@@ -58,13 +58,12 @@ a {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.06;
+  opacity: 1;
   background-repeat: no-repeat;
-  background-position: 82% 16%;
-  background-size: min(56vw, 680px);
+  background-position: center center;
+  background-size: min(90vw, 1100px);
   mix-blend-mode: screen;
-  filter: drop-shadow(0 0 22px rgba(255, 45, 45, 0.1));
-  animation: watermark-drift 18s ease-in-out infinite;
+  filter: drop-shadow(0 0 22px rgba(255, 45, 45, 0.09));
 }
 
 .background-watermark::before {
@@ -74,21 +73,31 @@ a {
 .background-watermark.text-watermark::before {
   content: var(--watermark-text, "GRADIENTE");
   position: absolute;
-  right: 4vw;
-  top: 26vh;
+  right: -3vw;
+  top: 12vh;
   font-family: "Sora", sans-serif;
   font-weight: 800;
   letter-spacing: 0.04em;
-  font-size: clamp(2.6rem, 12vw, 9rem);
-  color: rgba(180, 214, 255, 0.08);
+  font-size: clamp(3.2rem, 14vw, 11rem);
+  color: rgba(176, 205, 255, 0.065);
   text-transform: uppercase;
+  white-space: nowrap;
+  transform: rotate(-8deg);
 }
 
-.background-watermark::after {
-  content: "";
+.background-watermark.text-watermark::after {
+  content: var(--watermark-text, "GRADIENTE");
   position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 72% 26%, rgba(255, 59, 59, 0.08), transparent 44%);
+  left: -4vw;
+  bottom: 8vh;
+  font-family: "Sora", sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  font-size: clamp(3.4rem, 16vw, 12rem);
+  color: rgba(176, 205, 255, 0.05);
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: rotate(-8deg);
 }
 
 .site-shell {
@@ -162,7 +171,7 @@ a {
   height: 230%;
   transform: rotate(16deg);
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
-  animation: light-scan 8s ease-in-out infinite;
+  animation: none;
 }
 
 .wordmark-image {
@@ -366,20 +375,6 @@ a {
   transform: translateY(0) scale(1);
 }
 
-@keyframes watermark-drift {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-
-  50% {
-    transform: translate3d(-1.2%, 1.2%, 0) scale(1.02);
-  }
-
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
 @keyframes light-scan {
   0% {
     transform: translateX(-135%) rotate(16deg);
@@ -394,21 +389,42 @@ a {
   }
 }
 
+body.has-intro-motion .brand-wordmark::before {
+  animation: light-scan 2.1s ease-out 1;
+}
+
+body.page-transitioning .site-shell {
+  opacity: 0.98;
+}
+
+body.page-transitioning .profile,
+body.page-transitioning .top-cta,
+body.page-transitioning .route-nav,
+body.page-transitioning main {
+  transform: translateY(2px);
+  transition: transform 0.16s ease;
+}
+
 @media (max-width: 640px) {
   .route-nav {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .background-watermark {
-    background-size: 92vw;
-    background-position: 58% 16%;
-    opacity: 0.05;
+    background-size: 125vw;
+    background-position: 52% 42%;
   }
 
   .background-watermark.text-watermark::before {
-    right: 2vw;
-    top: 31vh;
-    font-size: clamp(2.2rem, 16vw, 6rem);
+    right: -11vw;
+    top: 19vh;
+    font-size: clamp(2.7rem, 20vw, 7rem);
+  }
+
+  .background-watermark.text-watermark::after {
+    left: -14vw;
+    bottom: 9vh;
+    font-size: clamp(2.9rem, 22vw, 7.4rem);
   }
 
   .brand-wordmark {
@@ -430,7 +446,6 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .background-watermark,
   .brand-wordmark::before {
     animation: none;
   }
@@ -438,6 +453,14 @@ a {
   .reveal-item {
     transition: none;
     opacity: 1;
+    transform: none;
+  }
+
+  .profile,
+  .top-cta,
+  .route-nav,
+  main {
+    transition: none;
     transform: none;
   }
 }

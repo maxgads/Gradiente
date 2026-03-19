@@ -448,6 +448,30 @@
     });
   }
 
+  function shouldUseIntroMotion() {
+    const reduceMotion =
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) return false;
+
+    try {
+      const seen = window.sessionStorage.getItem("linkhub_intro_seen") === "1";
+      window.sessionStorage.setItem("linkhub_intro_seen", "1");
+      return !seen;
+    } catch (_error) {
+      return true;
+    }
+  }
+
+  function bindRouteTransitions() {
+    const routeLinks = document.querySelectorAll(".route-link");
+    routeLinks.forEach(function (link) {
+      link.addEventListener("click", function () {
+        document.body.classList.add("page-transitioning");
+      });
+    });
+  }
+
   function redirectConsultas() {
     const manualLink = document.getElementById("manual-consult-link");
     const validConsultUrl = !isPlaceholder(config.consultationFormUrl);
@@ -508,7 +532,13 @@
     loadAnalytics();
     hydrateBranding();
     mountContactHub();
-    animateEntrance();
+    bindRouteTransitions();
+
+    const useIntroMotion = shouldUseIntroMotion();
+    if (useIntroMotion) {
+      document.body.classList.add("has-intro-motion");
+      animateEntrance();
+    }
 
     if (page === "consultas") {
       redirectConsultas();
