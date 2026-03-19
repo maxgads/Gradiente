@@ -1,5 +1,6 @@
 {
   "routes": [
+    { "src": "^/(parciales|ingresantes|mapa|consultas)/?$", "dest": "/index.html" },
     { "handle": "filesystem" },
     { "src": "/.*", "dest": "/index.html" }
   ]
