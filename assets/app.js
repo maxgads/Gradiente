@@ -1,17 +1,167 @@
 ﻿(function () {
   "use strict";
 
-  const page = document.body.dataset.page || "home";
   const config = window.LINKHUB_CONFIG || {};
-  const categoryOrder = [
-    "Ingresantes",
-    "Consultas frecuentes",
-    "Parciales y apuntes",
-    "Oportunidades",
-    "Mapa Facultad",
-    "Institucional",
-    "Contacto"
-  ];
+  const routeConfig = config.routeConfig || {};
+  const homeCategoryOrder = Array.isArray(config.homeCategoryOrder)
+    ? config.homeCategoryOrder
+    : [
+        "Ingresantes",
+        "Consultas frecuentes",
+        "Parciales y apuntes",
+        "Oportunidades",
+        "Mapa Facultad",
+        "Institucional",
+        "Contacto"
+      ];
+
+  const LINKS_CACHE_KEY = "linkhub_links_cache_v1";
+
+  const state = {
+    currentPath: "/",
+    links: null,
+    linksPromise: null,
+    renderToken: 0
+  };
+
+  const routes = normalizeRoutes(routeConfig);
+  const routesByPath = new Map(routes.map(function (route) {
+    return [route.path, route];
+  }));
+  const homeRoute = routes.find(function (route) {
+    return route.view === "home";
+  });
+  const homeExclusions = new Set((homeRoute && homeRoute.excludeFromHome) || []);
+
+  function normalizePath(pathname) {
+    const raw = String(pathname || "/");
+    const noQuery = raw.split("?")[0].split("#")[0] || "/";
+    if (noQuery.length > 1 && noQuery.endsWith("/")) {
+      return noQuery.slice(0, -1);
+    }
+    return noQuery || "/";
+  }
+
+  function normalizeRoutes(rawRoutes) {
+    const defaults = {
+      home: {
+        path: "/",
+        label: "Inicio",
+        title: "Ingenieria UNLP | Links",
+        nav: true,
+        view: "home",
+        excludeFromHome: ["Ingresantes", "Consultas frecuentes", "Mapa Facultad"]
+      },
+      parciales: {
+        path: "/parciales",
+        label: "Cursada",
+        title: "Cursada | Ingenieria UNLP",
+        nav: true,
+        view: "list",
+        panelTitle: "Consultas y recursos de cursada",
+        panelCopy: "Links clave para cursar, rendir y resolver dudas academicas frecuentes.",
+        match: {
+          categories: ["Consultas frecuentes"]
+        }
+      },
+      ingresantes: {
+        path: "/ingresantes",
+        label: "Ingresantes",
+        title: "Ingresantes | Ingenieria UNLP",
+        nav: true,
+        view: "list",
+        panelTitle: "Primeros pasos y tramites",
+        panelCopy: "Todo lo necesario para arrancar: calendario, guias, tramites y orientacion.",
+        match: {
+          categories: ["Ingresantes"]
+        }
+      },
+      mapa: {
+        path: "/mapa",
+        label: "Mapa",
+        title: "Mapa Facultad | Ingenieria UNLP",
+        nav: true,
+        view: "list",
+        panelTitle: "Recorrido de la facultad",
+        panelCopy:
+          "Proximamente vas a poder explorar un escenario 3D con las 4 manzanas, edificios y aulas para ubicarte antes de cursar.",
+        match: {
+          categories: ["Mapa Facultad"],
+          tags: ["mapa", "campus"]
+        }
+      },
+      consultas: {
+        path: "/consultas",
+        title: "Redirigiendo a consultas | Ingenieria UNLP",
+        nav: false,
+        view: "redirect"
+      }
+    };
+
+    const merged = Object.assign({}, defaults, rawRoutes || {});
+
+    return Object.keys(merged).map(function (key) {
+      const route = Object.assign({}, merged[key]);
+      route.key = key;
+      route.path = normalizePath(route.path || "/");
+      route.view = route.view || "list";
+      route.nav = route.nav !== false;
+      route.title = route.title || "Gradiente Ingenieria UNLP";
+      route.label = route.label || key;
+
+      if (route.match && route.match.categories) {
+        route.match.categories = route.match.categories.map(function (entry) {
+          return String(entry).toLowerCase();
+        });
+      }
+
+      if (route.match && route.match.tags) {
+        route.match.tags = route.match.tags.map(function (entry) {
+          return String(entry).toLowerCase();
+        });
+      }
+
+      if (route.match && route.match.audience) {
+        route.match.audience = route.match.audience.map(function (entry) {
+          return String(entry).toLowerCase();
+        });
+      }
+
+      route.excludeFromHome = Array.isArray(route.excludeFromHome)
+        ? route.excludeFromHome.map(function (entry) {
+            return String(entry).toLowerCase();
+          })
+        : [];
+
+      return route;
+    });
+  }
+
+  function getRoute(pathname) {
+    const path = normalizePath(pathname);
+    return routesByPath.get(path) || routesByPath.get("/") || routes[0];
+  }
+
+  function getStartupPath() {
+    const current = new URL(window.location.href);
+    const requestedRoute = current.searchParams.get("route");
+
+    if (requestedRoute) {
+      const normalizedRequested = normalizePath(requestedRoute);
+      if (routesByPath.has(normalizedRequested)) {
+        current.searchParams.delete("route");
+        const nextSearch = current.searchParams.toString();
+        const cleanUrl =
+          normalizedRequested +
+          (nextSearch ? "?" + nextSearch : "") +
+          (current.hash || "");
+        window.history.replaceState({ path: normalizedRequested }, "", cleanUrl);
+        return normalizedRequested;
+      }
+    }
+
+    return normalizePath(current.pathname);
+  }
 
   function slugify(text) {
     return String(text || "")
@@ -60,6 +210,10 @@
       return rawUrl;
     }
 
+    if (url.origin === window.location.origin && routesByPath.has(normalizePath(url.pathname))) {
+      return normalizePath(url.pathname);
+    }
+
     const merged = Object.assign({}, baseUtm(), customUtm || {});
     Object.keys(merged).forEach(function (key) {
       if (merged[key]) {
@@ -94,7 +248,7 @@
   function trackEvent(eventName, params) {
     const payload = Object.assign(
       {
-        page_path: window.location.pathname
+        page_path: state.currentPath
       },
       params || {}
     );
@@ -124,6 +278,36 @@
       return [tags.trim()];
     }
     return [];
+  }
+
+  function normalizeLink(rawLink) {
+    const normalized = Object.assign({}, rawLink);
+    normalized.title = String(rawLink.title || "Sin titulo");
+    normalized.url = String(rawLink.url || "#");
+    normalized.category = String(rawLink.category || "General");
+    normalized.categoryKey = normalized.category.toLowerCase();
+    normalized.audience = normalizeAudience(rawLink.audience);
+    normalized.audienceKey = normalized.audience.map(function (entry) {
+      return entry.toLowerCase();
+    });
+    normalized.tags = normalizeTags(rawLink.tags);
+    normalized.tagKey = normalized.tags.map(function (entry) {
+      return entry.toLowerCase();
+    });
+    normalized.priority = Number.isFinite(rawLink.priority)
+      ? rawLink.priority
+      : Number(rawLink.priority) || 999;
+    normalized.active = rawLink.active !== false;
+    return normalized;
+  }
+
+  function sortByPriority(links) {
+    return links.slice().sort(function (a, b) {
+      if (a.priority === b.priority) {
+        return a.title.localeCompare(b.title, "es");
+      }
+      return a.priority - b.priority;
+    });
   }
 
   function setVisualWithFallback(visualElement, fallbackElement, imageUrl) {
@@ -156,166 +340,6 @@
 
       probe.src = imageUrl;
     });
-  }
-
-  function getSocialIcon(label) {
-    const key = String(label || "").toLowerCase();
-    const icons = {
-      instagram:
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" ry="4"></rect><circle cx="12" cy="12" r="3.5"></circle><circle cx="17.2" cy="6.8" r="1"></circle></svg>',
-      whatsapp:
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.8a8 8 0 0 1-11.8 7l-3.2 1 1-3.1A8 8 0 1 1 20 11.8Z"></path><path d="M9 9.2c-.2-.4-.4-.4-.6-.4h-.6c-.2 0-.4 0-.6.2-.2.2-.8.8-.8 1.9s.8 2.2.9 2.3c.1.2 1.5 2.4 3.8 3.2 1.9.6 2.2.5 2.6.5.4-.1 1.2-.5 1.4-1 .2-.5.2-1 .1-1-.1-.1-.3-.2-.7-.4-.4-.2-1.2-.6-1.4-.6-.2-.1-.3-.1-.5.1-.2.2-.6.7-.7.8-.1.2-.3.2-.6.1-.3-.2-1.1-.4-2-1.3-.7-.6-1.2-1.4-1.3-1.7-.1-.3 0-.4.1-.6.1-.1.2-.3.3-.4.1-.1.1-.3.2-.4.1-.1 0-.3 0-.4 0-.1-.5-1.3-.7-1.8Z"></path></svg>',
-      tiktok:
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.8 4c.4 1.2 1.3 2.2 2.6 2.6v2.4a5.9 5.9 0 0 1-2.6-.8V14a5 5 0 1 1-5-5c.2 0 .4 0 .6.1v2.6a2.4 2.4 0 1 0 1.9 2.3V4h2.5Z"></path></svg>',
-      mail:
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z"></path><path d="m4 7 8 6 8-6"></path></svg>'
-    };
-
-    return icons[key] || "";
-  }
-
-  function normalizeLink(rawLink) {
-    const normalized = Object.assign({}, rawLink);
-    normalized.title = String(rawLink.title || "Sin título");
-    normalized.url = String(rawLink.url || "#");
-    normalized.category = String(rawLink.category || "General");
-    normalized.audience = normalizeAudience(rawLink.audience);
-    normalized.tags = normalizeTags(rawLink.tags);
-    normalized.priority = Number.isFinite(rawLink.priority)
-      ? rawLink.priority
-      : Number(rawLink.priority) || 999;
-    normalized.active = rawLink.active !== false;
-    return normalized;
-  }
-
-  function sortByPriority(links) {
-    return links.sort(function (a, b) {
-      if (a.priority === b.priority) {
-        return a.title.localeCompare(b.title, "es");
-      }
-      return a.priority - b.priority;
-    });
-  }
-
-  function isCursadaLink(link) {
-    return link.category.toLowerCase() === "consultas frecuentes";
-  }
-
-  function isIngresanteLink(link) {
-    const audience = link.audience.map(function (entry) {
-      return entry.toLowerCase();
-    });
-    const category = link.category.toLowerCase();
-
-    return audience.includes("ingresantes") || category.includes("ingresantes");
-  }
-
-  function isMapaLink(link) {
-    const category = link.category.toLowerCase();
-    const tags = link.tags.map(function (tag) {
-      return tag.toLowerCase();
-    });
-
-    return category.includes("mapa") || tags.includes("mapa") || tags.includes("campus");
-  }
-
-  function createSection(title, links) {
-    const section = document.createElement("section");
-    section.className = "panel";
-
-    const heading = document.createElement("h2");
-    heading.textContent = displayCategoryName(title);
-    section.appendChild(heading);
-
-    const list = document.createElement("div");
-    list.className = "link-list";
-
-    links.forEach(function (link) {
-      list.appendChild(renderLink(link));
-    });
-
-    section.appendChild(list);
-    return section;
-  }
-
-  function renderLink(link) {
-    const anchor = document.createElement("a");
-    anchor.className = "link-card";
-    anchor.target = "_blank";
-    anchor.rel = "noopener noreferrer";
-
-    const safeTitle = slugify(link.title) || "recurso";
-    anchor.href = withUtm(link.url, {
-      utm_content: safeTitle
-    });
-
-    const title = document.createElement("span");
-    title.className = "link-title";
-    title.textContent = link.title;
-
-    anchor.appendChild(title);
-
-    if (link.tags.length) {
-      const tags = document.createElement("span");
-      tags.className = "link-tags";
-      tags.textContent = link.tags.join(" · ");
-      anchor.appendChild(tags);
-    }
-
-    anchor.addEventListener("click", function () {
-      trackEvent("click_link", {
-        link_title: link.title,
-        link_category: link.category
-      });
-    });
-
-    return anchor;
-  }
-
-  function renderHome(links) {
-    const target = document.getElementById("category-sections");
-    if (!target) return;
-
-    const grouped = links.reduce(function (acc, link) {
-      if (!acc[link.category]) acc[link.category] = [];
-      acc[link.category].push(link);
-      return acc;
-    }, {});
-
-    const orderedCategories = categoryOrder
-      .filter(function (category) {
-        return grouped[category] && grouped[category].length;
-      })
-      .concat(
-        Object.keys(grouped).filter(function (category) {
-          return !categoryOrder.includes(category);
-        })
-      );
-
-    orderedCategories.forEach(function (categoryName) {
-      const categoryLinks = sortByPriority(grouped[categoryName]);
-      target.appendChild(createSection(categoryName, categoryLinks));
-    });
-  }
-
-  function renderFiltered(links) {
-    const target = document.getElementById("filtered-links");
-    if (!target) return;
-
-    if (!links.length) {
-      const empty = document.createElement("p");
-      empty.className = "panel-copy";
-      empty.textContent = "No hay links cargados para esta sección todavía.";
-      target.appendChild(empty);
-      return;
-    }
-
-    const list = document.createElement("div");
-    list.className = "link-list";
-    sortByPriority(links).forEach(function (link) {
-      list.appendChild(renderLink(link));
-    });
-    target.appendChild(list);
   }
 
   function hydrateBranding() {
@@ -365,13 +389,30 @@
         backgroundWatermark.classList.add("text-watermark");
         backgroundWatermark.style.setProperty("--watermark-text", JSON.stringify(watermarkText));
       }
-      backgroundWatermark.classList.remove("hidden");
     }
+  }
+
+  function getSocialIcon(label) {
+    const key = String(label || "").toLowerCase();
+    const icons = {
+      instagram:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4" ry="4"></rect><circle cx="12" cy="12" r="3.5"></circle><circle cx="17.2" cy="6.8" r="1"></circle></svg>',
+      whatsapp:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11.8a8 8 0 0 1-11.8 7l-3.2 1 1-3.1A8 8 0 1 1 20 11.8Z"></path><path d="M9 9.2c-.2-.4-.4-.4-.6-.4h-.6c-.2 0-.4 0-.6.2-.2.2-.8.8-.8 1.9s.8 2.2.9 2.3c.1.2 1.5 2.4 3.8 3.2 1.9.6 2.2.5 2.6.5.4-.1 1.2-.5 1.4-1 .2-.5.2-1 .1-1-.1-.1-.3-.2-.7-.4-.4-.2-1.2-.6-1.4-.6-.2-.1-.3-.1-.5.1-.2.2-.6.7-.7.8-.1.2-.3.2-.6.1-.3-.2-1.1-.4-2-1.3-.7-.6-1.2-1.4-1.3-1.7-.1-.3 0-.4.1-.6.1-.1.2-.3.3-.4.1-.1.1-.3.2-.4.1-.1 0-.3 0-.4 0-.1-.5-1.3-.7-1.8Z"></path></svg>',
+      tiktok:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.8 4c.4 1.2 1.3 2.2 2.6 2.6v2.4a5.9 5.9 0 0 1-2.6-.8V14a5 5 0 1 1-5-5c.2 0 .4 0 .6.1v2.6a2.4 2.4 0 1 0 1.9 2.3V4h2.5Z"></path></svg>',
+      mail:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z"></path><path d="m4 7 8 6 8-6"></path></svg>'
+    };
+
+    return icons[key] || "";
   }
 
   function mountContactHub() {
     const slot = document.getElementById("top-cta-slot");
     if (!slot) return;
+
+    slot.innerHTML = "";
 
     const wrapper = document.createElement("div");
     wrapper.className = "contact-hub";
@@ -438,16 +479,6 @@
     slot.appendChild(wrapper);
   }
 
-  function animateEntrance() {
-    const items = document.querySelectorAll(".profile, .top-cta, .route-nav, main .panel");
-    items.forEach(function (item, index) {
-      item.classList.add("reveal-item");
-      window.setTimeout(function () {
-        item.classList.add("is-visible");
-      }, 70 + index * 70);
-    });
-  }
-
   function shouldUseIntroMotion() {
     const reduceMotion =
       window.matchMedia &&
@@ -455,59 +486,53 @@
     if (reduceMotion) return false;
 
     try {
-      const seen = window.sessionStorage.getItem("linkhub_intro_seen") === "1";
-      window.sessionStorage.setItem("linkhub_intro_seen", "1");
+      const seen = window.sessionStorage.getItem("linkhub_shell_intro_seen") === "1";
+      window.sessionStorage.setItem("linkhub_shell_intro_seen", "1");
       return !seen;
     } catch (_error) {
       return true;
     }
   }
 
-  function bindRouteTransitions() {
-    const routeLinks = document.querySelectorAll(".route-link");
-    routeLinks.forEach(function (link) {
-      link.addEventListener("click", function () {
-        document.body.classList.add("page-transitioning");
-      });
-    });
-  }
+  function animateShell() {
+    if (!shouldUseIntroMotion()) return;
 
-  function redirectConsultas() {
-    const manualLink = document.getElementById("manual-consult-link");
-    const validConsultUrl = !isPlaceholder(config.consultationFormUrl);
-
-    if (!validConsultUrl) {
-      if (manualLink) {
-        manualLink.href = "/";
-        manualLink.textContent = "Configurar URL de formulario y volver";
-      }
-      return;
-    }
-
-    const targetUrl = withUtm(config.consultationFormUrl, {
-      utm_campaign: "consultas",
-      utm_content: "redirect_route"
+    const items = document.querySelectorAll(".profile, .top-cta, .route-nav, #app-main");
+    items.forEach(function (item, index) {
+      item.classList.add("reveal-item");
+      window.setTimeout(function () {
+        item.classList.add("is-visible");
+      }, 70 + index * 70);
     });
 
-    if (manualLink) {
-      manualLink.href = targetUrl;
-      manualLink.target = "_blank";
-      manualLink.rel = "noopener noreferrer";
-    }
-
-    trackEvent("redirect_consultas", {
-      destination: "google_form"
-    });
-
-    window.setTimeout(function () {
-      window.location.replace(targetUrl);
-    }, 250);
+    document.body.classList.add("has-intro-motion");
   }
 
   function loadLinks() {
-    return fetch("/links.json", {
-      cache: "no-store"
-    })
+    if (state.links) {
+      return Promise.resolve(state.links);
+    }
+
+    if (state.linksPromise) {
+      return state.linksPromise;
+    }
+
+    try {
+      const cachedRaw = window.sessionStorage.getItem(LINKS_CACHE_KEY);
+      if (cachedRaw) {
+        const cachedParsed = JSON.parse(cachedRaw);
+        if (Array.isArray(cachedParsed)) {
+          state.links = cachedParsed.map(normalizeLink).filter(function (link) {
+            return link.active;
+          });
+          return Promise.resolve(state.links);
+        }
+      }
+    } catch (_error) {
+      // ignore cache parse errors and fallback to network
+    }
+
+    state.linksPromise = fetch("/links.json", { cache: "force-cache" })
       .then(function (response) {
         if (!response.ok) {
           throw new Error("No se pudo leer links.json");
@@ -516,55 +541,409 @@
       })
       .then(function (payload) {
         if (!Array.isArray(payload)) {
-          throw new Error("Formato inválido en links.json");
+          throw new Error("Formato invalido en links.json");
         }
-        return payload.map(normalizeLink).filter(function (link) {
+
+        const normalized = payload.map(normalizeLink).filter(function (link) {
           return link.active;
         });
+
+        state.links = normalized;
+
+        try {
+          window.sessionStorage.setItem(LINKS_CACHE_KEY, JSON.stringify(payload));
+        } catch (_error) {
+          // storage full or blocked
+        }
+
+        return normalized;
       })
       .catch(function (error) {
         console.error(error);
+        state.links = [];
         return [];
+      })
+      .finally(function () {
+        state.linksPromise = null;
       });
+
+    return state.linksPromise;
+  }
+
+  function updateNav(path) {
+    const navLinks = document.querySelectorAll(".route-link");
+    navLinks.forEach(function (link) {
+      const linkPath = normalizePath(link.getAttribute("href"));
+      link.classList.toggle("active", linkPath === path);
+    });
+  }
+
+  function renderSkeleton() {
+    const main = document.getElementById("app-main");
+    if (!main) return;
+
+    main.innerHTML =
+      '<section class="panel panel-highlight">' +
+      '<h2>Cargando...</h2>' +
+      '<p class="panel-copy">Preparando recursos.</p>' +
+      "</section>" +
+      '<section class="panel">' +
+      '<div class="skeleton-list">' +
+      '<div class="skeleton-card"></div>'.repeat(4) +
+      "</div>" +
+      "</section>";
+  }
+
+  function shouldRenderInHome(categoryName) {
+    return !homeExclusions.has(String(categoryName || "").toLowerCase());
+  }
+
+  function createSection(title, links) {
+    const section = document.createElement("section");
+    section.className = "panel";
+
+    const heading = document.createElement("h2");
+    heading.textContent = displayCategoryName(title);
+    section.appendChild(heading);
+
+    const list = document.createElement("div");
+    list.className = "link-list";
+
+    links.forEach(function (link) {
+      list.appendChild(renderLinkCard(link));
+    });
+
+    section.appendChild(list);
+    return section;
+  }
+
+  function resolveInternalRoute(rawUrl) {
+    if (!rawUrl) return null;
+
+    try {
+      const parsed = new URL(rawUrl, window.location.origin);
+      if (parsed.origin !== window.location.origin) return null;
+      const normalized = normalizePath(parsed.pathname);
+      return routesByPath.has(normalized) ? normalized : null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function renderLinkCard(link) {
+    const anchor = document.createElement("a");
+    anchor.className = "link-card";
+
+    const internalRoute = resolveInternalRoute(link.url);
+    if (internalRoute) {
+      anchor.href = internalRoute;
+      anchor.dataset.route = internalRoute;
+    } else {
+      const safeTitle = slugify(link.title) || "recurso";
+      anchor.href = withUtm(link.url, {
+        utm_content: safeTitle
+      });
+      anchor.target = "_blank";
+      anchor.rel = "noopener noreferrer";
+    }
+
+    const title = document.createElement("span");
+    title.className = "link-title";
+    title.textContent = link.title;
+    anchor.appendChild(title);
+
+    if (link.tags.length) {
+      const tags = document.createElement("span");
+      tags.className = "link-tags";
+      tags.textContent = link.tags.join(" · ");
+      anchor.appendChild(tags);
+    }
+
+    anchor.addEventListener("click", function () {
+      trackEvent("click_link", {
+        link_title: link.title,
+        link_category: link.category,
+        destination: internalRoute || "external"
+      });
+    });
+
+    return anchor;
+  }
+
+  function filterLinksForRoute(route, links) {
+    if (!route.match) return links;
+
+    const match = route.match;
+
+    return links.filter(function (link) {
+      let valid = true;
+
+      if (match.categories && match.categories.length) {
+        valid = valid && match.categories.includes(link.categoryKey);
+      }
+
+      if (match.tags && match.tags.length) {
+        valid =
+          valid &&
+          link.tagKey.some(function (tag) {
+            return match.tags.includes(tag);
+          });
+      }
+
+      if (match.audience && match.audience.length) {
+        valid =
+          valid &&
+          link.audienceKey.some(function (entry) {
+            return match.audience.includes(entry);
+          });
+      }
+
+      return valid;
+    });
+  }
+
+  function renderHome(links) {
+    const main = document.getElementById("app-main");
+    if (!main) return;
+
+    main.innerHTML = "";
+
+    const grouped = links.reduce(function (acc, link) {
+      if (!shouldRenderInHome(link.category)) return acc;
+      if (!acc[link.category]) acc[link.category] = [];
+      acc[link.category].push(link);
+      return acc;
+    }, {});
+
+    const orderedCategories = homeCategoryOrder
+      .filter(function (category) {
+        return grouped[category] && grouped[category].length;
+      })
+      .concat(
+        Object.keys(grouped).filter(function (category) {
+          return !homeCategoryOrder.includes(category);
+        })
+      );
+
+    if (!orderedCategories.length) {
+      const empty = document.createElement("section");
+      empty.className = "panel panel-highlight";
+      empty.innerHTML =
+        "<h2>Sin contenido</h2><p class=\"panel-copy\">No hay links activos para mostrar.</p>";
+      main.appendChild(empty);
+      return;
+    }
+
+    orderedCategories.forEach(function (categoryName) {
+      const categoryLinks = sortByPriority(grouped[categoryName]);
+      main.appendChild(createSection(categoryName, categoryLinks));
+    });
+  }
+
+  function renderListView(route, links) {
+    const main = document.getElementById("app-main");
+    if (!main) return;
+
+    const filtered = sortByPriority(filterLinksForRoute(route, links));
+
+    const intro = document.createElement("section");
+    intro.className = "panel panel-highlight";
+
+    const title = document.createElement("h2");
+    title.textContent = route.panelTitle || route.label || "Recursos";
+    intro.appendChild(title);
+
+    if (route.panelCopy) {
+      const copy = document.createElement("p");
+      copy.className = "panel-copy";
+      copy.textContent = route.panelCopy;
+      intro.appendChild(copy);
+    }
+
+    const listPanel = document.createElement("section");
+    listPanel.className = "panel";
+
+    if (!filtered.length) {
+      const empty = document.createElement("p");
+      empty.className = "panel-copy";
+      empty.textContent = "No hay links cargados para esta seccion todavia.";
+      listPanel.appendChild(empty);
+    } else {
+      const list = document.createElement("div");
+      list.className = "link-list";
+      filtered.forEach(function (link) {
+        list.appendChild(renderLinkCard(link));
+      });
+      listPanel.appendChild(list);
+    }
+
+    main.innerHTML = "";
+    main.appendChild(intro);
+    main.appendChild(listPanel);
+  }
+
+  function renderRedirectView() {
+    const main = document.getElementById("app-main");
+    if (!main) return;
+
+    const panel = document.createElement("section");
+    panel.className = "panel panel-highlight redirect-panel";
+
+    panel.innerHTML =
+      "<h1>Te estamos redirigiendo al formulario</h1>" +
+      '<p class="panel-copy">Si no abre automaticamente, usa el boton de abajo.</p>';
+
+    const manual = document.createElement("a");
+    manual.className = "cta-button";
+    manual.textContent = "Abrir formulario";
+
+    const validConsultUrl = !isPlaceholder(config.consultationFormUrl);
+    if (validConsultUrl) {
+      const targetUrl = withUtm(config.consultationFormUrl, {
+        utm_campaign: "consultas",
+        utm_content: "redirect_route"
+      });
+
+      manual.href = targetUrl;
+      manual.target = "_blank";
+      manual.rel = "noopener noreferrer";
+
+      window.setTimeout(function () {
+        window.location.replace(targetUrl);
+      }, 120);
+    } else {
+      manual.href = "/";
+      manual.dataset.route = "/";
+    }
+
+    const wrapper = document.createElement("p");
+    wrapper.appendChild(manual);
+
+    panel.appendChild(wrapper);
+
+    main.innerHTML = "";
+    main.appendChild(panel);
+  }
+
+  function renderRoute(path) {
+    const route = getRoute(path);
+    const main = document.getElementById("app-main");
+    if (!main) return;
+
+    state.currentPath = route.path;
+    updateNav(route.path);
+    document.title = route.title;
+
+    trackEvent("view_route", {
+      route: route.path
+    });
+
+    if (route.view === "redirect") {
+      renderRedirectView();
+      main.classList.remove("content-switching");
+      main.classList.add("content-ready");
+      return;
+    }
+
+    const token = ++state.renderToken;
+
+    if (!state.links) {
+      renderSkeleton();
+    }
+
+    loadLinks().then(function (allLinks) {
+      if (token !== state.renderToken) return;
+
+      if (route.view === "home") {
+        renderHome(allLinks);
+      } else {
+        renderListView(route, allLinks);
+      }
+
+      main.classList.remove("content-switching");
+      main.classList.add("content-ready");
+    });
+  }
+
+  function navigateTo(path, replace) {
+    const targetRoute = getRoute(path);
+    const targetPath = targetRoute.path;
+
+    if (targetPath === state.currentPath) return;
+
+    const main = document.getElementById("app-main");
+    if (main) {
+      main.classList.add("content-switching");
+    }
+
+    if (replace) {
+      window.history.replaceState({ path: targetPath }, "", targetPath);
+    } else {
+      window.history.pushState({ path: targetPath }, "", targetPath);
+    }
+
+    renderRoute(targetPath);
+  }
+
+  function getInternalRouteFromAnchor(anchor) {
+    const forced = anchor.dataset.route;
+    if (forced && routesByPath.has(normalizePath(forced))) {
+      return normalizePath(forced);
+    }
+
+    const href = anchor.getAttribute("href") || "";
+    if (!href || href.startsWith("#")) return null;
+
+    let parsed;
+    try {
+      parsed = new URL(href, window.location.origin);
+    } catch (_error) {
+      return null;
+    }
+
+    if (parsed.origin !== window.location.origin) return null;
+
+    const normalized = normalizePath(parsed.pathname);
+    if (!routesByPath.has(normalized)) return null;
+
+    return normalized;
+  }
+
+  function bindRouter() {
+    document.addEventListener("click", function (event) {
+      if (event.defaultPrevented) return;
+      if (event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+      const anchor = event.target.closest("a[href]");
+      if (!anchor) return;
+
+      if (anchor.hasAttribute("download")) return;
+      if (anchor.getAttribute("target") && anchor.getAttribute("target") !== "_self") return;
+
+      const internalRoute = getInternalRouteFromAnchor(anchor);
+      if (!internalRoute) return;
+
+      event.preventDefault();
+      navigateTo(internalRoute, false);
+    });
+
+    window.addEventListener("popstate", function () {
+      renderRoute(normalizePath(window.location.pathname));
+    });
   }
 
   function boot() {
     loadAnalytics();
     hydrateBranding();
     mountContactHub();
-    bindRouteTransitions();
+    bindRouter();
+    animateShell();
 
-    const useIntroMotion = shouldUseIntroMotion();
-    if (useIntroMotion) {
-      document.body.classList.add("has-intro-motion");
-      animateEntrance();
-    }
+    const startupPath = getStartupPath();
+    state.currentPath = startupPath;
 
-    if (page === "consultas") {
-      redirectConsultas();
-      return;
-    }
-
-    loadLinks().then(function (allLinks) {
-      if (page === "home") {
-        renderHome(allLinks);
-        return;
-      }
-
-      if (page === "parciales") {
-        renderFiltered(allLinks.filter(isCursadaLink));
-        return;
-      }
-
-      if (page === "ingresantes") {
-        renderFiltered(allLinks.filter(isIngresanteLink));
-        return;
-      }
-
-      if (page === "mapa") {
-        renderFiltered(allLinks.filter(isMapaLink));
-      }
-    });
+    renderRoute(startupPath);
   }
 
   document.addEventListener("DOMContentLoaded", boot);

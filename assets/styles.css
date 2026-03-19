@@ -11,6 +11,11 @@
   --card-hover: #163170;
 }
 
+@view-transition {
+  navigation: auto;
+}
+
+
 * {
   box-sizing: border-box;
 }
@@ -105,6 +110,20 @@ a {
   margin: 1.2rem auto 2.5rem;
   position: relative;
   z-index: 1;
+}
+
+#app-main {
+  min-height: 340px;
+  opacity: 1;
+  transition: opacity 0.16s ease;
+}
+
+#app-main.content-switching {
+  opacity: 0.6;
+}
+
+#app-main.content-ready {
+  opacity: 1;
 }
 
 .profile {
@@ -333,6 +352,25 @@ a {
   gap: 0.56rem;
 }
 
+.skeleton-list {
+  display: grid;
+  gap: 0.56rem;
+}
+
+.skeleton-card {
+  height: 68px;
+  border-radius: 0.82rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 20%,
+    rgba(255, 255, 255, 0.12) 37%,
+    rgba(255, 255, 255, 0.06) 54%
+  );
+  background-size: 220% 100%;
+  animation: skeleton-wave 1.25s ease-in-out infinite;
+}
+
 .link-card {
   display: flex;
   flex-direction: column;
@@ -389,20 +427,24 @@ a {
   }
 }
 
+@keyframes skeleton-wave {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: -100% 0;
+  }
+}
+
 body.has-intro-motion .brand-wordmark::before {
   animation: light-scan 2.1s ease-out 1;
 }
 
-body.page-transitioning .site-shell {
-  opacity: 0.98;
-}
-
-body.page-transitioning .profile,
-body.page-transitioning .top-cta,
-body.page-transitioning .route-nav,
-body.page-transitioning main {
-  transform: translateY(2px);
-  transition: transform 0.16s ease;
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.16s;
+  animation-timing-function: ease-out;
 }
 
 @media (max-width: 640px) {
@@ -463,4 +505,14 @@ body.page-transitioning main {
     transition: none;
     transform: none;
   }
+
+  #app-main {
+    transition: none;
+  }
+
+  .skeleton-card {
+    animation: none;
+  }
 }
+
+

@@ -3,51 +3,15 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Ingresantes | Ingeniería UNLP</title>
-    <meta
-      name="description"
-      content="Recursos de primer contacto y trámites para ingresantes de Ingeniería UNLP."
-    />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="/assets/styles.css" />
+    <title>Ingresantes | Ingenieria UNLP</title>
+    <meta http-equiv="refresh" content="0;url=/?route=%2Fingresantes" />
+    <script>
+      window.location.replace('/?route=' + encodeURIComponent('/ingresantes'));
+    </script>
+    <style>
+      html,body{margin:0;background:#0d1b48;color:#eef3ff;font-family:sans-serif}
+      body{display:grid;place-items:center;min-height:100vh}
+    </style>
   </head>
-  <body data-page="ingresantes">
-    <div class="background-watermark hidden" id="background-watermark" aria-hidden="true"></div>
-    <div class="site-shell">
-      <header class="profile compact">
-        <p id="handle" class="handle">@grupoingenieriaunlp</p>
-        <h1 class="brand-name">Ingresantes</h1>
-      </header>
-
-      <div class="top-cta" id="top-cta-slot"></div>
-
-      <nav class="route-nav">
-        <a href="/" class="route-link">Inicio</a>
-        <a href="/parciales" class="route-link">Cursada</a>
-        <a href="/ingresantes" class="route-link active">Ingresantes</a>
-        <a href="/mapa" class="route-link">Mapa</a>
-      </nav>
-
-      <main>
-        <section class="panel panel-highlight">
-          <h2>Primeros pasos y trámites</h2>
-          <p class="panel-copy">
-            Todo lo necesario para arrancar: calendario, guías, trámites y orientación.
-          </p>
-        </section>
-
-        <section class="panel">
-          <div id="filtered-links"></div>
-        </section>
-      </main>
-    </div>
-
-    <script src="/assets/config.js"></script>
-    <script src="/assets/app.js"></script>
-  </body>
+  <body>Redirigiendo...</body>
 </html>
