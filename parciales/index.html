@@ -1,0 +1,53 @@
+﻿<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cursada | Ingeniería UNLP</title>
+    <meta
+      name="description"
+      content="Consultas frecuentes y recursos de cursada para Ingeniería UNLP."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body data-page="parciales">
+    <div class="background-watermark hidden" id="background-watermark" aria-hidden="true"></div>
+    <div class="site-shell">
+      <header class="profile compact">
+        <p id="handle" class="handle">@grupoingenieriaunlp</p>
+        <h1 class="brand-name">Cursada</h1>
+      </header>
+
+      <div class="top-cta" id="top-cta-slot"></div>
+
+      <nav class="route-nav">
+        <a href="/" class="route-link">Inicio</a>
+        <a href="/parciales" class="route-link active">Cursada</a>
+        <a href="/ingresantes" class="route-link">Ingresantes</a>
+        <a href="/mapa" class="route-link">Mapa</a>
+      </nav>
+
+      <main>
+        <section class="panel panel-highlight">
+          <h2>Consultas y recursos de cursada</h2>
+          <p class="panel-copy">
+            Links clave para cursar, rendir y resolver dudas académicas frecuentes.
+          </p>
+        </section>
+
+        <section class="panel">
+          <div id="filtered-links"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/assets/config.js"></script>
+    <script src="/assets/app.js"></script>
+  </body>
+</html>

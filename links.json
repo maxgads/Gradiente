@@ -1,0 +1,188 @@
+[
+  {
+    "title": "Gu\u00eda r\u00e1pida para ingresantes FI-UNLP",
+    "url": "https://ingreso.ing.unlp.edu.ar/",
+    "category": "Ingresantes",
+    "audience": ["ingresantes"],
+    "priority": 1,
+    "active": true,
+    "tags": ["ingreso", "primer a\u00f1o"]
+  },
+  {
+    "title": "Calendario acad\u00e9mico FI",
+    "url": "https://www.ing.unlp.edu.ar/academica/calendario-academico/",
+    "category": "Ingresantes",
+    "audience": ["ingresantes", "todos"],
+    "priority": 2,
+    "active": true,
+    "tags": ["fechas", "cursada"]
+  },
+  {
+    "title": "Programa para estudiantes trabajadores",
+    "url": "https://www.ing.unlp.edu.ar/",
+    "category": "Ingresantes",
+    "audience": ["ingresantes", "todos"],
+    "priority": 3,
+    "active": true,
+    "tags": ["trabajadores", "acompa\u00f1amiento"]
+  },
+  {
+    "title": "Pr\u00f3rroga para rendir final",
+    "url": "https://forms.gle/REEMPLAZAR_PRORROGA_FINAL",
+    "category": "Ingresantes",
+    "audience": ["ingresantes", "todos"],
+    "priority": 4,
+    "active": true,
+    "tags": ["tr\u00e1mite", "final"]
+  },
+  {
+    "title": "Pedidos de copias con beca",
+    "url": "https://forms.gle/REEMPLAZAR_COPIAS_CON_BECA",
+    "category": "Ingresantes",
+    "audience": ["ingresantes", "todos"],
+    "priority": 5,
+    "active": true,
+    "tags": ["copias", "beca", "tr\u00e1mite"]
+  },
+  {
+    "title": "Pedidos de copias sin beca",
+    "url": "https://forms.gle/REEMPLAZAR_COPIAS_SIN_BECA",
+    "category": "Ingresantes",
+    "audience": ["ingresantes", "todos"],
+    "priority": 6,
+    "active": true,
+    "tags": ["copias", "tr\u00e1mite"]
+  },
+
+  {
+    "title": "\u00bfC\u00f3mo aprobar Ingl\u00e9s?",
+    "url": "https://forms.gle/REEMPLAZAR_CONSULTA_INGLES",
+    "category": "Consultas frecuentes",
+    "audience": ["todos"],
+    "priority": 1,
+    "active": true,
+    "tags": ["ingl\u00e9s", "consulta"]
+  },
+  {
+    "title": "Ingl\u00e9s Nivel I y II (orientaci\u00f3n)",
+    "url": "https://forms.gle/REEMPLAZAR_INGLES_NIVEL",
+    "category": "Consultas frecuentes",
+    "audience": ["todos"],
+    "priority": 2,
+    "active": true,
+    "tags": ["ingl\u00e9s", "nivel"]
+  },
+  {
+    "title": "Prueba de suficiencia de Ingl\u00e9s | inscripci\u00f3n",
+    "url": "https://forms.gle/REEMPLAZAR_SUFICIENCIA_INGLES",
+    "category": "Consultas frecuentes",
+    "audience": ["todos"],
+    "priority": 3,
+    "active": true,
+    "tags": ["ingl\u00e9s", "suficiencia", "inscripci\u00f3n"]
+  },
+  {
+    "title": "Electivas human\u00edsticas (inscripci\u00f3n)",
+    "url": "https://www.ing.unlp.edu.ar/academica/electivas-humanisticas/",
+    "category": "Consultas frecuentes",
+    "audience": ["todos"],
+    "priority": 4,
+    "active": true,
+    "tags": ["electivas", "consulta"]
+  },
+
+  {
+    "title": "Nube de apuntes y parciales",
+    "url": "https://drive.google.com/drive/folders/1p_qUO7nKagtmC9glcEqIAdcIqEV6fWkp",
+    "category": "Parciales y apuntes",
+    "audience": ["todos"],
+    "priority": 1,
+    "active": true,
+    "tags": ["apunte", "parcial", "final"]
+  },
+  {
+    "title": "Formulario para compartir material",
+    "url": "https://forms.gle/REEMPLAZAR_COMPARTIR",
+    "category": "Parciales y apuntes",
+    "audience": ["todos"],
+    "priority": 2,
+    "active": true,
+    "tags": ["apunte", "colaborar"]
+  },
+
+  {
+    "title": "Pasant\u00edas y pr\u00e1cticas profesionales",
+    "url": "https://www.ing.unlp.edu.ar/",
+    "category": "Oportunidades",
+    "audience": ["estudiantes", "avanzados", "todos"],
+    "priority": 1,
+    "active": true,
+    "tags": ["pasant\u00eda", "pr\u00e1ctica", "laboral"]
+  },
+  {
+    "title": "Beca de estudio FI",
+    "url": "https://www.ing.unlp.edu.ar/becas/",
+    "category": "Oportunidades",
+    "audience": ["todos"],
+    "priority": 2,
+    "active": true,
+    "tags": ["beca", "fi"]
+  },
+  {
+    "title": "Becas universitarias YPF",
+    "url": "https://becasypf.com/",
+    "category": "Oportunidades",
+    "audience": ["todos"],
+    "priority": 3,
+    "active": true,
+    "tags": ["beca", "externa"]
+  },
+  {
+    "title": "Sumate al equipo de trabajo estudiantil",
+    "url": "https://forms.gle/REEMPLAZAR_SUMATE",
+    "category": "Oportunidades",
+    "audience": ["todos"],
+    "priority": 4,
+    "active": true,
+    "tags": ["voluntariado", "equipo"]
+  },
+
+  {
+    "title": "Mapa Facultad 3D (pr\u00f3ximamente)",
+    "url": "/mapa",
+    "category": "Mapa Facultad",
+    "audience": ["ingresantes", "todos"],
+    "priority": 1,
+    "active": true,
+    "tags": ["mapa", "aulas", "campus"]
+  },
+
+  {
+    "title": "Correo institucional",
+    "url": "https://www.ing.unlp.edu.ar/",
+    "category": "Institucional",
+    "audience": ["todos"],
+    "priority": 1,
+    "active": true,
+    "tags": ["institucional", "correo"]
+  },
+  {
+    "title": "Nota al Decano",
+    "url": "https://www.ing.unlp.edu.ar/",
+    "category": "Institucional",
+    "audience": ["todos"],
+    "priority": 2,
+    "active": true,
+    "tags": ["tr\u00e1mite", "institucional"]
+  },
+
+  {
+    "title": "Consultas a la mesa",
+    "url": "https://forms.gle/REEMPLAZAR_FORM",
+    "category": "Contacto",
+    "audience": ["ingresantes", "todos"],
+    "priority": 1,
+    "active": true,
+    "tags": ["consulta", "mesa"]
+  }
+]
