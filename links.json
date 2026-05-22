@@ -501,7 +501,7 @@
       "todos"
     ],
     "priority": 1,
-    "active": true,
+    "active": false,
     "tags": [
       "feriazo",
       "festival",
