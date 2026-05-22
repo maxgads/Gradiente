@@ -1,26 +1,32 @@
-﻿window.LINKHUB_CONFIG = {
+window.LINKHUB_CONFIG = {
   brandName: "Gradiente Ingenieria UNLP",
   handle: "@gradienteingenieriaunlp",
   description: "Defendiendo la universidad publica y la industria nacional.",
   slogan: "Tu maxima razon de cambio",
   wordmarkText: "GRADIENTE",
   wordmarkIncludesSlogan: false,
-  wordmarkUrl: "",
+  wordmarkUrl: "/assets/logo-gradiente-oficial-blanco.png",
   backgroundLogoUrl: "",
-  consultationFormUrl: "https://forms.gle/REEMPLAZAR_FORM",
+  consultationFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLSeGuH8e9_Yb_C6glZLeWzefB3vMLW1RlIgOFwUTw5RWtrd7hA/viewform?usp=publish-editor",
   primaryContactLabel: "Hacer consulta",
   contactChannelsLabel: "Consultas a",
-  driveUrl: "https://drive.google.com/drive/folders/1p_qUO7nKagtmC9glcEqIAdcIqEV6fWkp",
+  driveUrl: "https://drive.google.com/open?id=1nqMOCWnGQf4hijaALpiovu1L5c6PvUJb",
   analyticsMeasurementId: "",
+  linksDataVersion: "20260511",
+  kioscoDataVersion: "20260410",
+  homePromoAutoplayMs: 5000,
   utmDefaults: {
     source: "ig_bio",
     medium: "linkhub",
     campaign: "fi_unlp_2026"
   },
   homeCategoryOrder: [
+    "Avisos",
     "Ingresantes",
     "Consultas frecuentes",
     "Parciales y apuntes",
+    "Becas y bienestar",
+    "Proyectos e investigacion",
     "Oportunidades",
     "Mapa Facultad",
     "Institucional",
@@ -72,6 +78,16 @@
         tags: ["mapa", "campus"]
       }
     },
+    mesa: {
+      path: "/mesa",
+      label: "Mesita en Electro",
+      title: "Mesita en Electro | Ingenieria UNLP",
+      nav: true,
+      view: "kiosk",
+      panelTitle: "Mesita en Electro",
+      panelCopy:
+        "Productos y promos del kiosco en el edificio de Electro."
+    },
     consultas: {
       path: "/consultas",
       title: "Redirigiendo a consultas | Ingenieria UNLP",
@@ -88,17 +104,17 @@
     {
       label: "WhatsApp",
       short: "WA",
-      url: "https://wa.me/5492210000000"
+      url: "https://chat.whatsapp.com/CRnDHAhup938Nk4uJ8TBVp"
     },
     {
       label: "TikTok",
       short: "TT",
-      url: "https://www.tiktok.com/@gradienteingenieriaunlp"
+      url: "https://www.tiktok.com/@gradiente.ing"
     },
     {
       label: "Mail",
       short: "@",
-      url: "mailto:gradienteingenieriaunlp@gmail.com"
+      url: "gradienteingenieriaunlp@gmail.com"
     }
   ]
 };

@@ -1,188 +1,542 @@
 [
   {
-    "title": "Gu\u00eda r\u00e1pida para ingresantes FI-UNLP",
-    "url": "https://ingreso.ing.unlp.edu.ar/",
+    "title": "Guia oficial para ingresantes FI-UNLP",
+    "url": "https://ing.unlp.edu.ar/ingresantes/",
     "category": "Ingresantes",
-    "audience": ["ingresantes"],
+    "audience": [
+      "ingresantes"
+    ],
     "priority": 1,
     "active": true,
-    "tags": ["ingreso", "primer a\u00f1o"]
+    "tags": [
+      "ingreso",
+      "primer-ano",
+      "oficial"
+    ]
   },
   {
-    "title": "Calendario acad\u00e9mico FI",
-    "url": "https://www.ing.unlp.edu.ar/academica/calendario-academico/",
+    "title": "Catedra de ingreso",
+    "url": "https://ing.unlp.edu.ar/grado/catedra-de-ingreso/",
     "category": "Ingresantes",
-    "audience": ["ingresantes", "todos"],
+    "audience": [
+      "ingresantes"
+    ],
     "priority": 2,
     "active": true,
-    "tags": ["fechas", "cursada"]
+    "tags": [
+      "matepi",
+      "ingreso",
+      "oficial"
+    ]
   },
   {
-    "title": "Programa para estudiantes trabajadores",
-    "url": "https://www.ing.unlp.edu.ar/",
+    "title": "Calendario ano lectivo completo",
+    "url": "https://ing.unlp.edu.ar/institucional/calendario-ano-lectivo-completo/",
     "category": "Ingresantes",
-    "audience": ["ingresantes", "todos"],
+    "audience": [
+      "ingresantes",
+      "todos"
+    ],
     "priority": 3,
     "active": true,
-    "tags": ["trabajadores", "acompa\u00f1amiento"]
+    "tags": [
+      "fechas",
+      "calendario",
+      "oficial"
+    ]
   },
   {
-    "title": "Pr\u00f3rroga para rendir final",
-    "url": "https://forms.gle/REEMPLAZAR_PRORROGA_FINAL",
+    "title": "Programa para estudiantes trabajadores (RET)",
+    "url": "https://ing.unlp.edu.ar/grado/programa-para-estudiantes-trabajadores/",
     "category": "Ingresantes",
-    "audience": ["ingresantes", "todos"],
+    "audience": [
+      "ingresantes",
+      "todos"
+    ],
     "priority": 4,
     "active": true,
-    "tags": ["tr\u00e1mite", "final"]
+    "tags": [
+      "ret",
+      "trabajadores",
+      "tramite"
+    ]
   },
   {
-    "title": "Pedidos de copias con beca",
-    "url": "https://forms.gle/REEMPLAZAR_COPIAS_CON_BECA",
+    "title": "Turnos FI para tramites",
+    "url": "https://ing.unlp.edu.ar/turnos/",
     "category": "Ingresantes",
-    "audience": ["ingresantes", "todos"],
+    "audience": [
+      "ingresantes",
+      "todos"
+    ],
     "priority": 5,
     "active": true,
-    "tags": ["copias", "beca", "tr\u00e1mite"]
+    "tags": [
+      "turnos",
+      "readmision",
+      "tramite"
+    ]
   },
   {
-    "title": "Pedidos de copias sin beca",
-    "url": "https://forms.gle/REEMPLAZAR_COPIAS_SIN_BECA",
+    "title": "Como generar tu cuenta SIU-Guarani",
+    "url": "https://autogestion.guarani.unlp.edu.ar/acceso",
     "category": "Ingresantes",
-    "audience": ["ingresantes", "todos"],
+    "audience": [
+      "todos"
+    ],
     "priority": 6,
     "active": true,
-    "tags": ["copias", "tr\u00e1mite"]
-  },
-
-  {
-    "title": "\u00bfC\u00f3mo aprobar Ingl\u00e9s?",
-    "url": "https://forms.gle/REEMPLAZAR_CONSULTA_INGLES",
-    "category": "Consultas frecuentes",
-    "audience": ["todos"],
-    "priority": 1,
-    "active": true,
-    "tags": ["ingl\u00e9s", "consulta"]
+    "tags": [
+      "siu",
+      "guarani",
+      "autogestion",
+      "ingreso"
+    ]
   },
   {
-    "title": "Ingl\u00e9s Nivel I y II (orientaci\u00f3n)",
-    "url": "https://forms.gle/REEMPLAZAR_INGLES_NIVEL",
+    "title": "Aulas y horarios",
+    "url": "https://ing.unlp.edu.ar/grado/aulas/",
     "category": "Consultas frecuentes",
-    "audience": ["todos"],
+    "audience": [
+      "todos"
+    ],
     "priority": 2,
     "active": true,
-    "tags": ["ingl\u00e9s", "nivel"]
+    "tags": [
+      "aulas",
+      "horarios",
+      "cursada"
+    ]
   },
   {
-    "title": "Prueba de suficiencia de Ingl\u00e9s | inscripci\u00f3n",
-    "url": "https://forms.gle/REEMPLAZAR_SUFICIENCIA_INGLES",
+    "title": "Portal de Asignaturas FI",
+    "url": "https://www.asignaturas.ing.unlp.edu.ar/",
     "category": "Consultas frecuentes",
-    "audience": ["todos"],
-    "priority": 3,
-    "active": true,
-    "tags": ["ingl\u00e9s", "suficiencia", "inscripci\u00f3n"]
-  },
-  {
-    "title": "Electivas human\u00edsticas (inscripci\u00f3n)",
-    "url": "https://www.ing.unlp.edu.ar/academica/electivas-humanisticas/",
-    "category": "Consultas frecuentes",
-    "audience": ["todos"],
-    "priority": 4,
-    "active": true,
-    "tags": ["electivas", "consulta"]
-  },
-
-  {
-    "title": "Nube de apuntes y parciales",
-    "url": "https://drive.google.com/drive/folders/1p_qUO7nKagtmC9glcEqIAdcIqEV6fWkp",
-    "category": "Parciales y apuntes",
-    "audience": ["todos"],
+    "audience": [
+      "todos"
+    ],
     "priority": 1,
     "active": true,
-    "tags": ["apunte", "parcial", "final"]
+    "tags": [
+      "asignaturas",
+      "materias",
+      "cursada"
+    ]
+  },
+  {
+    "title": "Solicitud de correo institucional para alumnos",
+    "url": "https://www1.ing.unlp.edu.ar/sitio/administracion/soporte/correo_est/",
+    "category": "Consultas frecuentes",
+    "audience": [
+      "todos"
+    ],
+    "priority": 3,
+    "active": true,
+    "tags": [
+      "correo",
+      "cuenta",
+      "it"
+    ]
+  },
+  {
+    "title": "Prorroga para rendir final",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSePPkDXvKFLO8kEg4GLGe1_C4qhybkuVpoqPEeU3BDmXdlMbg/viewform",
+    "category": "Consultas frecuentes",
+    "audience": [
+      "todos"
+    ],
+    "priority": 4,
+    "active": true,
+    "tags": [
+      "final",
+      "prorroga",
+      "tramite"
+    ]
+  },
+  {
+    "title": "Nube de apuntes y parciales",
+    "url": "https://drive.google.com/open?id=1nqMOCWnGQf4hijaALpiovu1L5c6PvUJb",
+    "category": "Parciales y apuntes",
+    "audience": [
+      "todos"
+    ],
+    "priority": 1,
+    "active": true,
+    "tags": [
+      "apuntes",
+      "parciales",
+      "finales"
+    ]
   },
   {
     "title": "Formulario para compartir material",
-    "url": "https://forms.gle/REEMPLAZAR_COMPARTIR",
+    "url": "#",
     "category": "Parciales y apuntes",
-    "audience": ["todos"],
+    "audience": [
+      "todos"
+    ],
     "priority": 2,
-    "active": true,
-    "tags": ["apunte", "colaborar"]
+    "active": false,
+    "tags": [
+      "colaborar",
+      "apuntes"
+    ]
   },
-
   {
-    "title": "Pasant\u00edas y pr\u00e1cticas profesionales",
-    "url": "https://www.ing.unlp.edu.ar/",
-    "category": "Oportunidades",
-    "audience": ["estudiantes", "avanzados", "todos"],
+    "title": "Becas y pasantias FI",
+    "url": "https://ing.unlp.edu.ar/grado/becas-pasantias/",
+    "category": "Becas y bienestar",
+    "audience": [
+      "todos"
+    ],
     "priority": 1,
     "active": true,
-    "tags": ["pasant\u00eda", "pr\u00e1ctica", "laboral"]
+    "tags": [
+      "becas",
+      "pasantias",
+      "fi"
+    ]
   },
   {
-    "title": "Beca de estudio FI",
-    "url": "https://www.ing.unlp.edu.ar/becas/",
-    "category": "Oportunidades",
-    "audience": ["todos"],
+    "title": "Pasantias educativas FI",
+    "url": "https://ing.unlp.edu.ar/grado/becas-pasantias/pasantias/",
+    "category": "Becas y bienestar",
+    "audience": [
+      "estudiantes",
+      "avanzados",
+      "todos"
+    ],
     "priority": 2,
     "active": true,
-    "tags": ["beca", "fi"]
+    "tags": [
+      "pasantia",
+      "laboral",
+      "oficial"
+    ]
   },
   {
-    "title": "Becas universitarias YPF",
-    "url": "https://becasypf.com/",
-    "category": "Oportunidades",
-    "audience": ["todos"],
+    "title": "PAE FI (inscripcion y seguimiento de becas)",
+    "url": "https://pae.ing.unlp.edu.ar/inicio/ingresar.php",
+    "category": "Becas y bienestar",
+    "audience": [
+      "todos"
+    ],
     "priority": 3,
     "active": true,
-    "tags": ["beca", "externa"]
+    "tags": [
+      "pae",
+      "becas",
+      "fi"
+    ]
   },
   {
-    "title": "Sumate al equipo de trabajo estudiantil",
-    "url": "https://forms.gle/REEMPLAZAR_SUMATE",
-    "category": "Oportunidades",
-    "audience": ["todos"],
+    "title": "Becas UNLP",
+    "url": "https://unlp.edu.ar/gestion/bienestar_universitario/estudiantes/becas-unlp-49157",
+    "category": "Becas y bienestar",
+    "audience": [
+      "todos"
+    ],
     "priority": 4,
     "active": true,
-    "tags": ["voluntariado", "equipo"]
+    "tags": [
+      "unlp",
+      "ayuda-economica",
+      "comedor"
+    ]
   },
-
   {
-    "title": "Mapa Facultad 3D (pr\u00f3ximamente)",
-    "url": "/mapa",
-    "category": "Mapa Facultad",
-    "audience": ["ingresantes", "todos"],
+    "title": "Albergue universitario UNLP",
+    "url": "https://unlp.edu.ar/gestion/estudiantes/bienestar-accesible/albergue/",
+    "category": "Becas y bienestar",
+    "audience": [
+      "ingresantes",
+      "todos"
+    ],
+    "priority": 5,
+    "active": true,
+    "tags": [
+      "albergue",
+      "unlp",
+      "bienestar"
+    ]
+  },
+  {
+    "title": "Fondo de Becas FI (Devolviendo Oportunidades)",
+    "url": "https://ing.unlp.edu.ar/fondo-de-becas/",
+    "category": "Becas y bienestar",
+    "audience": [
+      "todos"
+    ],
+    "priority": 6,
+    "active": true,
+    "tags": [
+      "fondo",
+      "becas",
+      "fi"
+    ]
+  },
+  {
+    "title": "Becas Progresar (oficial)",
+    "url": "https://www.argentina.gob.ar/educacion/progresar",
+    "category": "Becas y bienestar",
+    "audience": [
+      "todos"
+    ],
+    "priority": 7,
+    "active": true,
+    "tags": [
+      "progresar",
+      "nacion",
+      "beca"
+    ]
+  },
+  {
+    "title": "Becas Manuel Belgrano (oficial)",
+    "url": "https://www.argentina.gob.ar/educacion/becas/becas-manuel-belgrano",
+    "category": "Becas y bienestar",
+    "audience": [
+      "todos"
+    ],
+    "priority": 8,
+    "active": true,
+    "tags": [
+      "belgrano",
+      "nacion",
+      "beca"
+    ]
+  },
+  {
+    "title": "Becas Fundacion YPF",
+    "url": "https://becas.fundacionypf.org/",
+    "category": "Becas y bienestar",
+    "audience": [
+      "todos"
+    ],
+    "priority": 9,
+    "active": true,
+    "tags": [
+      "ypf",
+      "beca",
+      "ingenieria"
+    ]
+  },
+  {
+    "title": "Proyectos de extension FI",
+    "url": "https://ing.unlp.edu.ar/extension/proyectos-de-extension/",
+    "category": "Proyectos e investigacion",
+    "audience": [
+      "todos"
+    ],
     "priority": 1,
     "active": true,
-    "tags": ["mapa", "aulas", "campus"]
-  },
-
-  {
-    "title": "Correo institucional",
-    "url": "https://www.ing.unlp.edu.ar/",
-    "category": "Institucional",
-    "audience": ["todos"],
-    "priority": 1,
-    "active": true,
-    "tags": ["institucional", "correo"]
+    "tags": [
+      "extension",
+      "proyectos",
+      "participar"
+    ]
   },
   {
-    "title": "Nota al Decano",
-    "url": "https://www.ing.unlp.edu.ar/",
-    "category": "Institucional",
-    "audience": ["todos"],
+    "title": "Convocatorias de extension FI",
+    "url": "https://ing.unlp.edu.ar/extension/",
+    "category": "Proyectos e investigacion",
+    "audience": [
+      "todos"
+    ],
     "priority": 2,
     "active": true,
-    "tags": ["tr\u00e1mite", "institucional"]
+    "tags": [
+      "convocatorias",
+      "extension",
+      "afc"
+    ]
   },
-
   {
-    "title": "Consultas a la mesa",
-    "url": "https://forms.gle/REEMPLAZAR_FORM",
-    "category": "Contacto",
-    "audience": ["ingresantes", "todos"],
+    "title": "Proyectos de investigacion y transferencia",
+    "url": "https://ing.unlp.edu.ar/investigacion/proyectos-de-investigacion-y-transferencia/",
+    "category": "Proyectos e investigacion",
+    "audience": [
+      "estudiantes",
+      "avanzados",
+      "todos"
+    ],
+    "priority": 3,
+    "active": true,
+    "tags": [
+      "investigacion",
+      "transferencia",
+      "proyectos"
+    ]
+  },
+  {
+    "title": "UIDETs, laboratorios y centros FI",
+    "url": "https://ing.unlp.edu.ar/investigacion/uidets/",
+    "category": "Proyectos e investigacion",
+    "audience": [
+      "estudiantes",
+      "avanzados",
+      "todos"
+    ],
+    "priority": 4,
+    "active": true,
+    "tags": [
+      "uidet",
+      "laboratorios",
+      "investigacion"
+    ]
+  },
+  {
+    "title": "Novedades de investigacion y transferencia",
+    "url": "https://ing.unlp.edu.ar/novedades/investigacion-y-transferencia/",
+    "category": "Proyectos e investigacion",
+    "audience": [
+      "todos"
+    ],
+    "priority": 5,
+    "active": true,
+    "tags": [
+      "novedades",
+      "beca-investigacion",
+      "convocatoria"
+    ]
+  },
+  {
+    "title": "Mapa Facultad 3D (proximamente)",
+    "url": "/mapa",
+    "category": "Mapa Facultad",
+    "audience": [
+      "ingresantes",
+      "todos"
+    ],
     "priority": 1,
     "active": true,
-    "tags": ["consulta", "mesa"]
+    "tags": [
+      "mapa",
+      "aulas",
+      "campus"
+    ]
+  },
+  {
+    "title": "Plano oficial del campus FI",
+    "url": "https://ing.unlp.edu.ar/institucional/plano/",
+    "category": "Mapa Facultad",
+    "audience": [
+      "ingresantes",
+      "todos"
+    ],
+    "priority": 2,
+    "active": true,
+    "tags": [
+      "plano",
+      "campus",
+      "edificios"
+    ]
+  },
+  {
+    "title": "Estudiantes FI (tramites, certificados y servicios)",
+    "url": "https://ing.unlp.edu.ar/estudiantes/",
+    "category": "Institucional",
+    "audience": [
+      "todos"
+    ],
+    "priority": 1,
+    "active": true,
+    "tags": [
+      "estudiantes",
+      "tramites",
+      "oficial"
+    ]
+  },
+  {
+    "title": "Servicios IT FI",
+    "url": "https://ing.unlp.edu.ar/institucional/servicios_it/",
+    "category": "Institucional",
+    "audience": [
+      "todos"
+    ],
+    "priority": 3,
+    "active": true,
+    "tags": [
+      "it",
+      "moodle",
+      "correo"
+    ]
+  },
+  {
+    "title": "Consultas a la mesa (formulario)",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLSeGuH8e9_Yb_C6glZLeWzefB3vMLW1RlIgOFwUTw5RWtrd7hA/viewform?usp=publish-editor",
+    "category": "Contacto",
+    "audience": [
+      "ingresantes",
+      "todos"
+    ],
+    "priority": 1,
+    "active": true,
+    "tags": [
+      "consulta",
+      "mesa",
+      "formulario"
+    ]
+  },
+  {
+    "title": "Marcha 12 de mayo: formulario de convocatoria",
+    "url": "https://forms.gle/QZzjTXXHq3uLBATG8",
+    "category": "Avisos",
+    "audience": [
+      "todos"
+    ],
+    "priority": 0,
+    "active": false,
+    "tags": [
+      "marcha",
+      "12-de-mayo",
+      "convocatoria",
+      "formulario"
+    ]
+  },
+  {
+    "title": "Feriazo Estudiantil",
+    "url": "https://docs.google.com/forms/d/e/1FAIpQLScVYVR5RSnmdzjr8wR9lZdhanZdTPDEj4tjDMdnpQfLz8zZpQ/viewform?usp=publish-editor",
+    "category": "Avisos",
+    "audience": [
+      "todos"
+    ],
+    "priority": 1,
+    "active": true,
+    "tags": [
+      "feriazo",
+      "festival",
+      "formulario",
+      "emprendimientos"
+    ]
+  },
+  {
+    "title": "Direccion de Ensenanza: ensenanza@ing.unlp.edu.ar",
+    "url": "mailto:ensenanza@ing.unlp.edu.ar",
+    "category": "Contacto",
+    "audience": [
+      "todos"
+    ],
+    "priority": 98,
+    "active": true,
+    "tags": [
+      "mail",
+      "copiar",
+      "ensenanza"
+    ]
+  },
+  {
+    "title": "Asuntos Estudiantiles: asuntos.estudiantiles@ing.unlp.edu.ar",
+    "url": "mailto:asuntos.estudiantiles@ing.unlp.edu.ar",
+    "category": "Contacto",
+    "audience": [
+      "todos"
+    ],
+    "priority": 99,
+    "active": true,
+    "tags": [
+      "mail",
+      "copiar",
+      "asuntos-estudiantiles"
+    ]
   }
 ]

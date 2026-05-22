@@ -1,5 +1,15 @@
 {
   "routes": [
+    {
+      "src": "/(.*)",
+      "headers": {
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()"
+      },
+      "continue": true
+    },
     { "src": "^/(parciales|ingresantes|mapa|consultas)/?$", "dest": "/index.html" },
     { "handle": "filesystem" },
     { "src": "/.*", "dest": "/index.html" }

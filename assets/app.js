@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   "use strict";
 
   const config = window.LINKHUB_CONFIG || {};
@@ -15,12 +15,13 @@
         "Contacto"
       ];
 
-  const LINKS_CACHE_KEY = "linkhub_links_cache_v1";
-
   const state = {
     currentPath: "/",
     links: null,
     linksPromise: null,
+    kiosk: null,
+    kioskPromise: null,
+    promoAutoplayTimer: null,
     renderToken: 0
   };
 
@@ -89,6 +90,16 @@
           categories: ["Mapa Facultad"],
           tags: ["mapa", "campus"]
         }
+      },
+      mesa: {
+        path: "/mesa",
+        label: "Mesita en Electro",
+        title: "Mesita en Electro | Ingenieria UNLP",
+        nav: true,
+        view: "kiosk",
+        panelTitle: "Mesita en Electro",
+        panelCopy:
+          "Productos y promos del kiosco en el edificio de Electro."
       },
       consultas: {
         path: "/consultas",
@@ -304,7 +315,9 @@
   function sortByPriority(links) {
     return links.slice().sort(function (a, b) {
       if (a.priority === b.priority) {
-        return a.title.localeCompare(b.title, "es");
+        const labelA = String(a.title || a.name || "");
+        const labelB = String(b.title || b.name || "");
+        return labelA.localeCompare(labelB, "es");
       }
       return a.priority - b.priority;
     });
@@ -408,6 +421,18 @@
     return icons[key] || "";
   }
 
+  function resolveContactCopyValue(social) {
+    const raw = String((social && social.url) || "").trim();
+    if (!raw) return "";
+    if (/^mailto:/i.test(raw)) {
+      return raw.replace(/^mailto:/i, "").trim();
+    }
+    if (raw.indexOf("@") !== -1 && raw.indexOf("http") !== 0) {
+      return raw;
+    }
+    return "";
+  }
+
   function mountContactHub() {
     const slot = document.getElementById("top-cta-slot");
     if (!slot) return;
@@ -450,27 +475,53 @@
 
     if (Array.isArray(config.socialLinks)) {
       config.socialLinks.forEach(function (social) {
-        const link = document.createElement("a");
-        link.className = "contact-channel";
-        link.href = social.url;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.setAttribute("aria-label", social.label);
+        const copyValue = resolveContactCopyValue(social);
+        const isCopyChannel = Boolean(copyValue);
+        const element = isCopyChannel ? document.createElement("button") : document.createElement("a");
+        element.className = "contact-channel" + (isCopyChannel ? " contact-channel-copy" : "");
+        element.setAttribute("aria-label", social.label);
+
+        if (isCopyChannel) {
+          element.type = "button";
+        } else {
+          element.href = social.url;
+          element.target = "_blank";
+          element.rel = "noopener noreferrer";
+        }
 
         const icon = getSocialIcon(social.label);
         if (icon) {
-          link.innerHTML = icon + '<span class="sr-only">' + social.label + "</span>";
+          element.innerHTML = icon + '<span class="sr-only">' + social.label + "</span>";
         } else {
-          link.textContent = social.short || social.label;
+          element.textContent = social.short || social.label;
         }
 
-        link.addEventListener("click", function () {
-          trackEvent("click_contact_channel", {
-            channel: social.label
-          });
-        });
+        if (isCopyChannel) {
+          element.addEventListener("click", function () {
+            copyToClipboard(copyValue).then(function (copied) {
+              if (copied) {
+                showToast("Link copiado");
+                element.classList.remove("is-copied");
+                void element.offsetWidth;
+                element.classList.add("is-copied");
+              } else {
+                showToast("No se pudo copiar el link");
+              }
+            });
 
-        channels.appendChild(link);
+            trackEvent("click_contact_channel_copy", {
+              channel: social.label
+            });
+          });
+        } else {
+          element.addEventListener("click", function () {
+            trackEvent("click_contact_channel", {
+              channel: social.label
+            });
+          });
+        }
+
+        channels.appendChild(element);
       });
     }
 
@@ -517,22 +568,10 @@
       return state.linksPromise;
     }
 
-    try {
-      const cachedRaw = window.sessionStorage.getItem(LINKS_CACHE_KEY);
-      if (cachedRaw) {
-        const cachedParsed = JSON.parse(cachedRaw);
-        if (Array.isArray(cachedParsed)) {
-          state.links = cachedParsed.map(normalizeLink).filter(function (link) {
-            return link.active;
-          });
-          return Promise.resolve(state.links);
-        }
-      }
-    } catch (_error) {
-      // ignore cache parse errors and fallback to network
-    }
+    const version = String(config.linksDataVersion || "").trim();
+    const linksUrl = version ? "/links.json?v=" + encodeURIComponent(version) : "/links.json";
 
-    state.linksPromise = fetch("/links.json", { cache: "force-cache" })
+    state.linksPromise = fetch(linksUrl, { cache: "no-cache" })
       .then(function (response) {
         if (!response.ok) {
           throw new Error("No se pudo leer links.json");
@@ -549,13 +588,6 @@
         });
 
         state.links = normalized;
-
-        try {
-          window.sessionStorage.setItem(LINKS_CACHE_KEY, JSON.stringify(payload));
-        } catch (_error) {
-          // storage full or blocked
-        }
-
         return normalized;
       })
       .catch(function (error) {
@@ -568,6 +600,106 @@
       });
 
     return state.linksPromise;
+  }
+
+  function normalizeKioskPromo(rawPromo, index) {
+    const normalized = Object.assign({}, rawPromo);
+    normalized.id = String(rawPromo.id || "promo-" + String(index + 1));
+    normalized.title = String(rawPromo.title || "Promo destacada");
+    normalized.price = String(rawPromo.price || "Consultar");
+    normalized.label = String(rawPromo.label || "");
+    normalized.image = String(rawPromo.image || "");
+    normalized.priority = Number.isFinite(rawPromo.priority)
+      ? rawPromo.priority
+      : Number(rawPromo.priority) || index + 1;
+    normalized.active = rawPromo.active !== false;
+    return normalized;
+  }
+
+  function normalizeKioskProduct(rawProduct, index) {
+    const normalized = Object.assign({}, rawProduct);
+    normalized.id = String(rawProduct.id || "producto-" + String(index + 1));
+    normalized.name = String(rawProduct.name || "Producto");
+    normalized.category = String(rawProduct.category || "General");
+    normalized.categoryKey = normalized.category.toLowerCase();
+    normalized.description = String(rawProduct.description || "");
+    normalized.price = String(rawProduct.price || "Consultar");
+    normalized.stock = String(rawProduct.stock || "disponible");
+    normalized.image = String(rawProduct.image || "");
+    normalized.featured = rawProduct.featured === true;
+    normalized.priority = Number.isFinite(rawProduct.priority)
+      ? rawProduct.priority
+      : Number(rawProduct.priority) || index + 1;
+    normalized.active = rawProduct.active !== false;
+    return normalized;
+  }
+
+  function loadKioskData() {
+    if (state.kiosk) {
+      return Promise.resolve(state.kiosk);
+    }
+
+    if (state.kioskPromise) {
+      return state.kioskPromise;
+    }
+
+    const version = String(config.kioscoDataVersion || "").trim();
+    const kioskUrl = version ? "/kiosco.json?v=" + encodeURIComponent(version) : "/kiosco.json";
+
+    state.kioskPromise = fetch(kioskUrl, { cache: "no-cache" })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("No se pudo leer kiosco.json");
+        }
+        return response.json();
+      })
+      .then(function (payload) {
+        const rawPromos = Array.isArray(payload && payload.promos) ? payload.promos : [];
+        const rawProducts = Array.isArray(payload && payload.productos) ? payload.productos : [];
+
+        const promos = rawPromos
+          .map(normalizeKioskPromo)
+          .filter(function (promo) {
+            return promo.active;
+          });
+
+        const products = rawProducts
+          .map(normalizeKioskProduct)
+          .filter(function (product) {
+            return product.active;
+          });
+
+        state.kiosk = {
+          promos: sortByPriority(promos),
+          products: sortByPriority(products)
+        };
+
+        return state.kiosk;
+      })
+      .catch(function (error) {
+        console.error(error);
+        state.kiosk = {
+          promos: [],
+          products: []
+        };
+        return state.kiosk;
+      })
+      .finally(function () {
+        state.kioskPromise = null;
+      });
+
+    return state.kioskPromise;
+  }
+
+  function clearPromoAutoplay() {
+    if (state.promoAutoplayTimer) {
+      window.clearInterval(state.promoAutoplayTimer);
+      state.promoAutoplayTimer = null;
+    }
+  }
+
+  function prefersReducedMotion() {
+    return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
 
   function updateNav(path) {
@@ -631,35 +763,70 @@
   }
 
   function renderLinkCard(link) {
-    const anchor = document.createElement("a");
-    anchor.className = "link-card";
-
     const internalRoute = resolveInternalRoute(link.url);
-    if (internalRoute) {
-      anchor.href = internalRoute;
-      anchor.dataset.route = internalRoute;
-    } else {
-      const safeTitle = slugify(link.title) || "recurso";
-      anchor.href = withUtm(link.url, {
-        utm_content: safeTitle
-      });
-      anchor.target = "_blank";
-      anchor.rel = "noopener noreferrer";
+    const isMailLink = /^mailto:/i.test(link.url);
+    const card = isMailLink ? document.createElement("div") : document.createElement("a");
+    card.className = isMailLink ? "link-card link-card-mail" : "link-card";
+
+    if (!isMailLink) {
+      if (internalRoute) {
+        card.href = internalRoute;
+        card.dataset.route = internalRoute;
+      } else {
+        const safeTitle = slugify(link.title) || "recurso";
+        card.href = withUtm(link.url, {
+          utm_content: safeTitle
+        });
+        card.target = "_blank";
+        card.rel = "noopener noreferrer";
+      }
     }
+
+    const content = document.createElement("div");
+    content.className = "link-card-body";
 
     const title = document.createElement("span");
     title.className = "link-title";
     title.textContent = link.title;
-    anchor.appendChild(title);
+    content.appendChild(title);
 
     if (link.tags.length) {
       const tags = document.createElement("span");
       tags.className = "link-tags";
       tags.textContent = link.tags.join(" · ");
-      anchor.appendChild(tags);
+      content.appendChild(tags);
     }
 
-    anchor.addEventListener("click", function () {
+    card.appendChild(content);
+
+    if (isMailLink) {
+      const copyButton = document.createElement("button");
+      copyButton.type = "button";
+      copyButton.className = "copy-mail-button";
+      copyButton.textContent = "Copiar";
+      copyButton.setAttribute("aria-label", "Copiar correo");
+      copyButton.addEventListener("click", function () {
+        const mail = String(link.url || "").replace(/^mailto:/i, "").trim();
+        if (!mail) return;
+
+        copyToClipboard(mail).then(function (copied) {
+          if (copied) {
+            showToast("Link copiado");
+          } else {
+            showToast("No se pudo copiar el link");
+          }
+        });
+
+        trackEvent("click_copy_mail", {
+          link_title: link.title,
+          link_category: link.category
+        });
+      });
+      card.appendChild(copyButton);
+      return card;
+    }
+
+    card.addEventListener("click", function () {
       trackEvent("click_link", {
         link_title: link.title,
         link_category: link.category,
@@ -667,7 +834,59 @@
       });
     });
 
-    return anchor;
+    return card;
+  }
+
+  function copyToClipboard(text) {
+    if (!text) return Promise.resolve(false);
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard
+        .writeText(text)
+        .then(function () {
+          return true;
+        })
+        .catch(function () {
+          return fallbackCopy(text);
+        });
+    }
+
+    return Promise.resolve(fallbackCopy(text));
+  }
+
+  function fallbackCopy(text) {
+    try {
+      const temp = document.createElement("textarea");
+      temp.value = text;
+      temp.setAttribute("readonly", "");
+      temp.style.position = "fixed";
+      temp.style.left = "-9999px";
+      document.body.appendChild(temp);
+      temp.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(temp);
+      return ok;
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  function showToast(message) {
+    let toast = document.getElementById("copy-toast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "copy-toast";
+      toast.className = "copy-toast";
+      document.body.appendChild(toast);
+    }
+
+    toast.textContent = message;
+    toast.classList.add("is-visible");
+
+    window.clearTimeout(showToast._timer);
+    showToast._timer = window.setTimeout(function () {
+      toast.classList.remove("is-visible");
+    }, 1300);
   }
 
   function filterLinksForRoute(route, links) {
@@ -704,8 +923,9 @@
 
   function renderHome(links) {
     const main = document.getElementById("app-main");
-    if (!main) return;
+    if (!main) return Promise.resolve();
 
+    clearPromoAutoplay();
     main.innerHTML = "";
 
     const grouped = links.reduce(function (acc, link) {
@@ -731,12 +951,303 @@
       empty.innerHTML =
         "<h2>Sin contenido</h2><p class=\"panel-copy\">No hay links activos para mostrar.</p>";
       main.appendChild(empty);
-      return;
+      return Promise.resolve();
     }
 
     orderedCategories.forEach(function (categoryName) {
       const categoryLinks = sortByPriority(grouped[categoryName]);
       main.appendChild(createSection(categoryName, categoryLinks));
+    });
+
+    return Promise.resolve();
+  }
+
+  function renderKioskPromos(main, kioskData) {
+    const panel = document.createElement("section");
+    panel.className = "panel panel-highlight promo-panel";
+
+    const heading = document.createElement("h2");
+    heading.textContent = "Promos Mesita en Electro";
+    panel.appendChild(heading);
+
+    const copy = document.createElement("p");
+    copy.className = "panel-copy";
+    copy.textContent = "Ofertas y productos mas pedidos del kiosco en la facu.";
+    panel.appendChild(copy);
+
+    const products = Array.isArray(kioskData && kioskData.products) ? kioskData.products : [];
+    const promos =
+      Array.isArray(kioskData && kioskData.promos) && kioskData.promos.length
+        ? kioskData.promos.slice(0, 8)
+        : products
+            .filter(function (product) {
+              return product.featured;
+            })
+            .slice(0, 3)
+            .map(function (product) {
+              return {
+                id: product.id,
+                title: product.name,
+                price: product.price,
+                label: "Destacado",
+                image: product.image
+              };
+            });
+
+    if (!promos.length) {
+      const empty = document.createElement("p");
+      empty.className = "panel-copy";
+      empty.textContent = "Mesita en Electro esta cargando productos. Volve a revisar en unos minutos.";
+      panel.appendChild(empty);
+      main.appendChild(panel);
+      return;
+    }
+
+    const carousel = document.createElement("div");
+    carousel.className = "promo-carousel";
+    carousel.setAttribute("role", "region");
+    carousel.setAttribute("aria-label", "Promociones de Mesita en Electro");
+
+    const track = document.createElement("div");
+    track.className = "promo-track";
+
+    const indicators = [];
+
+    promos.forEach(function (promo, index) {
+      const slide = document.createElement("article");
+      slide.className = "promo-slide";
+      slide.setAttribute("aria-label", "Promo " + String(index + 1));
+
+      const media = document.createElement("div");
+      media.className = "promo-media";
+      if (promo.image && !isPlaceholder(promo.image)) {
+        media.style.backgroundImage = "url(\"" + safeUrlForCss(promo.image) + "\")";
+        media.classList.add("has-image");
+      } else {
+        media.textContent = "Mesa";
+      }
+      slide.appendChild(media);
+
+      const content = document.createElement("div");
+      content.className = "promo-content";
+
+      if (promo.label) {
+        const badge = document.createElement("span");
+        badge.className = "promo-badge";
+        badge.textContent = promo.label;
+        content.appendChild(badge);
+      }
+
+      const title = document.createElement("h3");
+      title.className = "promo-title";
+      title.textContent = promo.title;
+      content.appendChild(title);
+
+      const price = document.createElement("p");
+      price.className = "promo-price";
+      price.textContent = promo.price;
+      content.appendChild(price);
+
+      slide.appendChild(content);
+      track.appendChild(slide);
+
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "promo-indicator";
+      dot.setAttribute("aria-label", "Ver promo " + String(index + 1));
+      dot.addEventListener("click", function () {
+        goTo(index, true);
+      });
+      indicators.push(dot);
+    });
+
+    const controls = document.createElement("div");
+    controls.className = "promo-controls";
+
+    const prevButton = document.createElement("button");
+    prevButton.type = "button";
+    prevButton.className = "promo-control";
+    prevButton.setAttribute("aria-label", "Promo anterior");
+    prevButton.textContent = "‹";
+
+    const nextButton = document.createElement("button");
+    nextButton.type = "button";
+    nextButton.className = "promo-control";
+    nextButton.setAttribute("aria-label", "Promo siguiente");
+    nextButton.textContent = "›";
+
+    const indicatorWrap = document.createElement("div");
+    indicatorWrap.className = "promo-indicators";
+    indicators.forEach(function (dot) {
+      indicatorWrap.appendChild(dot);
+    });
+
+    controls.appendChild(prevButton);
+    controls.appendChild(indicatorWrap);
+    controls.appendChild(nextButton);
+
+    carousel.appendChild(track);
+    carousel.appendChild(controls);
+    panel.appendChild(carousel);
+
+    main.appendChild(panel);
+
+    let currentIndex = 0;
+    let paused = false;
+
+    function goTo(nextIndex, isUserAction) {
+      const total = promos.length;
+      currentIndex = ((nextIndex % total) + total) % total;
+      track.style.transform = "translateX(-" + String(currentIndex * 100) + "%)";
+
+      indicators.forEach(function (dot, dotIndex) {
+        dot.classList.toggle("active", dotIndex === currentIndex);
+      });
+
+      if (isUserAction) {
+        trackEvent("click_promo", {
+          promo_index: currentIndex + 1
+        });
+      }
+    }
+
+    goTo(0, false);
+
+    prevButton.addEventListener("click", function () {
+      goTo(currentIndex - 1, true);
+    });
+
+    nextButton.addEventListener("click", function () {
+      goTo(currentIndex + 1, true);
+    });
+
+    carousel.addEventListener("mouseenter", function () {
+      paused = true;
+    });
+    carousel.addEventListener("mouseleave", function () {
+      paused = false;
+    });
+    carousel.addEventListener("focusin", function () {
+      paused = true;
+    });
+    carousel.addEventListener("focusout", function () {
+      paused = false;
+    });
+
+    const autoplayMs = Math.max(2500, Number(config.homePromoAutoplayMs) || 5000);
+    if (promos.length > 1 && !prefersReducedMotion()) {
+      state.promoAutoplayTimer = window.setInterval(function () {
+        if (!paused) {
+          goTo(currentIndex + 1, false);
+        }
+      }, autoplayMs);
+    }
+  }
+
+  function renderKioskView(route) {
+    const main = document.getElementById("app-main");
+    if (!main) return Promise.resolve();
+
+    clearPromoAutoplay();
+
+    return loadKioskData().then(function (kioskData) {
+      const products = Array.isArray(kioskData && kioskData.products) ? kioskData.products : [];
+
+      main.innerHTML = "";
+
+      const intro = document.createElement("section");
+      intro.className = "panel panel-highlight";
+
+      const introTitle = document.createElement("h2");
+      introTitle.className = "kiosk-intro-title";
+      introTitle.textContent = route.panelTitle || route.label || "Mesita en Electro";
+      intro.appendChild(introTitle);
+
+      const introCopy = document.createElement("p");
+      introCopy.className = "panel-copy kiosk-intro-copy";
+      introCopy.textContent =
+        route.panelCopy ||
+        "Productos y promos del kiosco en el edificio de Electro.";
+      intro.appendChild(introCopy);
+
+      main.appendChild(intro);
+      renderKioskPromos(main, kioskData);
+
+      if (!products.length) {
+        const emptyPanel = document.createElement("section");
+        emptyPanel.className = "panel";
+        emptyPanel.innerHTML =
+          "<h2>Catalogo en preparacion</h2><p class=\"panel-copy\">Todavia no hay productos cargados.</p>";
+        main.appendChild(emptyPanel);
+        return;
+      }
+
+      const grouped = {};
+      const categoryOrder = [];
+
+      products.forEach(function (product) {
+        if (!grouped[product.category]) {
+          grouped[product.category] = [];
+          categoryOrder.push(product.category);
+        }
+        grouped[product.category].push(product);
+      });
+
+      categoryOrder.forEach(function (categoryName) {
+        const panel = document.createElement("section");
+        panel.className = "panel kiosk-group";
+
+        const title = document.createElement("h2");
+        title.className = "kiosk-group-title";
+        title.textContent = categoryName;
+        panel.appendChild(title);
+
+        const grid = document.createElement("div");
+        grid.className = "kiosk-grid";
+
+        sortByPriority(grouped[categoryName]).forEach(function (product) {
+          const card = document.createElement("article");
+          card.className = "kiosk-card";
+
+          if (product.featured) {
+            const featured = document.createElement("span");
+            featured.className = "kiosk-badge";
+            featured.textContent = "Destacado";
+            card.appendChild(featured);
+          }
+
+          const name = document.createElement("h3");
+          name.className = "kiosk-name";
+          name.textContent = product.name;
+          card.appendChild(name);
+
+          if (product.description) {
+            const description = document.createElement("p");
+            description.className = "kiosk-description";
+            description.textContent = product.description;
+            card.appendChild(description);
+          }
+
+          const meta = document.createElement("div");
+          meta.className = "kiosk-meta";
+
+          const price = document.createElement("strong");
+          price.className = "kiosk-price";
+          price.textContent = product.price;
+          meta.appendChild(price);
+
+          const stock = document.createElement("span");
+          stock.className = "kiosk-stock";
+          stock.textContent = product.stock;
+          meta.appendChild(stock);
+
+          card.appendChild(meta);
+          grid.appendChild(card);
+        });
+
+        panel.appendChild(grid);
+        main.appendChild(panel);
+      });
     });
   }
 
@@ -839,29 +1350,56 @@
     });
 
     if (route.view === "redirect") {
+      clearPromoAutoplay();
       renderRedirectView();
       main.classList.remove("content-switching");
       main.classList.add("content-ready");
       return;
     }
 
-    const token = ++state.renderToken;
+    if (route.view !== "home") {
+      clearPromoAutoplay();
+    }
 
-    if (!state.links) {
-      renderSkeleton();
+    const token = ++state.renderToken;
+    renderSkeleton();
+
+    if (route.view === "kiosk") {
+      renderKioskView(route)
+        .then(function () {
+          if (token !== state.renderToken) return;
+          main.classList.remove("content-switching");
+          main.classList.add("content-ready");
+        })
+        .catch(function () {
+          if (token !== state.renderToken) return;
+          main.innerHTML =
+            '<section class="panel panel-highlight"><h2>Error al cargar Mesita en Electro</h2><p class="panel-copy">Intenta nuevamente en unos minutos.</p></section>';
+          main.classList.remove("content-switching");
+          main.classList.add("content-ready");
+        });
+      return;
     }
 
     loadLinks().then(function (allLinks) {
       if (token !== state.renderToken) return;
 
-      if (route.view === "home") {
-        renderHome(allLinks);
-      } else {
-        renderListView(route, allLinks);
-      }
+      const renderTask =
+        route.view === "home" ? renderHome(allLinks) : Promise.resolve(renderListView(route, allLinks));
 
-      main.classList.remove("content-switching");
-      main.classList.add("content-ready");
+      Promise.resolve(renderTask)
+        .then(function () {
+          if (token !== state.renderToken) return;
+          main.classList.remove("content-switching");
+          main.classList.add("content-ready");
+        })
+        .catch(function () {
+          if (token !== state.renderToken) return;
+          main.innerHTML =
+            '<section class="panel panel-highlight"><h2>Error de carga</h2><p class="panel-copy">No se pudieron mostrar los recursos.</p></section>';
+          main.classList.remove("content-switching");
+          main.classList.add("content-ready");
+        });
     });
   }
 

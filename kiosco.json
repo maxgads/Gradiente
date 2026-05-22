@@ -1,0 +1,99 @@
+{
+  "promos": [
+    {
+      "id": "promo-cuaderno-x2",
+      "title": "Cuaderno cuadriculado x2",
+      "price": "$7.000",
+      "label": "Promo",
+      "image": "",
+      "priority": 1,
+      "active": true
+    },
+    {
+      "id": "promo-cuaderno-x3",
+      "title": "Cuaderno cuadriculado x3",
+      "price": "$9.000",
+      "label": "Ahorro",
+      "image": "",
+      "priority": 2,
+      "active": true
+    },
+    {
+      "id": "promo-kit-cursada",
+      "title": "Ahorra con los kit de cursada",
+      "price": "Desde $4.000",
+      "label": "Libreria economica",
+      "image": "",
+      "priority": 3,
+      "active": true
+    }
+  ],
+  "productos": [
+    {
+      "id": "prod-cuaderno-cuadriculado",
+      "name": "Cuaderno cuadriculado",
+      "category": "Cuadernillos",
+      "price": "$4.000",
+      "description": "2 x $7.000 · 3 x $9.000",
+      "stock": "disponible",
+      "featured": true,
+      "priority": 1,
+      "active": true
+    },
+    {
+      "id": "prod-lapicera",
+      "name": "Lapicera",
+      "category": "Libreria",
+      "price": "$800",
+      "description": "Tinta azul o negra segun disponibilidad.",
+      "stock": "disponible",
+      "featured": true,
+      "priority": 2,
+      "active": true
+    },
+    {
+      "id": "prod-lapiz",
+      "name": "Lapiz",
+      "category": "Libreria",
+      "price": "$500",
+      "description": "Lapiz escolar para cursada.",
+      "stock": "disponible",
+      "featured": false,
+      "priority": 3,
+      "active": true
+    },
+    {
+      "id": "prod-goma",
+      "name": "Goma",
+      "category": "Libreria",
+      "price": "$400",
+      "description": "Goma escolar.",
+      "stock": "disponible",
+      "featured": false,
+      "priority": 4,
+      "active": true
+    },
+    {
+      "id": "prod-resaltador",
+      "name": "Resaltador",
+      "category": "Libreria",
+      "price": "$1.000",
+      "description": "Color segun disponibilidad.",
+      "stock": "disponible",
+      "featured": false,
+      "priority": 5,
+      "active": true
+    },
+    {
+      "id": "prod-don-satur",
+      "name": "Don Satur",
+      "category": "Snacks",
+      "price": "$1.200",
+      "description": "Bizcochos para la cursada.",
+      "stock": "disponible",
+      "featured": false,
+      "priority": 6,
+      "active": true
+    }
+  ]
+}
