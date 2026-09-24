@@ -10,8 +10,23 @@
       },
       "continue": true
     },
-    { "src": "^/(parciales|ingresantes|mapa|consultas)/?$", "dest": "/index.html" },
-    { "handle": "filesystem" },
-    { "src": "/.*", "dest": "/index.html" }
+    {
+      "src": "^/v2$",
+      "status": 308,
+      "headers": {
+        "Location": "/v2/"
+      }
+    },
+    {
+      "src": "^/(parciales|ingresantes|mapa|consultas)/?$",
+      "dest": "/index.html"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/.*",
+      "dest": "/index.html"
+    }
   ]
 }
