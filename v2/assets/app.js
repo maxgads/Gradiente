@@ -471,7 +471,8 @@
   }
   function ensureKiosco() {
     if (DATA.kiosco) return Promise.resolve();
-    return getJSON(CFG.data.kiosco).then(function (k) {
+    // precios: siempre la versión recién subida (el navegador o Vercel pueden tener guardada una vieja)
+    return getJSON(CFG.data.kiosco + (CFG.data.kiosco.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 6e5)).then(function (k) {
       var by = function (a, b) { return (a.priority || 99) - (b.priority || 99); };
       DATA.kiosco = {
         promos: (k.promos || []).filter(function (p) { return p.active !== false; }).sort(by),
@@ -1454,6 +1455,8 @@
       g.style.cssText = "left:" + o.l + "px;top:" + (o.t + (n.offsetHeight - h) / 2) + "px;width:" + n.offsetWidth + "px;height:" + h + "px";
       inner.appendChild(g);
       var done = false, out = function () { if (done) return; done = true; g.classList.add("is-out"); setTimeout(function () { g.remove(); }, 350); };
+      // la tarjeta nueva entra transparente: el candado se desvanece a la par (si no, se ve a través)
+      n.addEventListener("animationstart", function (e) { if (e.target === n) out(); });
       n.addEventListener("animationend", function (e) { if (e.target === n) out(); });
       setTimeout(out, 2600); // por si la animación no corre (movimiento reducido)
     });
@@ -1891,11 +1894,11 @@
     });
   }
   function nubeCard() {
-    return '<section class="nube rise" aria-labelledby="nubeT"><div class="nube-head"><span class="nube-ic">' + ic("cloudq") + "</span>" +
-      '<div class="nube-t"><h2 class="nube-title" id="nubeT">Buscador</h2>' +
-      '<p class="nube-kpis"><span class="nk nk--brand">' + ic("cloud") + "Nube Gradiente</span><span class=\"nk\"><b>2.600+</b> archivos</span><span class=\"nk\"><b>" + nubeCount() + "</b> materias</span>" +
-      '<span class="nk nk--soft">parciales · finales · apuntes</span>' +
-      '<a class="nk nk--link" href="' + esc(CFG.driveUrl) + '" target="_blank" rel="noopener">Abrir la nube' + ic("ext") + "</a></p></div></div>" +
+    // el ícono es el botón de la nube: todo el encabezado entra en su altura
+    return '<section class="nube rise" aria-labelledby="nubeT"><div class="nube-head">' +
+      '<a class="nube-ic" href="' + esc(CFG.driveUrl) + '" target="_blank" rel="noopener" aria-label="Abrir la Nube Gradiente" title="Abrir la Nube Gradiente">' + ic("cloudq") + '<i class="nube-go">' + ic("ext") + "</i></a>" +
+      '<h2 class="nube-title" id="nubeT">Buscador</h2>' +
+      '<p class="nube-kpis"><span><b>2.600+</b> archivos</span><span><b>' + nubeCount() + "</b> materias</span></p></div>" +
       nubeFinder("nubeQ") + "</section>";
   }
 
@@ -2130,17 +2133,27 @@
     var list = !items.length ? "" : compact
       ? '<span class="promoItems-line">' + esc(items.join(" · ")) + "</span>"
       : '<ul class="promoItems">' + items.map(function (it) { return "<li>" + esc(it) + "</li>"; }).join("") + "</ul>";
-    return '<div class="promoCard' + (compact ? "" : " lift rise") + '"><span class="tag">' + esc(p.label || "Promo") + "</span><strong>" + esc(p.title) + "</strong>" +
+    if (!compact) return kitCard(p, items);
+    return '<div class="promoCard"><span class="tag">' + esc(p.label || "Promo") + "</span><strong>" + esc(p.title) + "</strong>" +
       list + '<span class="price">' + esc(p.price) + "</span></div>";
+  }
+  /* kit: número grande, lo que trae como etiquetas, precio abajo y el "Kit Gradiente" como sello */
+  function kitCard(p, items) {
+    var m = String(p.title || "").match(/\d+/), n = m ? m[0] : "";
+    var name = n ? String(p.title).replace(/^kit\s*/i, "").replace(n, "").trim() : p.title;
+    return '<article class="kit rise">' + (n ? '<span class="kit-n" aria-hidden="true">' + n + "</span>" : "") +
+      '<p class="kit-k">Kit</p><h3 class="kit-t">' + (n ? "<b>" + n + "</b> " : "") + esc(name) + "</h3>" +
+      (items.length ? '<ul class="kit-items">' + items.map(function (it) { return "<li>" + esc(it) + "</li>"; }).join("") + "</ul>" : "") +
+      '<div class="kit-foot"><span class="kit-price">' + esc(p.price) + '</span><span class="kit-seal" aria-label="' + esc(p.label || "Kit Gradiente") + '">' + ic("nabla") + "<small>" + esc(p.label || "Kit Gradiente") + "</small></span></div></article>";
   }
   function renderMesita() {
     if (!DATA.kiosco) loading();
     return ensureKiosco().then(function () {
       var K = DATA.kiosco;
       var cats = []; K.productos.forEach(function (p) { if (p.category && cats.indexOf(p.category) < 0) cats.push(p.category); });
-      var html = '<div class="wrap page"><p class="kicker">Mesita en Electro</p><h1 class="h1">Librería<br>a precio estudiante</h1>' +
-        '<p class="lead">Kits de cuadernos y útiles sueltos. Pasá a buscar el tuyo por la mesita de Gradiente, en el edificio de Electro.</p>';
-      if (K.promos.length) html += '<div class="promoCards">' + K.promos.map(function (p) { return promoCard(p, false); }).join("") + "</div>";
+      var html = '<div class="wrap page"><header class="shopHead"><h1 class="h1">Mesita en Electro</h1><p class="shopHead-sub">Librería a precio estudiante</p>' +
+        '<p class="shopHead-p">Kits de cuadernos y útiles sueltos. Pasá a buscar el tuyo por la mesita de Gradiente, en el edificio de Electro.</p></header>';
+      if (K.promos.length) html += '<div class="kits">' + K.promos.map(function (p) { return promoCard(p, false); }).join("") + "</div>";
       html += '<div class="sectionHead"><h2 class="h2">Productos</h2></div>';
       if (cats.length > 1) html += '<div class="chipsRow" role="group" aria-label="Categorías"><button class="chip" type="button" data-shop="all" aria-pressed="' + (shopCat === "all") + '">Todo</button>' + cats.map(function (c) { return '<button class="chip" type="button" data-shop="' + esc(c) + '" aria-pressed="' + (shopCat === c) + '">' + esc(c) + "</button>"; }).join("") + "</div>";
       html += '<div class="shopGrid" id="shopGrid"></div>' + footer() + "</div>";

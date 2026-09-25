@@ -1986,20 +1986,18 @@ button.resPanel-h:hover .resPanel-chev, button.resPanel-h:focus-visible .resPane
 .ab-photo figcaption { position: absolute; left: 12px; bottom: 12px; padding: 6px 11px; border-radius: 999px; font-size: 13px; font-weight: 600; color: #fff; background: rgba(0, 0, 0, .55); backdrop-filter: blur(6px); }
 
 /* ---------- Recursos ---------- */
-/* nube: título "Buscador" + datos chiquitos, todo del ancho del buscador */
-.nube-head { align-items: center; gap: 14px; }
+/* nube: ícono (abre la nube) + "Buscador" + dos datos apilados, todo de la altura del ícono */
+.nube-head { display: flex; align-items: center; gap: 14px; min-height: 52px; }
+.nube-ic { position: relative; transition: transform .2s var(--ease), box-shadow .2s; }
+.nube-ic:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 14px 28px -14px #2563eb, inset 0 1px 0 rgba(255,255,255,.35); }
 .nube-ic svg { width: 28px; height: 28px; }
-.nube-title { margin: 0; font-family: var(--display); font-weight: 800; font-size: clamp(30px, 6vw, 40px); line-height: .95; }
-.nube-kpis { margin: 8px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.nk { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12.5px; color: var(--ink-2);
-  background: color-mix(in srgb, var(--surface) 80%, transparent); border: 1px solid var(--line); white-space: nowrap; }
-.nk b { font-family: var(--mono); font-weight: 700; color: var(--ink); }
-.nk svg { width: 14px; height: 14px; }
-.nk--brand { color: var(--sky); border-color: color-mix(in srgb, var(--sky-2) 35%, var(--line)); font-weight: 700; }
-.nk--soft { border-style: dashed; color: var(--muted); }
-.nk--link { margin-left: auto; font-weight: 700; color: var(--sky); border-color: transparent; background: transparent; }
-.nk--link:hover { text-decoration: underline; }
-@media (max-width: 559px) { .nk--soft { display: none; } .nk--link { margin-left: 0; } }
+.nube-go { position: absolute; right: -5px; top: -5px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); color: var(--sky); box-shadow: var(--shadow-1); border: 1px solid var(--line); }
+.nube-go svg { width: 11px; height: 11px; }
+.nube-title { margin: 0; font-family: var(--display); font-weight: 800; font-size: clamp(34px, 7vw, 44px); line-height: 1; letter-spacing: -.01em; }
+.nube-kpis { margin: 0 0 0 auto; display: grid; gap: 1px; padding-left: 14px; border-left: 1px solid color-mix(in srgb, var(--sky-2) 30%, var(--line)); font-size: 12.5px; line-height: 1.35; color: var(--muted); white-space: nowrap; }
+.nube-kpis b { font-family: var(--mono); font-weight: 700; color: var(--ink); }
+@media (min-width: 560px) { .nube-kpis { margin-left: 4px; } }
+@media (max-width: 559px) { .nube-ic { width: 52px; height: 52px; border-radius: 16px; } .nube-ic svg { width: 26px; height: 26px; } }
 /* resultados: fichas bajas y parejas, el nombre en una línea */
 .nubeHit { min-height: 0; height: 58px; padding: 8px 10px; gap: 10px; }
 .nubeHit > span:nth-child(2) { overflow: hidden; }
@@ -2017,14 +2015,21 @@ button.resPanel-h:hover .resPanel-chev, button.resPanel-h:focus-visible .resPane
 .resTools.is-stuck .resSec { font-size: 22px; }
 
 /* bloques: sin tarjeta; el título y abajo cada link como un botón redondeado */
-.resPanel { background: color-mix(in srgb, var(--cc) 3%, transparent); border: 1px solid color-mix(in srgb, var(--cc) 26%, transparent); box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 6px 8px 8px; }
+.resPanel { background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0; border-radius: 0; }
+.resPanel-h { padding: 4px 2px 12px; }
+.resGrid .resPanel { margin-bottom: 30px; }
 .resRows { margin: 0; background: none; border: 0; border-radius: 0; box-shadow: none; overflow: visible; gap: 6px; }
 .resRows > * + * { border-top: 0; }
 .resRow { border-radius: 13px; background: color-mix(in srgb, var(--surface) 82%, transparent); border: 1px solid color-mix(in srgb, var(--cc) 16%, var(--line)); padding: 11px 13px; transition: background .15s, border-color .15s, transform .15s var(--ease); }
 .resRow:hover { background: var(--tint); border-color: color-mix(in srgb, var(--cc) 45%, transparent); }
 .resRow:active { transform: scale(.99); }
-.resRow-wrap { padding-right: 0; gap: 6px; }
-.resRow-wrap .iconBtn { width: 44px; height: auto; align-self: stretch; border-radius: 13px; border: 1px solid color-mix(in srgb, var(--cc) 16%, var(--line)); background: color-mix(in srgb, var(--surface) 82%, transparent); }
+/* mails: un solo botón con el de copiar adentro, a la derecha */
+.resRow-wrap { gap: 0; padding: 0 6px 0 0; border-radius: 13px; background: color-mix(in srgb, var(--surface) 82%, transparent); border: 1px solid color-mix(in srgb, var(--cc) 16%, var(--line)); transition: background .15s, border-color .15s; }
+.resRow-wrap:hover { border-color: color-mix(in srgb, var(--cc) 45%, transparent); }
+.resRow-wrap .resRow { border: 0; background: transparent; }
+.resRow-wrap .resRow:hover { background: transparent; }
+.resRow-wrap .iconBtn { width: 34px; height: 34px; border: 0; background: transparent; color: var(--muted); border-radius: 10px; }
+.resRow-wrap .iconBtn:hover { background: var(--tint); color: var(--cc); }
 .resTiles { margin: 0; }
 .resTile { border-radius: 14px; background: color-mix(in srgb, var(--surface) 82%, transparent); border: 1px solid color-mix(in srgb, var(--cc) 16%, var(--line)); box-shadow: none; }
 /* el saludo (con la tarjeta de Nabla adentro) va por encima de los accesos rápidos; la barra de arriba (z 30) sigue encima */
@@ -2059,3 +2064,36 @@ button.resPanel-h:hover .resPanel-chev, button.resPanel-h:focus-visible .resPane
 /* encabezado de Mi plan: el anillo va centrado en el espacio libre al lado del título */
 .planHead { grid-template-columns: minmax(0, auto) minmax(76px, 1fr); }
 #planStats { justify-self: center; }
+
+/* árbol: los lugares con candado tapan las líneas que pasan por detrás (mismo fondo que el árbol) */
+.tnode.is-ghost, .tree.has-focus .tnode.is-ghost:not(.is-on), .tghost { background: var(--surface-2); }
+.tghost { transition: opacity .28s ease, transform .3s var(--ease); }
+
+/* ---------- Mesita: encabezado y kits ---------- */
+.shopHead .h1 { margin: 0; font-size: clamp(40px, 9vw, 64px); line-height: .95; }
+.shopHead-sub { margin: 6px 0 0; font-family: var(--display); font-weight: 700; font-style: italic; text-transform: uppercase; font-size: clamp(19px, 4vw, 24px); letter-spacing: .01em; color: var(--accent); }
+.shopHead-p { margin: 8px 0 0; max-width: 56ch; font-size: 14.5px; color: var(--muted); }
+.kits { display: grid; gap: 12px; margin-top: 20px; }
+@media (min-width: 700px) { .kits { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); } }
+.kit {
+  --k: var(--red); position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 0; padding: 18px 18px 16px; border-radius: 22px; color: #fff; min-height: 220px;
+  background: radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, #fff 16%, transparent), transparent 55%), linear-gradient(160deg, color-mix(in srgb, var(--k) 88%, #fff), var(--k) 60%, color-mix(in srgb, var(--k) 80%, #000));
+  box-shadow: 0 18px 36px -22px var(--k); transition: transform .25s var(--ease), box-shadow .25s;
+}
+.kit:nth-child(3n+2) { --k: var(--navy); }
+.kit:nth-child(3n+3) { --k: var(--blue, #2a4bb0); }
+@media (hover: hover) { .kit:hover { transform: translateY(-3px); box-shadow: 0 24px 44px -22px var(--k); } }
+.kit-n { position: absolute; right: -6px; top: -34px; font-family: var(--display); font-weight: 800; font-style: italic; font-size: 190px; line-height: 1; color: rgba(255, 255, 255, .1); pointer-events: none; }
+.kit-k { margin: 0; font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; opacity: .75; }
+.kit-t { margin: 2px 0 0; font-family: var(--display); font-weight: 700; font-size: 28px; line-height: 1; }
+.kit-t b { font-weight: 800; font-style: italic; }
+.kit-items { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; position: relative; }
+.kit-items li { font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: 999px; background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .18); }
+.kit-foot { margin-top: auto; padding-top: 16px; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; }
+.kit-price { font-family: var(--display); font-weight: 800; font-style: italic; font-size: 42px; line-height: .9; letter-spacing: -.01em; }
+.kit-seal { flex: none; width: 60px; height: 60px; border-radius: 50%; display: grid; place-content: center; justify-items: center; gap: 1px; transform: rotate(-12deg);
+  border: 2px dashed rgba(255, 255, 255, .55); color: rgba(255, 255, 255, .9); text-align: center; }
+.kit-seal svg { width: 16px; height: 16px; }
+.kit-seal .nb-eyes { display: none; }
+.kit-seal small { font-family: var(--mono); font-size: 7.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; line-height: 1.15; max-width: 48px; }
+@media (max-width: 699px) { .kit { min-height: 0; } .kit-foot { padding-top: 14px; } }
