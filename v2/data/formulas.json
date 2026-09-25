@@ -1,0 +1,535 @@
+{
+ "_como": "Fórmulas de Herramientas > Fórmulas. f es LaTeX (se dibuja con KaTeX). Para sumar un tema: { id, name, hint, items: [{ n: nombre, f: fórmula, note: aclaración opcional }] }. hint = en qué materias se suele ver (texto libre).",
+ "topics": [
+  {
+   "id": "algebra",
+   "name": "Álgebra y trigonometría",
+   "hint": "Matemática para Ingeniería",
+   "items": [
+    {
+     "n": "Resolvente (cuadrática)",
+     "f": "x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}",
+     "note": "para ax² + bx + c = 0"
+    },
+    {
+     "n": "Identidad pitagórica",
+     "f": "\\sin^2 x + \\cos^2 x = 1"
+    },
+    {
+     "n": "Seno de una suma",
+     "f": "\\sin(a \\pm b) = \\sin a \\cos b \\pm \\cos a \\sin b"
+    },
+    {
+     "n": "Coseno de una suma",
+     "f": "\\cos(a \\pm b) = \\cos a \\cos b \\mp \\sin a \\sin b"
+    },
+    {
+     "n": "Ángulo doble",
+     "f": "\\sin 2x = 2 \\sin x \\cos x \\qquad \\cos 2x = \\cos^2 x - \\sin^2 x"
+    },
+    {
+     "n": "Teorema del coseno",
+     "f": "c^2 = a^2 + b^2 - 2ab \\cos \\gamma"
+    },
+    {
+     "n": "Teorema del seno",
+     "f": "\\frac{a}{\\sin \\alpha} = \\frac{b}{\\sin \\beta} = \\frac{c}{\\sin \\gamma}"
+    },
+    {
+     "n": "Propiedades del logaritmo",
+     "f": "\\log_a (xy) = \\log_a x + \\log_a y \\qquad \\log_a x^n = n \\log_a x"
+    },
+    {
+     "n": "Cambio de base",
+     "f": "\\log_a x = \\frac{\\ln x}{\\ln a}"
+    },
+    {
+     "n": "Binomio de Newton",
+     "f": "(a + b)^n = \\sum_{k=0}^{n} \\binom{n}{k} a^{n-k} b^k"
+    }
+   ]
+  },
+  {
+   "id": "derivadas",
+   "name": "Límites y derivadas",
+   "hint": "Matemática A",
+   "items": [
+    {
+     "n": "Límites notables",
+     "f": "\\lim_{x \\to 0} \\frac{\\sin x}{x} = 1 \\qquad \\lim_{x \\to \\infty} \\left(1 + \\frac{1}{x}\\right)^x = e"
+    },
+    {
+     "n": "Definición de derivada",
+     "f": "f'(x) = \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}"
+    },
+    {
+     "n": "Producto",
+     "f": "(f g)' = f' g + f g'"
+    },
+    {
+     "n": "Cociente",
+     "f": "\\left(\\frac{f}{g}\\right)' = \\frac{f' g - f g'}{g^2}"
+    },
+    {
+     "n": "Regla de la cadena",
+     "f": "(f \\circ g)'(x) = f'\\big(g(x)\\big)\\, g'(x)"
+    },
+    {
+     "n": "Potencia, exponencial y logaritmo",
+     "f": "(x^n)' = n x^{n-1} \\qquad (e^x)' = e^x \\qquad (\\ln x)' = \\frac{1}{x}"
+    },
+    {
+     "n": "Trigonométricas",
+     "f": "(\\sin x)' = \\cos x \\qquad (\\cos x)' = -\\sin x \\qquad (\\tan x)' = \\sec^2 x"
+    },
+    {
+     "n": "Inversas",
+     "f": "(\\arctan x)' = \\frac{1}{1 + x^2} \\qquad (\\arcsin x)' = \\frac{1}{\\sqrt{1 - x^2}}"
+    },
+    {
+     "n": "L'Hôpital",
+     "f": "\\lim_{x \\to a} \\frac{f(x)}{g(x)} = \\lim_{x \\to a} \\frac{f'(x)}{g'(x)}",
+     "note": "si da 0/0 o ∞/∞"
+    },
+    {
+     "n": "Recta tangente",
+     "f": "y = f(a) + f'(a)(x - a)"
+    },
+    {
+     "n": "Polinomio de Taylor",
+     "f": "f(x) \\approx \\sum_{n=0}^{N} \\frac{f^{(n)}(a)}{n!}(x - a)^n"
+    }
+   ]
+  },
+  {
+   "id": "integrales",
+   "name": "Integrales",
+   "hint": "Matemática A",
+   "items": [
+    {
+     "n": "Potencia",
+     "f": "\\int x^n \\, dx = \\frac{x^{n+1}}{n+1} + C \\quad (n \\neq -1)"
+    },
+    {
+     "n": "Logaritmo y exponencial",
+     "f": "\\int \\frac{dx}{x} = \\ln|x| + C \\qquad \\int e^x \\, dx = e^x + C"
+    },
+    {
+     "n": "Trigonométricas",
+     "f": "\\int \\sin x \\, dx = -\\cos x + C \\qquad \\int \\cos x \\, dx = \\sin x + C"
+    },
+    {
+     "n": "Arcotangente y arcoseno",
+     "f": "\\int \\frac{dx}{1 + x^2} = \\arctan x + C \\qquad \\int \\frac{dx}{\\sqrt{1 - x^2}} = \\arcsin x + C"
+    },
+    {
+     "n": "Por partes",
+     "f": "\\int u \\, dv = u v - \\int v \\, du"
+    },
+    {
+     "n": "Sustitución",
+     "f": "\\int f\\big(g(x)\\big)\\, g'(x) \\, dx = \\int f(u) \\, du"
+    },
+    {
+     "n": "Regla de Barrow",
+     "f": "\\int_a^b f(x) \\, dx = F(b) - F(a)",
+     "note": "F es una primitiva de f"
+    },
+    {
+     "n": "Área entre curvas",
+     "f": "A = \\int_a^b \\big(f(x) - g(x)\\big) \\, dx",
+     "note": "con f ≥ g en [a, b]"
+    },
+    {
+     "n": "Volumen de revolución (discos)",
+     "f": "V = \\pi \\int_a^b f(x)^2 \\, dx"
+    },
+    {
+     "n": "Longitud de arco",
+     "f": "L = \\int_a^b \\sqrt{1 + f'(x)^2} \\, dx"
+    }
+   ]
+  },
+  {
+   "id": "series",
+   "name": "Sucesiones y series",
+   "hint": "",
+   "items": [
+    {
+     "n": "Serie geométrica",
+     "f": "\\sum_{n=0}^{\\infty} r^n = \\frac{1}{1 - r} \\quad (|r| < 1)"
+    },
+    {
+     "n": "Exponencial",
+     "f": "e^x = \\sum_{n=0}^{\\infty} \\frac{x^n}{n!}"
+    },
+    {
+     "n": "Seno y coseno",
+     "f": "\\sin x = \\sum_{n=0}^{\\infty} \\frac{(-1)^n x^{2n+1}}{(2n+1)!} \\qquad \\cos x = \\sum_{n=0}^{\\infty} \\frac{(-1)^n x^{2n}}{(2n)!}"
+    },
+    {
+     "n": "Logaritmo",
+     "f": "\\ln(1 + x) = \\sum_{n=1}^{\\infty} \\frac{(-1)^{n+1} x^n}{n} \\quad (-1 < x \\le 1)"
+    },
+    {
+     "n": "Criterio del cociente",
+     "f": "L = \\lim_{n \\to \\infty} \\left| \\frac{a_{n+1}}{a_n} \\right|",
+     "note": "L < 1 converge · L > 1 diverge · L = 1 no decide"
+    },
+    {
+     "n": "Serie p",
+     "f": "\\sum_{n=1}^{\\infty} \\frac{1}{n^p}",
+     "note": "converge si p > 1"
+    }
+   ]
+  },
+  {
+   "id": "edo",
+   "name": "Ecuaciones diferenciales",
+   "hint": "",
+   "items": [
+    {
+     "n": "Lineal de primer orden",
+     "f": "y' + p(x)\\, y = q(x) \\qquad \\mu = e^{\\int p \\, dx} \\qquad y = \\frac{1}{\\mu}\\left(\\int \\mu\\, q \\, dx + C\\right)"
+    },
+    {
+     "n": "Variables separables",
+     "f": "\\frac{dy}{dx} = g(x)\\, h(y) \\;\\Rightarrow\\; \\int \\frac{dy}{h(y)} = \\int g(x) \\, dx"
+    },
+    {
+     "n": "Segundo orden, coeficientes constantes",
+     "f": "a y'' + b y' + c y = 0 \\;\\Rightarrow\\; a r^2 + b r + c = 0"
+    },
+    {
+     "n": "Raíces reales distintas",
+     "f": "y = C_1 e^{r_1 x} + C_2 e^{r_2 x}"
+    },
+    {
+     "n": "Raíz doble",
+     "f": "y = (C_1 + C_2 x)\\, e^{r x}"
+    },
+    {
+     "n": "Raíces complejas r = α ± iβ",
+     "f": "y = e^{\\alpha x}\\big(C_1 \\cos \\beta x + C_2 \\sin \\beta x\\big)"
+    }
+   ]
+  },
+  {
+   "id": "lineal",
+   "name": "Álgebra lineal y geometría",
+   "hint": "",
+   "items": [
+    {
+     "n": "Producto escalar",
+     "f": "\\vec u \\cdot \\vec v = |\\vec u|\\,|\\vec v| \\cos \\theta = u_1 v_1 + u_2 v_2 + u_3 v_3"
+    },
+    {
+     "n": "Producto vectorial",
+     "f": "\\vec u \\times \\vec v = \\begin{vmatrix} \\hat\\imath & \\hat\\jmath & \\hat k \\\\ u_1 & u_2 & u_3 \\\\ v_1 & v_2 & v_3 \\end{vmatrix} \\qquad |\\vec u \\times \\vec v| = |\\vec u|\\,|\\vec v| \\sin\\theta"
+    },
+    {
+     "n": "Determinante 2×2",
+     "f": "\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix} = ad - bc"
+    },
+    {
+     "n": "Inversa 2×2",
+     "f": "\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}^{-1} = \\frac{1}{ad - bc} \\begin{pmatrix} d & -b \\\\ -c & a \\end{pmatrix}"
+    },
+    {
+     "n": "Autovalores",
+     "f": "\\det(A - \\lambda I) = 0 \\qquad A \\vec v = \\lambda \\vec v"
+    },
+    {
+     "n": "Recta y plano",
+     "f": "(x, y, z) = P_0 + t\\, \\vec v \\qquad a(x - x_0) + b(y - y_0) + c(z - z_0) = 0"
+    },
+    {
+     "n": "Distancia punto–plano",
+     "f": "d = \\frac{|a x_0 + b y_0 + c z_0 + d|}{\\sqrt{a^2 + b^2 + c^2}}"
+    }
+   ]
+  },
+  {
+   "id": "varias",
+   "name": "Cálculo en varias variables",
+   "hint": "",
+   "items": [
+    {
+     "n": "Gradiente (∇, nabla)",
+     "f": "\\nabla f = \\left( \\frac{\\partial f}{\\partial x}, \\frac{\\partial f}{\\partial y}, \\frac{\\partial f}{\\partial z} \\right)"
+    },
+    {
+     "n": "Derivada direccional",
+     "f": "D_{\\hat u} f = \\nabla f \\cdot \\hat u",
+     "note": "û unitario; es máxima en la dirección de ∇f"
+    },
+    {
+     "n": "Plano tangente",
+     "f": "z = f(a, b) + f_x(a, b)(x - a) + f_y(a, b)(y - b)"
+    },
+    {
+     "n": "Extremos (Hessiano)",
+     "f": "D = f_{xx} f_{yy} - f_{xy}^2",
+     "note": "D > 0 y fxx > 0: mínimo · D > 0 y fxx < 0: máximo · D < 0: punto silla"
+    },
+    {
+     "n": "Coordenadas polares",
+     "f": "\\iint_D f \\, dA = \\iint f(r \\cos\\theta, r \\sin\\theta)\\, r \\, dr \\, d\\theta"
+    },
+    {
+     "n": "Divergencia y rotor",
+     "f": "\\nabla \\cdot \\vec F = \\frac{\\partial P}{\\partial x} + \\frac{\\partial Q}{\\partial y} + \\frac{\\partial R}{\\partial z} \\qquad \\nabla \\times \\vec F"
+    },
+    {
+     "n": "Teorema de Green",
+     "f": "\\oint_C P \\, dx + Q \\, dy = \\iint_D \\left( \\frac{\\partial Q}{\\partial x} - \\frac{\\partial P}{\\partial y} \\right) dA"
+    },
+    {
+     "n": "Teorema de Stokes",
+     "f": "\\oint_C \\vec F \\cdot d\\vec r = \\iint_S (\\nabla \\times \\vec F) \\cdot d\\vec S"
+    },
+    {
+     "n": "Teorema de la divergencia (Gauss)",
+     "f": "\\iint_S \\vec F \\cdot d\\vec S = \\iiint_V \\nabla \\cdot \\vec F \\, dV",
+     "note": "S es la superficie cerrada que encierra V"
+    }
+   ]
+  },
+  {
+   "id": "proba",
+   "name": "Probabilidad y estadística",
+   "hint": "Probabilidades y Estadística",
+   "items": [
+    {
+     "n": "Probabilidad condicional",
+     "f": "P(A \\mid B) = \\frac{P(A \\cap B)}{P(B)}"
+    },
+    {
+     "n": "Teorema de Bayes",
+     "f": "P(A \\mid B) = \\frac{P(B \\mid A)\\, P(A)}{P(B)}"
+    },
+    {
+     "n": "Esperanza y varianza",
+     "f": "E[X] = \\sum x\\, p(x) \\qquad \\operatorname{Var}(X) = E[X^2] - E[X]^2"
+    },
+    {
+     "n": "Binomial",
+     "f": "P(X = k) = \\binom{n}{k} p^k (1 - p)^{n-k} \\qquad E = np \\quad V = np(1 - p)"
+    },
+    {
+     "n": "Poisson",
+     "f": "P(X = k) = \\frac{e^{-\\lambda} \\lambda^k}{k!} \\qquad E = V = \\lambda"
+    },
+    {
+     "n": "Exponencial",
+     "f": "f(x) = \\lambda e^{-\\lambda x} \\quad (x \\ge 0) \\qquad E = \\frac{1}{\\lambda}"
+    },
+    {
+     "n": "Estandarizar (normal)",
+     "f": "Z = \\frac{X - \\mu}{\\sigma}"
+    },
+    {
+     "n": "Intervalo de confianza para la media",
+     "f": "\\bar x \\pm z_{\\alpha/2} \\frac{\\sigma}{\\sqrt{n}}",
+     "note": "σ conocido; si no, t de Student con s y n − 1 grados"
+    }
+   ]
+  },
+  {
+   "id": "mecanica",
+   "name": "Mecánica",
+   "hint": "Física I",
+   "items": [
+    {
+     "n": "MRUV",
+     "f": "x = x_0 + v_0 t + \\tfrac{1}{2} a t^2 \\qquad v = v_0 + a t \\qquad v^2 = v_0^2 + 2a\\,\\Delta x"
+    },
+    {
+     "n": "Segunda ley de Newton",
+     "f": "\\sum \\vec F = m \\vec a"
+    },
+    {
+     "n": "Rozamiento",
+     "f": "f = \\mu N"
+    },
+    {
+     "n": "Trabajo y energía",
+     "f": "W = \\int \\vec F \\cdot d\\vec r \\qquad W_{\\text{neto}} = \\Delta E_c \\qquad E_c = \\tfrac{1}{2} m v^2"
+    },
+    {
+     "n": "Energía potencial",
+     "f": "E_p = m g h \\qquad E_{p,\\text{el}} = \\tfrac{1}{2} k x^2"
+    },
+    {
+     "n": "Cantidad de movimiento e impulso",
+     "f": "\\vec p = m \\vec v \\qquad \\vec J = \\int \\vec F \\, dt = \\Delta \\vec p"
+    },
+    {
+     "n": "Movimiento circular",
+     "f": "a_c = \\frac{v^2}{r} = \\omega^2 r \\qquad v = \\omega r"
+    },
+    {
+     "n": "Rotación",
+     "f": "\\tau = I \\alpha \\qquad E_{\\text{rot}} = \\tfrac{1}{2} I \\omega^2 \\qquad L = I \\omega"
+    },
+    {
+     "n": "Oscilador armónico",
+     "f": "x(t) = A \\cos(\\omega t + \\varphi) \\qquad \\omega = \\sqrt{k / m}"
+    },
+    {
+     "n": "Gravitación",
+     "f": "F = G \\frac{m_1 m_2}{r^2}"
+    }
+   ]
+  },
+  {
+   "id": "electro",
+   "name": "Electricidad y magnetismo",
+   "hint": "",
+   "items": [
+    {
+     "n": "Ley de Coulomb",
+     "f": "F = k \\frac{q_1 q_2}{r^2} \\qquad k = \\frac{1}{4 \\pi \\varepsilon_0}"
+    },
+    {
+     "n": "Ley de Gauss",
+     "f": "\\oint \\vec E \\cdot d\\vec A = \\frac{Q_{\\text{enc}}}{\\varepsilon_0}"
+    },
+    {
+     "n": "Potencial de una carga",
+     "f": "V = k \\frac{q}{r} \\qquad \\vec E = -\\nabla V"
+    },
+    {
+     "n": "Capacitores",
+     "f": "C = \\frac{Q}{V} \\qquad C_{\\text{placas}} = \\varepsilon_0 \\frac{A}{d} \\qquad U = \\tfrac{1}{2} C V^2"
+    },
+    {
+     "n": "Ley de Ohm y potencia",
+     "f": "V = I R \\qquad P = V I = I^2 R"
+    },
+    {
+     "n": "Resistencias",
+     "f": "R_{\\text{serie}} = R_1 + R_2 \\qquad \\frac{1}{R_{\\text{paralelo}}} = \\frac{1}{R_1} + \\frac{1}{R_2}"
+    },
+    {
+     "n": "Fuerza magnética",
+     "f": "\\vec F = q\\, \\vec v \\times \\vec B \\qquad \\vec F = I\\, \\vec L \\times \\vec B"
+    },
+    {
+     "n": "Ley de Ampère",
+     "f": "\\oint \\vec B \\cdot d\\vec l = \\mu_0 I_{\\text{enc}}"
+    },
+    {
+     "n": "Ley de Faraday",
+     "f": "\\varepsilon = -\\frac{d \\Phi_B}{dt}"
+    }
+   ]
+  },
+  {
+   "id": "termo",
+   "name": "Termodinámica",
+   "hint": "",
+   "items": [
+    {
+     "n": "Gas ideal",
+     "f": "P V = n R T"
+    },
+    {
+     "n": "Primer principio",
+     "f": "\\Delta U = Q - W"
+    },
+    {
+     "n": "Calor sensible y latente",
+     "f": "Q = m c\\, \\Delta T \\qquad Q = m L"
+    },
+    {
+     "n": "Trabajo isotérmico (gas ideal)",
+     "f": "W = n R T \\ln \\frac{V_f}{V_i}"
+    },
+    {
+     "n": "Rendimiento de Carnot",
+     "f": "\\eta = 1 - \\frac{T_f}{T_c}"
+    },
+    {
+     "n": "Entropía",
+     "f": "\\Delta S = \\int \\frac{dQ_{\\text{rev}}}{T}"
+    }
+   ]
+  },
+  {
+   "id": "quimica",
+   "name": "Química",
+   "hint": "Química para Ingeniería",
+   "items": [
+    {
+     "n": "Moles",
+     "f": "n = \\frac{m}{M} \\qquad N = n\\, N_A"
+    },
+    {
+     "n": "Molaridad y dilución",
+     "f": "M = \\frac{n_{\\text{soluto}}}{V_{\\text{solución}}} \\qquad C_1 V_1 = C_2 V_2"
+    },
+    {
+     "n": "pH",
+     "f": "\\text{pH} = -\\log [\\text{H}^+] \\qquad \\text{pH} + \\text{pOH} = 14",
+     "note": "a 25 °C"
+    },
+    {
+     "n": "Ley de velocidad",
+     "f": "v = k [A]^m [B]^n"
+    },
+    {
+     "n": "Arrhenius",
+     "f": "k = A\\, e^{-E_a / R T}"
+    },
+    {
+     "n": "Energía libre de Gibbs",
+     "f": "\\Delta G = \\Delta H - T \\Delta S \\qquad \\Delta G^\\circ = -R T \\ln K"
+    },
+    {
+     "n": "Ecuación de Nernst",
+     "f": "E = E^\\circ - \\frac{R T}{n F} \\ln Q"
+    }
+   ]
+  },
+  {
+   "id": "constantes",
+   "name": "Constantes útiles",
+   "hint": "",
+   "items": [
+    {
+     "n": "Gravedad",
+     "f": "g = 9{,}81 \\ \\text{m/s}^2"
+    },
+    {
+     "n": "Gases",
+     "f": "R = 8{,}314 \\ \\text{J\\,mol}^{-1}\\text{K}^{-1} = 0{,}082 \\ \\text{atm\\,L\\,mol}^{-1}\\text{K}^{-1}"
+    },
+    {
+     "n": "Avogadro",
+     "f": "N_A = 6{,}022 \\times 10^{23} \\ \\text{mol}^{-1}"
+    },
+    {
+     "n": "Carga del electrón",
+     "f": "e = 1{,}602 \\times 10^{-19} \\ \\text{C}"
+    },
+    {
+     "n": "Permitividad y permeabilidad",
+     "f": "\\varepsilon_0 = 8{,}854 \\times 10^{-12} \\ \\text{F/m} \\qquad \\mu_0 = 4\\pi \\times 10^{-7} \\ \\text{T\\,m\\,A}^{-1}"
+    },
+    {
+     "n": "Gravitación universal",
+     "f": "G = 6{,}674 \\times 10^{-11} \\ \\text{N\\,m}^2\\,\\text{kg}^{-2}"
+    },
+    {
+     "n": "Faraday",
+     "f": "F = 96\\,485 \\ \\text{C/mol}"
+    },
+    {
+     "n": "Planck y Boltzmann",
+     "f": "h = 6{,}626 \\times 10^{-34} \\ \\text{J\\,s} \\qquad k_B = 1{,}381 \\times 10^{-23} \\ \\text{J/K}"
+    }
+   ]
+  }
+ ]
+}

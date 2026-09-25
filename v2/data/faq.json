@@ -1,0 +1,188 @@
+{
+  "_ayuda": "Base de preguntas frecuentes del chat del inicio. Cada respuesta: q (pregunta), a (respuesta, puede tener varios párrafos en un array), k (palabras con las que la gente lo busca), links (botones: url directa, match = título en /links.json, o go = ruta interna como #/plan; go especiales: catedra (buscador de mails de cátedras), consulta (formulario de consultas), cal (calendario del inicio), about (quiénes somos)), top (orden en las 5 más preguntadas).",
+  "topics": [
+    { "id": "cursada", "label": "Cursada e inscripciones" },
+    { "id": "profes", "label": "Profes y cátedras" },
+    { "id": "finales", "label": "Finales" },
+    { "id": "tramites", "label": "Trámites y SIU" },
+    { "id": "becas", "label": "Becas y ayuda" },
+    { "id": "ingreso", "label": "Soy ingresante" },
+    { "id": "gradiente", "label": "Gradiente" }
+  ],
+  "items": [
+    {
+      "id": "inscripcion", "topic": "cursada", "top": 1,
+      "q": "¿Cómo me inscribo a una materia?",
+      "a": ["Por SIU Guaraní, dentro del período de inscripción que publica la Facultad en el calendario académico.", "Si la materia no te aparece, casi siempre es porque te falta alguna correlativa. En Mi plan podés ver qué te falta."],
+      "k": ["inscribir", "inscripcion", "anotar", "anoto", "anotarme", "cursar", "materia", "cursada", "siu"],
+      "links": [{ "label": "SIU Guaraní", "url": "https://autogestion.guarani.unlp.edu.ar/acceso" }, { "label": "Calendario académico", "match": "Calendario ano lectivo completo" }]
+    },
+    {
+      "id": "que-curso", "topic": "cursada", "top": 3,
+      "q": "¿Qué materias puedo cursar?",
+      "a": ["Depende de las correlativas: para cursar necesitás tenerlas regulares o aprobadas.", "Marcá lo que ya hiciste en Mi plan y te mostramos al toque qué podés cursar y qué finales podés rendir."],
+      "k": ["puedo", "cursar", "correlativas", "correlativa", "habilita", "siguiente", "cuatrimestre", "plan"],
+      "links": [{ "label": "Ver qué puedo cursar", "go": "#/plan?filtro=ready" }]
+    },
+    {
+      "id": "aulas", "topic": "cursada", "top": 2,
+      "q": "¿Dónde veo aulas y horarios?",
+      "a": ["La Facultad publica las aulas y horarios de cada cuatrimestre en su web. Las cátedras suelen avisar cambios en el portal de asignaturas."],
+      "k": ["aula", "aulas", "horario", "horarios", "donde", "curso", "comision", "comisiones", "edificio"],
+      "links": [{ "label": "Aulas y horarios", "match": "Aulas y horarios" }, { "label": "Portal de asignaturas", "match": "Portal de Asignaturas FI" }]
+    },
+    {
+      "id": "regular", "topic": "cursada",
+      "q": "¿Qué diferencia hay entre regular y aprobada?",
+      "a": ["Regular: aprobaste la cursada y te queda rendir el final.", "Aprobada: rendiste el final o la promocionaste. Para rendir un final necesitás las correlativas aprobadas, no solo regulares."],
+      "k": ["regular", "regularizar", "aprobada", "aprobar", "diferencia", "promocion", "promocionar", "final"]
+    },
+    {
+      "id": "material", "topic": "cursada",
+      "q": "¿Dónde encuentro el material de una materia?",
+      "a": ["Cada cátedra tiene su página en el portal de asignaturas de la Facultad.", "Además, en la Nube de Gradiente hay más de 2.600 archivos entre parciales, finales y apuntes, ordenados por materia."],
+      "k": ["material", "apunte", "apuntes", "teoria", "practica", "catedra", "pagina", "moodle", "asignatura"],
+      "links": [{ "label": "Portal de asignaturas", "match": "Portal de Asignaturas FI" }, { "label": "Nube de apuntes", "match": "Nube de apuntes y parciales" }]
+    },
+    {
+      "id": "final-inscripcion", "topic": "finales", "top": 4,
+      "q": "¿Cómo me anoto a un final?",
+      "a": ["También por SIU Guaraní, en las fechas de mesa que figuran en el calendario académico. Anotate con tiempo: la inscripción cierra unos días antes de cada mesa.", "Acordate que para rendir necesitás las correlativas aprobadas."],
+      "k": ["final", "finales", "mesa", "mesas", "rendir", "examen", "anotar", "inscribir", "fecha", "fechas"],
+      "links": [{ "label": "SIU Guaraní", "url": "https://autogestion.guarani.unlp.edu.ar/acceso" }, { "label": "Calendario académico", "match": "Calendario ano lectivo completo" }]
+    },
+    {
+      "id": "prorroga", "topic": "finales",
+      "q": "Se me vence la cursada, ¿puedo pedir prórroga?",
+      "a": ["Sí, la Facultad tiene un formulario para pedir prórroga para rendir el final. Pedila antes de que se venza."],
+      "k": ["vence", "vencimiento", "vencio", "prorroga", "extender", "extension", "cursada", "regularidad", "final"],
+      "links": [{ "label": "Pedir prórroga", "match": "Prorroga para rendir final" }]
+    },
+    {
+      "id": "parciales-viejos", "topic": "finales", "top": 5,
+      "q": "¿Dónde consigo parciales y finales viejos?",
+      "a": ["En la Nube de Gradiente: más de 2.600 archivos ordenados por materia. En Mi plan te marcamos con una carpetita las materias que tienen material."],
+      "k": ["parcial", "parciales", "final", "finales", "viejos", "resueltos", "modelo", "nube", "drive", "examenes"],
+      "links": [{ "label": "Abrir la nube", "match": "Nube de apuntes y parciales" }]
+    },
+    {
+      "id": "siu-cuenta", "topic": "tramites",
+      "q": "¿Cómo creo mi cuenta de SIU Guaraní?",
+      "a": ["Desde la página de acceso de SIU Guaraní de la UNLP. Si ya tenés cuenta y no podés entrar, probá recuperar la contraseña desde ahí mismo."],
+      "k": ["siu", "guarani", "cuenta", "usuario", "contrasena", "clave", "entrar", "acceso", "olvide"],
+      "links": [{ "label": "Ir a SIU Guaraní", "url": "https://autogestion.guarani.unlp.edu.ar/acceso" }]
+    },
+    {
+      "id": "certificado", "topic": "tramites",
+      "q": "¿Cómo saco un certificado o constancia?",
+      "a": ["Los trámites, certificados y servicios para estudiantes están explicados en la página de Estudiantes de la Facultad. Si hace falta ir en persona, sacá turno antes."],
+      "k": ["certificado", "constancia", "alumno", "regular", "analitico", "tramite", "tramites", "papel"],
+      "links": [{ "label": "Trámites de estudiantes", "match": "Estudiantes FI (tramites, certificados y servicios)" }, { "label": "Sacar turno", "match": "Turnos FI para tramites" }]
+    },
+    {
+      "id": "turno", "topic": "tramites",
+      "q": "¿Cómo saco turno para un trámite?",
+      "a": ["La Facultad da turnos online para la atención presencial."],
+      "k": ["turno", "turnos", "alumnos", "departamento", "atencion", "presencial", "ventanilla"],
+      "links": [{ "label": "Sacar turno", "match": "Turnos FI para tramites" }]
+    },
+    {
+      "id": "correo", "topic": "tramites",
+      "q": "¿Cómo pido el correo institucional?",
+      "a": ["Se pide desde la web de soporte de la Facultad."],
+      "k": ["correo", "mail", "email", "institucional", "cuenta", "ing"],
+      "links": [{ "label": "Pedir correo", "match": "Solicitud de correo institucional para alumnos" }]
+    },
+    {
+      "id": "mail-profe", "topic": "profes",
+      "q": "¿Cómo consigo el mail de un profe o de la cátedra?",
+      "a": ["Buscá la materia y te mostramos el mail de contacto de la cátedra, su página y el Portal de Asignaturas. Casi todas tienen un mail general que lee el equipo docente.", "Para dudas del día a día, el aula virtual de la materia suele ser lo más rápido."],
+      "k": ["mail", "correo", "email", "profe", "profesor", "profesora", "docente", "catedra", "contacto", "escribir", "ayudante", "jtp", "titular"],
+      "links": [{ "label": "Buscar el mail de la cátedra", "go": "catedra" }, { "label": "Portal de asignaturas", "match": "Portal de Asignaturas FI" }]
+    },
+    {
+      "id": "escribir-profe", "topic": "profes",
+      "q": "¿Cómo le escribo a un profe para hacer una consulta?",
+      "a": ["Mandalo desde tu mail institucional si lo tenés. En el asunto poné materia, comisión y tema (por ejemplo: «Matemática B – Com. 3 – Consulta TP 2»).", "Arrancá con nombre, apellido y número de alumno, y andá al grano. Si es una duda de contenido, muchas veces conviene ir directo a la clase de consulta."],
+      "k": ["escribir", "mail", "consulta", "profe", "profesor", "docente", "asunto", "redactar", "mensaje", "como", "pregunto"],
+      "links": [{ "label": "Buscar el mail de la cátedra", "go": "catedra" }, { "label": "Pedir correo institucional", "match": "Solicitud de correo institucional para alumnos" }]
+    },
+    {
+      "id": "horario-consulta", "topic": "profes",
+      "q": "¿Cuándo son las clases de consulta?",
+      "a": ["Cada cátedra tiene sus propios horarios de consulta. Suelen estar en la página de la cátedra o en su aula virtual.", "Si no los encontrás, escribile al mail de contacto de la cátedra y preguntá."],
+      "k": ["consulta", "consultas", "horario", "horarios", "clase", "dudas", "practica", "ayudante"],
+      "links": [{ "label": "Buscar la cátedra", "go": "catedra" }, { "label": "Aulas y horarios", "match": "Aulas y horarios" }]
+    },
+    {
+      "id": "revision", "topic": "profes",
+      "q": "No estoy de acuerdo con mi nota, ¿qué hago?",
+      "a": ["Pedí ver el examen: la revisión es tu derecho. La cátedra suele avisar en el aula virtual cuándo es la muestra de parciales; si no, preguntá por mail.", "Si después de la revisión sentís que algo no estuvo bien, escribinos y te acompañamos."],
+      "k": ["nota", "revision", "revisar", "examen", "parcial", "reclamo", "corregir", "correccion", "muestra", "desaprobe", "injusto"],
+      "links": [{ "label": "Buscar el mail de la cátedra", "go": "catedra" }, { "label": "Escribirnos", "go": "consulta" }]
+    },
+    {
+      "id": "problema-catedra", "topic": "profes",
+      "q": "Tengo un problema con un profe o una cátedra",
+      "a": ["Primero intentá hablarlo con la cátedra (tu ayudante, el JTP o el titular). Si no se resuelve, podés ir al Departamento de tu carrera o a la Dirección de Enseñanza.", "Si no querés hacerlo solo, escribinos: como agrupación te acompañamos y lo tratamos con discreción."],
+      "k": ["problema", "profe", "profesor", "catedra", "trato", "maltrato", "reclamo", "queja", "denuncia", "conflicto", "injusto"],
+      "links": [{ "label": "Escribirnos", "go": "consulta" }, { "label": "Mail a Enseñanza", "url": "mailto:ensenanza@ing.unlp.edu.ar" }]
+    },
+    {
+      "id": "paro", "topic": "cursada",
+      "q": "¿Hay clases? ¿Hay paro o feriado?",
+      "a": ["En el calendario del inicio están los feriados, asuetos y fechas de la Facultad. Cuando hay paro o un aviso importante, también lo marcamos ahí."],
+      "k": ["paro", "clases", "feriado", "asueto", "hay", "manana", "hoy", "calendario", "fecha", "fechas", "suspension", "no laborable"],
+      "links": [{ "label": "Ver el calendario", "go": "cal" }, { "label": "Calendario oficial", "match": "Calendario ano lectivo completo" }]
+    },
+    {
+      "id": "contacto-facu", "topic": "tramites",
+      "q": "¿A quién le escribo por un problema con la cursada?",
+      "a": ["Para temas académicos (inscripciones, correlativas, mesas) escribile a la Dirección de Enseñanza. Para becas y bienestar, a Asuntos Estudiantiles.", "Si no sabés por dónde arrancar, mandanos la consulta y te orientamos."],
+      "k": ["problema", "reclamo", "escribir", "mail", "contacto", "ensenanza", "asuntos", "estudiantiles", "ayuda"],
+      "links": [{ "label": "Mail a Enseñanza", "url": "mailto:ensenanza@ing.unlp.edu.ar" }, { "label": "Mail a Asuntos Estudiantiles", "url": "mailto:asuntos.estudiantiles@ing.unlp.edu.ar" }]
+    },
+    {
+      "id": "becas", "topic": "becas",
+      "q": "¿Qué becas hay?",
+      "a": ["Hay becas de la Facultad y de la UNLP (ayuda económica, comedor, transporte, entre otras). Las convocatorias abren en fechas puntuales, así que conviene revisar seguido."],
+      "k": ["beca", "becas", "plata", "ayuda", "economica", "comedor", "transporte", "bienestar"],
+      "links": [{ "label": "Becas y pasantías", "match": "Becas y pasantias FI" }]
+    },
+    {
+      "id": "trabajo", "topic": "becas",
+      "q": "Trabajo, ¿hay algo para estudiantes que trabajan?",
+      "a": ["Sí, la Facultad tiene un programa para estudiantes trabajadores (RET) con algunas facilidades para la cursada."],
+      "k": ["trabajo", "trabajador", "trabajadora", "laburo", "laburo", "ret", "horario", "facilidades"],
+      "links": [{ "label": "Programa RET", "match": "Programa para estudiantes trabajadores (RET)" }]
+    },
+    {
+      "id": "ingresante", "topic": "ingreso",
+      "q": "Soy ingresante, ¿por dónde arranco?",
+      "a": ["Empezá por la guía oficial para ingresantes y la página de la cátedra de ingreso. Creá tu cuenta de SIU Guaraní, que la vas a usar para todo.", "Y cuando termines el ingreso, armá tu plan acá para ver qué cursar."],
+      "k": ["ingresante", "ingreso", "nuevo", "nueva", "empiezo", "primer", "primero", "arranco", "curso", "nivelacion"],
+      "links": [{ "label": "Guía para ingresantes", "match": "Guia oficial para ingresantes FI-UNLP" }, { "label": "Cátedra de ingreso", "match": "Catedra de ingreso" }]
+    },
+    {
+      "id": "que-es", "topic": "gradiente",
+      "q": "¿Qué es Gradiente?",
+      "a": ["Somos una agrupación estudiantil de Ingeniería UNLP. Hacemos la Nube de apuntes, la mesita de librería en Electro, esta web y te ayudamos con lo que necesites."],
+      "k": ["gradiente", "agrupacion", "quienes", "somos", "centro", "estudiantes"],
+      "links": [{ "label": "Conocenos", "go": "about" }]
+    },
+    {
+      "id": "mesita", "topic": "gradiente",
+      "q": "¿Dónde está la mesita y qué vende?",
+      "a": ["Estamos con la mesita en el edificio de Electro. Tenemos kits de cuadernos y útiles a precio estudiante."],
+      "k": ["mesita", "kiosco", "libreria", "cuaderno", "utiles", "comprar", "precio", "electro", "kit"],
+      "links": [{ "label": "Ver la mesita", "go": "#/mesita" }]
+    },
+    {
+      "id": "sumarme", "topic": "gradiente",
+      "q": "¿Cómo me sumo a Gradiente?",
+      "a": ["¡Escribinos! Por Instagram, WhatsApp o pasando por la mesita en Electro."],
+      "k": ["sumo", "sumarme", "participar", "militar", "unirme", "ayudar", "voluntario"],
+      "links": [{ "label": "Instagram", "url": "https://instagram.com/gradienteingenieriaunlp" }, { "label": "WhatsApp", "url": "https://chat.whatsapp.com/CRnDHAhup938Nk4uJ8TBVp" }]
+    }
+  ]
+}

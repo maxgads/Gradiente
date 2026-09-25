@@ -1,0 +1,18 @@
+{
+  "_como": "Publicaciones que se muestran en el inicio, en este orden. 'code' es lo que va después de /p/ o /reel/ en el link del post (instagram.com/p/CODE/). type: 'p' (foto o carrusel) o 'reel'. Para sumar una nueva, agregala arriba de todo.",
+  "user": "gradienteingenieriaunlp",
+  "posts": [
+    { "code": "Ddki3NbjdDZ", "type": "p", "date": "2026-09-21" },
+    { "code": "DdZt3l_Jjsn", "type": "p", "date": "2026-09-17" },
+    { "code": "DdWb-etRSei", "type": "p", "date": "2026-09-16" },
+    { "code": "DdVDe3qt6WE", "type": "reel", "date": "2026-09-15" },
+    { "code": "DdSDCIIJl0Y", "type": "p", "date": "2026-09-14" },
+    { "code": "DdFRvX6EVy3", "type": "p", "date": "2026-09-09" },
+    { "code": "DdAY5UlNsTY", "type": "p", "date": "2026-09-07" },
+    { "code": "Dc7ANJUptl_", "type": "p", "date": "2026-09-05" },
+    { "code": "Dc4EGXps8m9", "type": "p", "date": "2026-09-04", "note": "colaboración con Gradiente en Exactas" },
+    { "code": "Dc2Ah03t7fj", "type": "p", "date": "2026-09-03" },
+    { "code": "DczT9XxFOcl", "type": "p", "date": "2026-09-02" },
+    { "code": "DcMheWgpCfh", "type": "p", "date": "2026-08-18" }
+  ]
+}
