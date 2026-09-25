@@ -2030,3 +2030,32 @@ button.resPanel-h:hover .resPanel-chev, button.resPanel-h:focus-visible .resPane
 /* el saludo (con la tarjeta de Nabla adentro) va por encima de los accesos rápidos; la barra de arriba (z 30) sigue encima */
 .hello { position: relative; z-index: 26; }
 @media (max-width: 759px) { .nube .nubeHits .nubeHit:nth-of-type(n+5) { display: none; } }
+
+/* ================= v2.10 · Mi plan: verdes más vivos y anillo centrado ================= */
+/* --done-hue: verde vivo solo para fondos y bordes de las aprobadas (el texto sigue usando --st-done,
+   que es más oscuro para leerse bien). En las oscuras es el mismo --st-done, que ya es brillante. */
+:root { --done-hue: #10c27c; }
+:root[data-palette="vivo"] { --done-hue: #1fd65f; }
+:root[data-palette="cielo"] { --done-hue: #14c98a; }
+:root[data-palette="pastel"] { --done-hue: #4cc98e; }
+:root[data-palette="rosa"] { --done-hue: #3ccf9a; }
+:root[data-palette="lavanda"] { --done-hue: #30c795; }
+:root[data-palette="menta"] { --done-hue: #1ecb6b; }
+:root[data-palette="durazno"] { --done-hue: #39c173; }
+:root[data-theme="dark"] { --done-hue: var(--st-done); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --done-hue: var(--st-done); } }
+
+:root { --done-card: color-mix(in srgb, var(--done-hue) 22%, var(--surface)); --done-edge: color-mix(in srgb, var(--done-hue) 60%, var(--surface)); }
+:root[data-theme="dark"] { --done-card: color-mix(in srgb, var(--done-hue) 26%, var(--surface)); --done-edge: color-mix(in srgb, var(--done-hue) 55%, var(--surface)); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --done-card: color-mix(in srgb, var(--done-hue) 26%, var(--surface)); --done-edge: color-mix(in srgb, var(--done-hue) 55%, var(--surface)); }
+}
+
+.tnode.is-done { background: var(--done-card); border-color: var(--done-edge); }
+.tnode.is-done::before { background: var(--done-hue); }
+.subj.is-done { background: linear-gradient(90deg, var(--done-card), color-mix(in srgb, var(--done-hue) 8%, var(--surface)) 80%); border-color: var(--done-edge); }
+.tree-lines path.is-aprobada { stroke: color-mix(in srgb, var(--done-hue) 75%, var(--surface-2)); }
+
+/* encabezado de Mi plan: el anillo va centrado en el espacio libre al lado del título */
+.planHead { grid-template-columns: minmax(0, auto) minmax(76px, 1fr); }
+#planStats { justify-self: center; }
