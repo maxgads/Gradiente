@@ -42,13 +42,14 @@
   S.view = S.tv || "tree";
   S.name = S.name || "";
   S.filter = "all";
+  S.reveal = S.rv || "next";
   var DEV = { on: false, temp: false };
   try {
     DEV.on = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])$/.test(location.hostname) || /[?&#]dev\b/.test(location.href) || sessionStorage.getItem("gradiente.dev") === "1";
     if (/[?&#]dev\b/.test(location.href)) sessionStorage.setItem("gradiente.dev", "1");
     DEV.temp = sessionStorage.getItem("gradiente.temp") === "1";
   } catch (e) {}
-  function save() { if (DEV.temp) return; store.set(KEY, { career: S.career, prog: S.prog, tv: S.view, name: S.name }); }
+  function save() { if (DEV.temp) return; store.set(KEY, { career: S.career, prog: S.prog, tv: S.view, name: S.name, rv: S.reveal }); }
 
   var DATA = { plans: null, byId: {}, nube: {}, links: null, kiosco: null };
   var ui = { query: "", focus: null, lastRoute: null };
@@ -459,17 +460,23 @@
       var c = career();
       if (q && q.elegir) return renderCareerPicker();
       if (!c) { renderCareerPicker(); setTimeout(openOnboarding, 60); return; }
-      ui.focus = null; ui.animate = true;
+      ui.focus = null; ui.animate = true; ui.enter = true; ui.statsOpen = false; ui.seen = null;
+      ui.searching = !!ui.query;
       var html = '<div class="wrap page">';
-      html += '<header class="planHead"><div class="planTitle"><div class="planTitle-l">' +
-        '<button class="careerSwitch" type="button" id="switchCareer">' + ic("plan") + "Cambiar carrera" + ' <span class="mono">Plan ' + esc(c.plan) + "</span></button>" +
-        '<h1 class="h1">' + esc(c.name.replace(/^Ingeniería (en )?/, "Ing. $1")) + "</h1></div></div>" +
-        '<div id="planStats"></div></header>';
-      html += '<div class="stickSentinel" id="stickSentinel"></div><div class="planTools" id="planTools"><div class="planTools-row"><label class="search"><span class="sr">Buscar materia</span>' + ic("search") +
-        '<input id="planSearch" type="search" placeholder="Buscar materia" autocomplete="off" value="' + esc(ui.query) + '"></label>' +
+      html += '<header class="planHead"><div class="ph-l">' +
+        '<h1 class="h1">' + esc(c.name.replace(/^Ingeniería (en )?/, "Ing. $1")) + "</h1>" +
+        '<p class="ph-meta"><span>Plan ' + esc(c.plan) + '</span><button class="ph-switch" type="button" id="switchCareer">' + ic("plan") + "Cambiar carrera</button></p></div>" +
+        '<div id="planStats"></div></header>' +
+        '<div class="ph-more" id="phMore"><div class="ph-more-in" id="phMoreIn"></div></div>';
+      html += '<div class="stickSentinel" id="stickSentinel"></div><div class="planTools" id="planTools"><div class="planTools-row' + (ui.searching ? " is-searching" : "") + '" id="toolsRow">' +
+        '<button class="miniRing" type="button" id="miniRing" tabindex="-1" aria-label="Ver progreso"></button>' +
         '<div class="seg" role="group" aria-label="Vista"><button type="button" data-view="tree" aria-pressed="' + (S.view === "tree") + '">' + ic("tree") + '<span>Árbol</span></button><button type="button" data-view="list" aria-pressed="' + (S.view === "list") + '">' + ic("list") + "<span>Lista</span></button></div>" +
-        '<button class="iconBtn" type="button" id="helpBtn" aria-label="Cómo funciona">' + ic("help") + '</button><button class="iconBtn" type="button" id="menuBtn" aria-label="Opciones del plan">' + ic("more") + "</button></div>" +
-        '<div class="chipsRow" id="planFilters" role="group" aria-label="Filtrar"></div></div>';
+        '<span id="activeFilter"></span><span class="tools-gap"></span>' +
+        '<button class="iconBtn" type="button" id="searchBtn" aria-label="Buscar materia">' + ic("search") + "</button>" +
+        '<div class="fmenu-wrap"><button class="iconBtn" type="button" id="filterBtn" aria-label="Filtros" aria-haspopup="true" aria-expanded="false">' + ic("filter") + '<i class="fbadge"></i></button><div class="fmenu" id="fmenu" hidden></div></div>' +
+        '<button class="iconBtn" type="button" id="helpBtn" aria-label="Cómo funciona">' + ic("help") + '</button><button class="iconBtn" type="button" id="menuBtn" aria-label="Opciones del plan">' + ic("more") + "</button>" +
+        '<label class="qbox"><span class="sr">Buscar materia</span>' + ic("search") + '<input id="planSearch" type="search" placeholder="Buscar materia o código" autocomplete="off" value="' + esc(ui.query) + '"><button type="button" class="qbox-x" id="searchX" aria-label="Cerrar búsqueda">' + ic("x") + "</button></label>" +
+        "</div></div>";
       html += '<div id="planBody"></div></div>';
       main.innerHTML = html;
 
@@ -477,13 +484,18 @@
       $("#switchCareer").onclick = function () { location.hash = "#/plan?elegir=1"; };
       $("#helpBtn").onclick = openHelp;
       $("#menuBtn").onclick = function () { openPlanMenu(c); };
-      var input = $("#planSearch");
+      $("#miniRing").onclick = function () { window.scrollTo({ top: 0, behavior: "smooth" }); setStatsOpen(true); };
+      var row = $("#toolsRow"), input = $("#planSearch");
+      $("#searchBtn").onclick = function () { closeFilterMenu(); row.classList.add("is-searching"); ui.searching = true; setTimeout(function () { input.focus(); }, 30); };
+      $("#searchX").onclick = function (ev) { ev.preventDefault(); row.classList.remove("is-searching"); ui.searching = false; if (ui.query) { ui.query = ""; input.value = ""; renderPlanBody(); } };
       input.addEventListener("input", function () { ui.query = input.value; renderPlanBody(); });
+      input.addEventListener("keydown", function (e) { if (e.key === "Escape") { e.stopPropagation(); $("#searchX").click(); } });
+      $("#filterBtn").onclick = function (ev) { ev.stopPropagation(); if ($("#fmenu").hidden) openFilterMenu(); else closeFilterMenu(); };
       $all("[data-view]", main).forEach(function (b) {
         b.onclick = function () {
-          S.view = b.dataset.view; save(); ui.animate = true; ui.focus = null; hideFocusBar();
+          S.view = b.dataset.view; save(); ui.animate = true; ui.enter = true; ui.focus = null; hideFocusBar();
           $all("[data-view]", main).forEach(function (o) { o.setAttribute("aria-pressed", String(o === b)); });
-          renderPlanBody();
+          renderFilters(); renderPlanBody();
         };
       });
       rerenderPlanBits();
@@ -507,11 +519,46 @@
     refreshSheet();
   }
   function renderPlanStats() {
-    var c = career(), s = summary(c), el = $("#planStats");
+    var c = career(), s = summary(c), el = $("#planStats"), more = $("#phMoreIn"), mini = $("#miniRing");
     if (!el) return;
     var first = !el.innerHTML;
-    el.innerHTML = planProgress(s);
-    if (!first) $all(".is-zero", el).forEach(function (r) { r.classList.remove("is-zero"); });
+    var fa = s.a / (s.total || 1) * 100, fr = (s.a + s.r) / (s.total || 1) * 100;
+    var ring = function (cls) {
+      return '<svg class="' + cls + '" viewBox="0 0 52 52" aria-hidden="true"><circle class="rg-t" cx="26" cy="26" r="22"/>' +
+        '<circle class="rg-r" cx="26" cy="26" r="22" pathLength="100" style="--f:' + fr.toFixed(2) + '"/>' +
+        '<circle class="rg-d" cx="26" cy="26" r="22" pathLength="100" style="--f:' + fa.toFixed(2) + '"/></svg>';
+    };
+    el.innerHTML = '<button class="ph-ring' + (first ? " is-zero" : "") + '" type="button" id="ringBtn" aria-expanded="' + !!ui.statsOpen + '" aria-controls="phMore" aria-label="' + s.pct + '% de la carrera aprobada. Ver detalle">' +
+      ring("rg") + '<b>' + s.pct + '<small>%</small></b></button>';
+    if (mini) mini.innerHTML = ring("rg") + "<b>" + s.pct + "%</b>";
+    var t = s.total || 1, pend = Math.max(0, s.total - s.a - s.r - s.c);
+    var w = function (n) { return (n / t * 100).toFixed(2) + "%"; };
+    more.innerHTML = '<p class="pm-lead"><b>' + s.a + " de " + s.total + "</b> materias aprobadas</p>" +
+      '<div class="pp-bar" role="img" aria-label="' + s.a + " aprobadas, " + s.r + " regulares, " + s.c + ' cursando"><i class="d" style="--w:' + w(s.a) + '"></i><i class="r" style="--w:' + w(s.r) + '"></i><i class="c" style="--w:' + w(s.c) + '"></i></div>' +
+      '<ul class="pp-legend"><li><i class="d"></i><b>' + s.a + "</b> aprobadas</li><li><i class=\"r\"></i><b>" + s.r + "</b> " + (s.r === 1 ? "regular" : "regulares") +
+      "</li><li><i class=\"c\"></i><b>" + s.c + '</b> cursando</li><li class="pp-rest"><b>' + pend + "</b> por hacer</li></ul>" +
+      '<p class="pm-avg">Promedio <b>' + fmtAvg(s.avg) + "</b> <span>" + (s.notes.length ? "con " + s.notes.length + (s.notes.length === 1 ? " nota" : " notas") : "cargá la nota al aprobar") + "</span></p>";
+    $("#ringBtn").onclick = function () { setStatsOpen(!ui.statsOpen); };
+    if (first) requestAnimationFrame(function () { requestAnimationFrame(function () { var b = $("#ringBtn"); if (b) b.classList.remove("is-zero"); }); });
+  }
+  function setStatsOpen(open) {
+    ui.statsOpen = open;
+    var m = $("#phMore"), b = $("#ringBtn");
+    if (!m) return;
+    m.classList.toggle("is-open", open);
+    if (b) b.setAttribute("aria-expanded", String(open));
+  }
+  /* al usar el árbol, la cabecera se va para arriba y queda el anillo chico en la barra */
+  function tuckHeader() {
+    var tree = $("#tree"), sen = $("#stickSentinel");
+    if (ui.statsOpen) setStatsOpen(false);
+    if (!tree || !sen) return;
+    var r = tree.getBoundingClientRect();
+    if (r.bottom <= window.innerHeight + 2) return;
+    var top = Math.ceil($("#planTools").getBoundingClientRect().top + window.scrollY - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--topbar-h")) || 60));
+    var page = main.querySelector(".page");
+    if (page) { var need = top + window.innerHeight - (page.getBoundingClientRect().top + window.scrollY); if (page.offsetHeight < need) page.style.minHeight = need + "px"; }
+    if (window.scrollY < top - 4) window.scrollTo({ top: top, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   }
   var FILTERS = [
     ["all", "Todas", null],
@@ -529,16 +576,43 @@
     return state === f;
   }
   function renderFilters() {
-    var c = career(), el = $("#planFilters");
-    if (!el) return;
-    var ev = {}; c.courses.forEach(function (x) { ev[x.c] = evaluate(c, x).state; });
-    el.innerHTML = FILTERS.map(function (f) {
-      var n = c.courses.filter(function (x) { return x.k !== "lang" && matchFilter(ev[x.c], f[0]); }).length;
-      if (f[0] !== "all" && !n && S.filter !== f[0]) return "";
-      return '<button class="chip" type="button" data-filter="' + f[0] + '" aria-pressed="' + (S.filter === f[0]) + '">' + (f[2] ? '<span class="dot" style="background:' + f[2] + '"></span>' : "") + f[1] + " <em>" + n + "</em></button>";
-    }).join("");
-    $all("[data-filter]", el).forEach(function (b) { b.onclick = function () { S.filter = b.dataset.filter; renderFilters(); renderPlanBody(); }; });
+    var c = career(), btn = $("#filterBtn"), act = $("#activeFilter");
+    if (!btn) return;
+    btn.classList.toggle("has-badge", S.filter !== "all" || (S.view === "tree" && S.reveal === "all"));
+    var f = FILTERS.filter(function (x) { return x[0] === S.filter; })[0];
+    act.innerHTML = S.filter !== "all" && f ? '<button class="chip chip--on" type="button" id="clearFilter" aria-label="Quitar filtro ' + f[1] + '">' + (f[2] ? '<span class="dot" style="background:' + f[2] + '"></span>' : "") + f[1] + ic("x") + "</button>" : "";
+    var cf = $("#clearFilter"); if (cf) cf.onclick = function () { S.filter = "all"; renderFilters(); renderPlanBody(); };
+    if (!$("#fmenu").hidden) paintFilterMenu();
   }
+  function paintFilterMenu() {
+    var c = career(), m = $("#fmenu");
+    var ev = {}; c.courses.forEach(function (x) { ev[x.c] = evaluate(c, x).state; });
+    var h = "";
+    if (S.view === "tree") {
+      h += '<p class="fm-label">En el árbol mostrar</p><div class="fm-seg" role="group" aria-label="Qué mostrar en el árbol">' +
+        '<button type="button" data-reveal="next" aria-pressed="' + (S.reveal !== "all") + '">Lo próximo</button>' +
+        '<button type="button" data-reveal="all" aria-pressed="' + (S.reveal === "all") + '">Todo el plan</button></div>';
+    }
+    h += '<p class="fm-label">' + (S.view === "tree" ? "Resaltar" : "Mostrar") + '</p><div class="fm-list" role="group">' + FILTERS.map(function (f) {
+      var n = c.courses.filter(function (x) { return x.k !== "lang" && matchFilter(ev[x.c], f[0]); }).length;
+      return '<button type="button" data-filter="' + f[0] + '" aria-pressed="' + (S.filter === f[0]) + '"><i style="background:' + (f[2] || "transparent") + '"></i>' + f[1] + "<em>" + n + "</em>" + ic("check", "fm-ck") + "</button>";
+    }).join("") + "</div>";
+    m.innerHTML = h;
+    $all("[data-filter]", m).forEach(function (b) { b.onclick = function () { S.filter = b.dataset.filter; renderFilters(); renderPlanBody(); }; });
+    $all("[data-reveal]", m).forEach(function (b) { b.onclick = function () { S.reveal = b.dataset.reveal; save(); renderFilters(); renderPlanBody(); }; });
+  }
+  function openFilterMenu() {
+    var m = $("#fmenu"); if (!m) return;
+    m.hidden = false; paintFilterMenu(); $("#filterBtn").setAttribute("aria-expanded", "true");
+    setTimeout(function () { document.addEventListener("click", outsideFilter, true); }, 0);
+  }
+  function closeFilterMenu() {
+    var m = $("#fmenu"); if (!m || m.hidden) return;
+    m.hidden = true; $("#filterBtn").setAttribute("aria-expanded", "false");
+    document.removeEventListener("click", outsideFilter, true);
+  }
+  function outsideFilter(e) { if (!e.target.closest(".fmenu-wrap")) closeFilterMenu(); }
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeFilterMenu(); });
   function queryHit(c, x) {
     if (!ui.query) return true;
     var q = norm(ui.query);
@@ -609,27 +683,46 @@
 
   /* ---------------- árbol ---------------- */
   var treeState = { lines: [] };
+  /* se ve si ya la tocaste, si la podés cursar o si no tiene correlativas */
+  function nodeVisible(c, x, e) {
+    if (S.reveal === "all") return true;
+    if (e.state !== "block") return true;
+    return !(x.r && x.r.length) && !x.min && !x.sem;
+  }
   function renderTree(c, el) {
     var cols = {};
     c.courses.forEach(function (x) { var s = x.s < 0 ? 0 : x.s; (cols[s] = cols[s] || []).push(x); });
-    var html = '<div class="tree" id="tree"><div class="tree-in" id="treeIn"><svg class="tree-lines" id="treeLines"></svg>';
-    Object.keys(cols).map(Number).sort(function (a, b) { return a - b; }).forEach(function (s) {
-      html += '<div class="tree-col"><header><span>' + (s === 0 ? "Nivelación" : s % 2 ? Math.ceil(s / 2) + "° año" : "") + "</span><span>" + (s ? (s % 2 ? "1" : "2") + "° cuatri" : "") + "</span></header>";
-      cols[s].forEach(function (x) {
+    var seenKey = c.id + "|" + S.reveal, prevSeen = ui.seen && ui.seen.key === seenKey ? ui.seen.set : null, nowSeen = {};
+    var html = '<div class="tree' + (S.reveal === "all" ? "" : " is-fog") + '" id="tree"><div class="tree-in" id="treeIn"><svg class="tree-lines" id="treeLines"></svg>';
+    var hidden = 0;
+    Object.keys(cols).map(Number).sort(function (a, b) { return a - b; }).forEach(function (s, ci) {
+      html += '<div class="tree-col" style="--col:' + ci + '"><header><span>' + (s === 0 ? "Nivelación" : s % 2 ? Math.ceil(s / 2) + "° año" : "") + "</span><span>" + (s ? (s % 2 ? "1" : "2") + "° cuatri" : "") + "</span></header>";
+      cols[s].forEach(function (x, ri) {
         var e = evaluate(c, x), hit = queryHit(c, x) && matchFilter(e.state, S.filter);
-        var P = S.prog[c.id] && S.prog[c.id][x.c];
-        html += '<button type="button" class="tnode ' + CLS[e.state] + (hit ? "" : " is-dim") + (ui.pop === x.c ? " is-pop" : "") + '" data-node="' + esc(x.c) + '">' +
-          '<span class="subj-top"><span class="subj-code">' + esc(x.k === "slot" ? "A elección" : x.c) + "</span>" + (P && P.n ? '<span class="mono small" style="margin-left:auto;color:var(--st-done);font-weight:700">' + P.n + "</span>" : "") + "</span>" +
+        var P = S.prog[c.id] && S.prog[c.id][x.c], vis = nodeVisible(c, x, e);
+        if (vis) nowSeen[x.c] = 1; else hidden++;
+        var anim = vis && ui.enter ? " is-enter" : vis && prevSeen && !prevSeen[x.c] ? " is-spawn" : "";
+        if (!vis) {
+          html += '<button type="button" class="tnode is-ghost' + (hit ? "" : " is-dim") + (ui.enter ? " is-enter" : "") + '" style="--row:' + ri + '" data-node="' + esc(x.c) + '" aria-label="' + esc(displayName(c, x)) + ', todavía bloqueada">' + ic("lock") + "</button>";
+          return;
+        }
+        html += '<button type="button" class="tnode ' + CLS[e.state] + (hit ? "" : " is-dim") + (ui.pop === x.c ? " is-pop" : "") + anim + '" style="--row:' + ri + '" data-node="' + esc(x.c) + '">' +
+          '<span class="subj-top"><span class="subj-code">' + esc(x.k === "slot" ? "A elección" : x.c) + "</span>" + (P && P.n ? '<span class="tn-note">' + P.n + "</span>" : "") + "</span>" +
           "<strong>" + esc(displayName(c, x)) + "</strong></button>";
       });
       html += "</div>";
     });
     html += "</div></div>";
+    if (S.reveal !== "all" && hidden) html += '<p class="treeFoot">' + ic("lock") + "<span>" + hidden + " materias se van a ir mostrando a medida que avances.</span>" + '<button type="button" id="showAll">Ver todo el plan</button></p>';
     var prev = $("#tree"), keep = prev ? { l: prev.scrollLeft, t: prev.scrollTop } : null;
     el.innerHTML = tipHtml() + html;
     var tree = $("#tree");
     if (keep) { tree.scrollLeft = keep.l; tree.scrollTop = keep.t; }
     ui.pop = null;
+    ui.spawned = prevSeen ? Object.keys(nowSeen).filter(function (k) { return !prevSeen[k]; }) : [];
+    ui.seen = { key: seenKey, set: nowSeen };
+    var wasEnter = ui.enter; ui.enter = false;
+    var sa = $("#showAll"); if (sa) sa.onclick = function () { S.reveal = "all"; save(); renderFilters(); renderPlanBody(); };
     bindTip(el);
     if (!tipSeen()) { var first = $all(".tnode.is-ready", tree).filter(function (n) { var x = c.byCode[n.dataset.node]; return x && x.k !== "lang" && x.s > 0; })[0] || $(".tnode.is-ready", tree); if (first) first.classList.add("is-hint"); }
     enablePan(tree);
@@ -638,19 +731,22 @@
         if (tree.dataset.panned === "1") return;
         var code = n.dataset.node;
         $all(".is-hint", tree).forEach(function (h) { h.classList.remove("is-hint"); });
+        tuckHeader();
         if (ui.focus === code) openSubject(c, code);
         else { ui.focus = code; paintFocus(c); }
       };
     });
     tree.addEventListener("click", function (e) { if (e.target === tree || e.target.id === "treeIn" || e.target.classList.contains("tree-col")) { ui.focus = null; paintFocus(c); } });
-    requestAnimationFrame(function () { drawTreeLines(); paintFocus(c); });
+    tree.addEventListener("scroll", function () { if (ui.statsOpen) setStatsOpen(false); }, { passive: true });
+    requestAnimationFrame(function () { drawTreeLines(wasEnter ? "enter" : "spawn"); paintFocus(c); });
   }
-  function drawTreeLines() {
+  function drawTreeLines(mode) {
     var c = career(), inner = $("#treeIn"), svg = $("#treeLines");
     if (!inner || !svg || !c) return;
     var base = inner.getBoundingClientRect(), pos = {};
-    $all("[data-node]", inner).forEach(function (n) { var r = n.getBoundingClientRect(); pos[n.dataset.node] = { l: r.left - base.left, r: r.right - base.left, y: r.top - base.top + r.height / 2 }; });
+    $all("[data-node]", inner).forEach(function (n) { var r = n.getBoundingClientRect(); pos[n.dataset.node] = { l: r.left - base.left, r: r.right - base.left, y: r.top - base.top + r.height / 2, g: n.classList.contains("is-ghost") }; });
     svg.setAttribute("width", inner.scrollWidth); svg.setAttribute("height", inner.scrollHeight);
+    var spawned = {}; (ui.spawned || []).forEach(function (k) { spawned[k] = 1; });
     var paths = [];
     c.courses.forEach(function (x) {
       (x.r || []).forEach(function (r) {
@@ -661,12 +757,17 @@
         if (x2 < x1) return;
         var dx = Math.max(24, (x2 - x1) / 2);
         var s = stOf(c.id, r);
-        paths.push('<path data-from="' + r + '" data-to="' + x.c + '" class="' + (s === "a" ? "is-aprobada" : s === "r" ? "is-regular" : "") + '" d="M' + x1 + " " + y1 + " C" + (x1 + dx) + " " + y1 + " " + (x2 - dx) + " " + y2 + " " + x2 + " " + y2 + '"/>');
+        var cls = (s === "a" ? "is-aprobada" : s === "r" ? "is-regular" : "") + (a.g || b.g ? " is-ghost" : "");
+        if (!a.g && !b.g && (mode === "enter" || (mode === "spawn" && spawned[x.c]))) cls += " is-draw";
+        paths.push('<path' + (cls.indexOf("is-draw") >= 0 ? ' pathLength="1"' : "") + ' data-from="' + r + '" data-to="' + x.c + '" class="' + cls + '" d="M' + x1 + " " + y1 + " C" + (x1 + dx) + " " + y1 + " " + (x2 - dx) + " " + y2 + " " + x2 + " " + y2 + '"/>');
       });
     });
     svg.innerHTML = paths.join("");
+    $all("path.is-draw", svg).forEach(function (p) { p.addEventListener("animationend", function () { p.classList.remove("is-draw"); p.removeAttribute("pathLength"); }, { once: true }); });
+    ui.spawned = [];
     paintFocus(c);
   }
+  /* camino de una materia: todo lo de atrás (coloreado según lo que ya tenés) y un solo paso hacia adelante */
   function paintFocus(c) {
     var tree = $("#tree");
     if (!tree) return;
@@ -676,8 +777,9 @@
     var up = {}, down = {};
     if (sel) {
       (function back(code) { (c.byCode[code].r || []).forEach(function (r) { if (!up[r] && c.byCode[r]) { up[r] = 1; back(r); } }); })(sel);
-      (function fwd(code) { (c.unlocks[code] || []).forEach(function (u) { if (!down[u]) { down[u] = 1; fwd(u); } }); })(sel);
+      (c.unlocks[sel] || []).forEach(function (u) { if (c.byCode[u]) down[u] = 1; });
     }
+    var selSt = sel ? stOf(c.id, sel) : null;
     $all("[data-node]", tree).forEach(function (n) {
       var k = n.dataset.node;
       n.classList.toggle("is-on", !!(sel && (k === sel || up[k] || down[k])));
@@ -686,9 +788,14 @@
     $all("#treeLines path", tree).forEach(function (p) {
       var f = p.dataset.from, t = p.dataset.to;
       var inUp = !!((up[f] || f === sel) && (up[t] || t === sel));
-      var inDown = !!(down[t] && (down[f] || f === sel));
-      p.classList.toggle("is-on", !!sel && (inUp || inDown));
-      p.classList.toggle("is-out", !!sel && inDown && !inUp);
+      var inDown = f === sel && !!down[t];
+      var on = !!sel && (inUp || inDown);
+      p.classList.toggle("is-on", on);
+      p.classList.toggle("is-out", on && inDown);
+      var fs = stOf(c.id, f), tone = "";
+      if (on && inUp) tone = fs === "a" ? "ok" : fs === "r" ? "half" : "miss";
+      if (on && inDown) tone = selSt === "a" ? "ok" : selSt === "r" ? "half" : "next";
+      p.setAttribute("data-tone", tone);
     });
   }
   function showFocusBar(c, code) {
@@ -732,7 +839,7 @@
     if (tipSeen()) return "";
     return '<div class="tip" id="planTip"><ol>' +
       '<li><b>1</b><span><strong>Tocá una materia</strong> y abajo elegís si la estás cursando, la regularizaste o la aprobaste.</span></li>' +
-      '<li><b>2</b><span>Se marca su camino: <em class="c-red">rojo</em> lo que necesitás antes, <em class="c-blue">azul</em> lo que destraba.</span></li>' +
+      '<li><b>2</b><span>Se marca su camino: <em class="c-green">verde</em> lo que ya tenés, <em class="c-red">rojo</em> lo que te falta, <em class="c-blue">azul</em> lo que destraba.</span></li>' +
       '<li><b>3</b><span>Arrastrá para moverte. Si preferís, pasá a <strong>Lista</strong>.</span></li>' +
       '</ol><button class="btn btn--sm" type="button" data-tip-ok>Entendido</button></div>';
   }
@@ -868,8 +975,12 @@
     var reqs = x.r || [];
     if (reqs.length) h += '<div class="dSection"><p class="dLabel">Necesita</p>' + chips(reqs) + "</div>";
     if (x.x) h += '<div class="dSection"><p class="dLabel">Condición</p><p class="small" style="margin:0">' + esc(x.x) + "</p></div>";
-    var un = c.unlocks[x.c] || [];
-    if (un.length) h += '<div class="dSection"><p class="dLabel">Habilita</p>' + chips(un) + "</div>";
+    var un = (c.unlocks[x.c] || []).filter(function (u) { return c.byCode[u]; }).sort(function (a, b) { return (c.byCode[a].s || 99) - (c.byCode[b].s || 99); });
+    if (un.length) {
+      var SHOW = 6;
+      h += '<div class="dSection"><p class="dLabel">Habilita</p>' + chips(un.slice(0, SHOW)) +
+        (un.length > SHOW ? '<details class="relMore"><summary>Ver ' + (un.length - SHOW) + " más</summary>" + chips(un.slice(SHOW)) + "</details>" : "") + "</div>";
+    }
     if (!reqs.length && !x.x && x.k !== "slot") h += '<p class="small muted" style="margin:14px 0 0">Sin correlativas: se puede cursar desde el principio.</p>';
 
     h += '<a class="dFoot" href="' + esc(c.official) + '" target="_blank" rel="noopener">Ver en el plan oficial' + ic("ext") + "</a>";
