@@ -19,8 +19,12 @@ window.GRADIENTE = {
     nube: "data/nube.json",
     faq: "data/faq.json",
     fechas: "data/fechas.json",
-    catedras: "data/catedras.json"
+    catedras: "data/catedras.json",
+    instagram: "data/instagram.json"
   },
+
+  // Nombre del asistente de preguntas frecuentes del inicio
+  botName: "Gradi",
 
   // Accesos rápidos del inicio: se buscan por título en links.json (o url directa).
   // icon: id, clock, cal, book, cloud, heart, ext · color: navy, red, blue

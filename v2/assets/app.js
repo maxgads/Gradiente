@@ -461,7 +461,7 @@
 
   function renderHome() {
     if (!DATA.plans || !DATA.links) loading();
-    return Promise.all([ensurePlans(), ensureLinks(), ensureFaq(), ensureFechas()]).then(function () {
+    return Promise.all([ensurePlans(), ensureLinks(), ensureFaq(), ensureFechas(), ensureIg()]).then(function () {
       var c = career(), d = new Date();
       var avisos = DATA.links.filter(function (l) { return l.category === "Avisos"; });
       var cur = c ? c.courses.filter(function (x) { return stOf(c.id, x.c) === "c"; }).length : 0;
@@ -473,9 +473,9 @@
       html += '<header class="hello rise"><p class="hello-date">' + DIAS[d.getDay()] + " " + d.getDate() + " de " + MESES[d.getMonth()] + "</p>" +
         '<h1 class="hello-t">' + greeting() + (S.name ? ", <span>" + esc(S.name) + "</span>" : "") + "</h1>" +
         '<p class="hello-sub">' + sub + "</p>" +
-        '<div class="askBox" id="askBox"><form class="askBar" id="askForm" autocomplete="off" role="search"><label class="sr" for="askInput">Preguntá tu duda</label>' + ic("search") +
-        '<input id="askInput" type="search" placeholder="¿Tenés una duda? Preguntá acá" enterkeyhint="search" aria-controls="askPop"><button type="submit" aria-label="Buscar respuesta"><kbd>' + ic("chev") + "</kbd></button></form>" +
-        '<div class="askPop" id="askPop" hidden></div></div></header>';
+        '<div class="askBox" id="askBox"><form class="askBar" id="askForm" autocomplete="off" role="search"><label class="sr" for="askInput">Preguntale a ' + BOT + "</label>" + ic("chat") +
+        '<input id="askInput" type="search" placeholder="¿Tenés una duda? Preguntá acá" enterkeyhint="send" aria-controls="faq" aria-expanded="false"><button type="submit" aria-label="Enviar pregunta"><kbd>' + ic("send") + "</kbd></button></form></div>" +
+        '<section class="gchat" id="faq" aria-labelledby="faqT"><div class="gchat-in">' + faqShell() + "</div></section></header>";
 
       if (avisos.length) {
         html += '<div class="avisos">' + avisos.map(function (l) {
@@ -489,11 +489,11 @@
       }).join("") + "</nav>";
 
       html += '<div class="homeCols">';
-      html += '<div class="homeCol"><section class="hsec hp' + (homeUI.plan ? " is-open" : "") + '" id="homePlan" aria-label="Tu carrera">' + homePlan(c) + "</section>";
-      html += '<section class="hsec cal" id="homeCal" aria-labelledby="calT"></section></div>';
-      html += '<section class="hsec faq" id="faq" aria-labelledby="faqT">' + faqShell() + "</section>";
+      html += '<section class="hsec hp' + (homeUI.plan ? " is-open" : "") + '" id="homePlan" aria-label="Tu carrera">' + homePlan(c) + "</section>";
+      html += '<section class="hsec cal" id="homeCal" aria-labelledby="calT"></section>';
       html += "</div>";
 
+      html += igSection();
       html += aboutSection();
       html += footer() + "</div>";
       main.innerHTML = html;
@@ -576,7 +576,8 @@
   function bindHome() {
     bindHomePlan();
     bindAsk();
-    $all("[data-about]", main).forEach(function (b) { b.onclick = function () { openAbout(b.dataset.about); }; });
+    bindAbout();
+    bindIg();
     bindFaq();
   }
   function quickLinks() {
@@ -588,59 +589,40 @@
   }
   function linkByMatch(m) { var l = (DATA.links || []).find(function (x) { return x.title === m; }); return l ? l.url : null; }
 
-  /* ---------- buscador del saludo: responde ahí mismo, sin mandarte al chat ---------- */
-  function askPaint(html) {
-    var pop = $("#askPop"); if (!pop) return;
-    pop.innerHTML = html; pop.hidden = !html;
-    $("#askBox").classList.toggle("is-open", !!html);
+  /* ---------- "¿Tenés una duda?": al tocar el buscador se despliega abajo el chat con Gradi ---------- */
+  var BOT = CFG.botName || "Gradi";
+  function chatOpen() { var f = $("#faq"); return !!(f && f.classList.contains("is-open")); }
+  function openChat(focus) {
+    var f = $("#faq"), inp = $("#askInput"); if (!f) return;
+    if (!chatOpen()) {
+      f.classList.add("is-open"); $("#askBox").classList.add("is-open");
+      if (inp) inp.setAttribute("aria-expanded", "true");
+      faqStart();
+      // que el buscador quede arriba y el chat se vea entero
+      var top = $("#askBox").getBoundingClientRect().top;
+      if (top > window.innerHeight * .45 || top < 60) window.scrollTo({ top: window.scrollY + top - 76, behavior: "smooth" });
+    }
+    if (focus && inp) inp.focus({ preventScroll: true });
   }
-  function askList(text) {
-    var r = text.trim().length >= 2 ? faqSearch(text, true).slice(0, 5).map(function (x) { return x.it; }) : DATA.faq.tops.slice(0, 4);
-    if (!r.length) return '<p class="askPop-k">Sin coincidencias</p><p class="askPop-p">Apretá enter y te decimos a quién preguntarle.</p>';
-    return '<p class="askPop-k">' + (text.trim() ? "¿Es alguna de estas?" : "Lo más preguntado") + "</p>" +
-      r.map(function (it) { return '<button type="button" class="askOpt" data-ask-q="' + it.id + '">' + ic("search") + "<span>" + esc(it.q) + "</span>" + ic("chev") + "</button>"; }).join("");
-  }
-  function askAnswer(it) {
-    return '<div class="askAns"><p class="askAns-q">' + esc(it.q) + "</p>" + answerHtml(it) + "</div>" +
-      '<div class="askPop-foot"><button type="button" class="linkBtn" data-ask-again>' + ic("search") + "Otra pregunta</button>" +
-      '<button type="button" class="linkBtn" data-ask-chat>Seguir en el chat' + ic("chev") + "</button></div>";
+  function closeChat() {
+    var f = $("#faq"), inp = $("#askInput"); if (!f || !chatOpen()) return;
+    f.classList.remove("is-open"); $("#askBox").classList.remove("is-open");
+    if (inp) { inp.setAttribute("aria-expanded", "false"); inp.value = ""; inp.blur(); }
+    paintSug("");
   }
   function bindAsk() {
     var box = $("#askBox"), inp = $("#askInput"), form = $("#askForm");
     if (!box || !DATA.faq) return;
-    var shown = null;
-    var reset = function () { askPaint(""); shown = null; };
-    var open = function () { if (!shown && $("#askPop").hidden) askPaint(askList(inp.value)); };
-    inp.addEventListener("focus", open);
-    inp.addEventListener("click", open);
-    inp.addEventListener("input", function () { shown = null; askPaint(askList(inp.value)); });
-    inp.addEventListener("keydown", function (e) { if (e.key === "Escape") { reset(); inp.blur(); } });
+    inp.addEventListener("focus", function () { openChat(false); });
+    inp.addEventListener("click", function () { openChat(false); });
+    inp.addEventListener("input", function () { paintSug(inp.value); });
+    inp.addEventListener("keydown", function (e) { if (e.key === "Escape") { e.stopPropagation(); closeChat(); } });
     form.onsubmit = function (e) {
       e.preventDefault();
-      var v = inp.value.trim(); if (!v) { inp.focus(); return; }
-      var r = faqSearch(v, false);
-      if (r.length && r[0].cover >= 0.5 && (r.length < 2 || r[0].score > r[1].score + 0.4 || r[0].cover === 1)) { shown = r[0].it; askPaint(askAnswer(shown)); }
-      else if (r.length) askPaint(askList(v));
-      else askPaint('<div class="askAns">' + consultHtml("Esa todavía no la tenemos guardada. Mandanos la consulta y te respondemos nosotros.") + "</div>");
-      inp.blur();
+      var v = inp.value.trim(); openChat(false);
+      if (!v) { inp.focus(); return; }
+      inp.value = ""; paintSug(""); askFree(v);
     };
-    box.addEventListener("click", function (e) {
-      var b = e.target.closest("button"); if (!b || !box.contains(b)) return;
-      if (b.dataset.askQ) { shown = DATA.faq.byId[b.dataset.askQ]; inp.value = shown.q; askPaint(askAnswer(shown)); }
-      else if (b.hasAttribute("data-ask-again")) { shown = null; inp.value = ""; askPaint(askList("")); inp.focus(); }
-      else if (b.hasAttribute("data-ask-chat")) {
-        var it = shown; reset(); inp.value = "";
-        var f = $("#faq"); if (f) f.scrollIntoView({ behavior: "smooth", block: "start" });
-        if (it) setTimeout(function () { askItem(it.id); }, 350);
-      }
-      else if (b.hasAttribute("data-about-go")) openAbout("who");
-      else if (b.dataset.helpGo) openConsultas(b.dataset.helpGo);
-      else if (b.hasAttribute("data-cal-go")) { reset(); goCal(); }
-    });
-    document.addEventListener("click", function outside(e) {
-      if (!document.body.contains(box)) { document.removeEventListener("click", outside); return; }
-      if (!box.contains(e.target)) reset();
-    });
   }
 
   /* ---------- almanaque: fechas oficiales de la Facultad + lo que cargue Gradiente (data/fechas.json) ---------- */
@@ -765,41 +747,89 @@
     };
   }
 
-  /* ---------- quiénes somos ---------- */
+  /* ---------- redes con sus colores de siempre ---------- */
+  function socialKey(s) { return { ig: "ig", wa: "wa", tt: "tt", mail: "mail" }[s.icon] || "x"; }
+  function socialBtn(s, label) {
+    return '<a class="soc soc--' + socialKey(s) + (label ? " soc--label" : "") + '" href="' + esc(s.url) + '" target="_blank" rel="noopener" aria-label="' + esc(s.label) + '">' +
+      '<span class="soc-ic">' + ic(s.icon) + "</span>" + (label ? "<span>" + esc(s.label) + "</span>" : "") + "</a>";
+  }
+
+  /* ---------- quiénes somos: se despliega ahí mismo ---------- */
+  function aboutBody(which, inline) {
+    var A = CFG.about || {};
+    if (which === "history") return '<ol class="timeline">' + (A.history || []).map(function (h) { return "<li><b>" + esc(h.year) + "</b><p>" + esc(h.text) + "</p></li>"; }).join("") + "</ol>";
+    if (which === "join") {
+      return '<p class="ab-p">Siempre hay lugar para una mano más: apuntes, la mesita, la web o lo que se te ocurra. Escribinos por donde te quede cómodo.</p>' +
+        '<div class="ab-soc">' + (CFG.socialLinks || []).map(function (s) { return socialBtn(s, true); }).join("") + "</div>";
+    }
+    return (inline ? '<p class="ab-p">Lo que hacemos para que cursar sea un poco más fácil:</p>' : '<p class="ab-p">' + esc(A.intro || CFG.description || "") + "</p>") + '<div class="ab-do">' +
+      (A.doing || []).map(function (d, i) {
+        var href = d.consult ? CFG.consultationFormUrl : d.go ? d.go : linkByMatch(d.match) || d.url || "#";
+        return '<a class="ab-tile ab-tile--' + (i % 4) + '" href="' + esc(href) + '"' + (d.go ? "" : ' target="_blank" rel="noopener"') + ">" +
+          '<span class="ab-ic">' + ic(d.icon || "ext") + "</span><strong>" + esc(d.title) + "</strong><small>" + esc(d.text) + "</small></a>";
+      }).join("") + "</div>";
+  }
   function aboutSection() {
     var A = CFG.about || {};
-    var hasHist = (A.history || []).length > 0;
-    return '<section class="hsec about" aria-labelledby="aboutT"><div class="about-l"><p class="hsec-k">Gradiente</p><h2 class="hsec-t" id="aboutT">' + esc(CFG.tagline || "Gradiente") + "</h2>" +
+    var items = [["who", "users", "Quiénes somos", "Qué es Gradiente y qué hacemos"]];
+    if ((A.history || []).length) items.push(["history", "cal", "Nuestra historia", "Cómo arrancamos y hasta dónde llegamos"]);
+    items.push(["join", "heart", "Sumate", "Escribinos o pasá por la mesita"]);
+    return '<section class="hsec about" id="about" aria-labelledby="aboutT"><div class="about-l"><p class="hsec-k">Gradiente</p><h2 class="hsec-t" id="aboutT">' + esc(CFG.tagline || "Gradiente") + "</h2>" +
       '<p class="hsec-p">' + esc(A.intro || CFG.description || "") + "</p></div>" +
-      '<div class="about-links">' +
-      '<button type="button" data-about="who">' + ic("users") + "<span>Quiénes somos<small>Qué es Gradiente y qué hacemos</small></span>" + ic("chev") + "</button>" +
-      (hasHist ? '<button type="button" data-about="history">' + ic("cal") + "<span>Nuestra historia<small>Cómo arrancamos y hasta dónde llegamos</small></span>" + ic("chev") + "</button>" : "") +
-      '<button type="button" data-about="join">' + ic("heart") + "<span>Sumate<small>Escribinos o pasá por la mesita</small></span>" + ic("chev") + "</button>" +
-      "</div></section>";
+      '<div class="about-links">' + items.map(function (it) {
+        return '<div class="ab-item"><button type="button" class="ab-btn" data-about="' + it[0] + '" aria-expanded="false" aria-controls="ab-' + it[0] + '">' + ic(it[1]) +
+          "<span>" + it[2] + "<small>" + it[3] + "</small></span><i class=\"ab-pm\"></i></button>" +
+          '<div class="ab-body" id="ab-' + it[0] + '"><div class="ab-in">' + aboutBody(it[0], true) + "</div></div></div>";
+      }).join("") + "</div></section>";
+  }
+  function setAbout(which, open) {
+    $all(".ab-btn", main).forEach(function (b) { b.setAttribute("aria-expanded", String(b.dataset.about === which && open)); });
+  }
+  function bindAbout() {
+    $all(".ab-btn", main).forEach(function (b) {
+      b.onclick = function () { setAbout(b.dataset.about, b.getAttribute("aria-expanded") !== "true"); };
+    });
   }
   function openAbout(which) {
-    var A = CFG.about || {};
+    var btn = $('.ab-btn[data-about="' + which + '"]', main);
+    if (btn) {
+      setAbout(which, true);
+      setTimeout(function () { btn.scrollIntoView({ behavior: "smooth", block: "center" }); }, 60);
+      return;
+    }
+    var titles = { who: "Quiénes somos", history: "Nuestra historia", join: "Sumate" };
     openSheet(function () {
-      var head = function (k, t) { return '<div class="dHead"><div><p class="dMeta">' + k + '</p><h2 class="h2" id="sheetTitle">' + t + '</h2></div><button class="iconBtn" type="button" data-close aria-label="Cerrar">' + ic("x") + "</button></div>"; };
-      if (which === "history") {
-        return head("Gradiente", "Nuestra historia") + '<ol class="timeline">' + (A.history || []).map(function (h) { return "<li><b>" + esc(h.year) + "</b><p>" + esc(h.text) + "</p></li>"; }).join("") + "</ol>";
-      }
-      if (which === "join") {
-        return head("Gradiente", "Sumate") + '<p class="muted" style="margin:10px 0 16px">Siempre hay lugar para una mano más: apuntes, la mesita, la web o lo que se te ocurra. Escribinos por donde te quede cómodo.</p>' +
-          '<div class="sheetList">' + (CFG.socialLinks || []).map(function (s) { return '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + ic(s.icon) + "<span>" + esc(s.label) + "</span></a>"; }).join("") + "</div>";
-      }
-      return head("Gradiente", "Quiénes somos") + '<p style="margin:12px 0 18px;color:var(--ink-2)">' + esc(A.intro || CFG.description || "") + '</p><p class="dLabel">Qué hacemos</p><div class="sheetList">' +
-        (A.doing || []).map(function (d) {
-          var href = d.consult ? CFG.consultationFormUrl : d.go ? d.go : linkByMatch(d.match) || d.url || "#";
-          var ext = !d.go;
-          return '<a href="' + esc(href) + '"' + (ext ? ' target="_blank" rel="noopener"' : " data-close") + ">" + ic(d.icon || "ext") + "<span>" + esc(d.title) + "<small>" + esc(d.text) + "</small></span></a>";
-        }).join("") + "</div>" +
-        ((A.history || []).length ? '<button class="btn btn--block" type="button" style="margin-top:14px" data-about-hist>' + ic("cal") + "Nuestra historia</button>" : "");
+      return '<div class="dHead"><div><p class="dMeta">Gradiente</p><h2 class="h2" id="sheetTitle">' + (titles[which] || titles.who) + '</h2></div><button class="iconBtn" type="button" data-close aria-label="Cerrar">' + ic("x") + "</button></div>" +
+        '<div class="ab-sheet">' + aboutBody(which) + "</div>";
     });
-    sheetBody.onclick = function (ev) {
-      if (ev.target.closest("[data-about-hist]")) openAbout("history");
-      else if (ev.target.closest("a[data-close]")) closeSheet();
-    };
+    sheetBody.onclick = function (ev) { if (ev.target.closest('a[href^="#"]')) closeSheet(); };
+  }
+
+  /* ---------- Instagram: las últimas publicaciones (data/instagram.json) ---------- */
+  function ensureIg() {
+    if (DATA.ig) return Promise.resolve();
+    return getJSON(CFG.data.instagram || "data/instagram.json").then(function (d) { DATA.ig = d; }).catch(function () { DATA.ig = { posts: [] }; });
+  }
+  function igSection() {
+    var ig = DATA.ig || {}, posts = (ig.posts || []).filter(function (p) { return p && p.code; });
+    var user = ig.user || "gradienteingenieriaunlp", url = "https://www.instagram.com/" + user + "/";
+    var h = '<section class="hsec igs" aria-labelledby="igT"><div class="igs-head"><span class="soc soc--ig igs-av"><span class="soc-ic">' + ic("ig") + "</span></span>" +
+      '<div><p class="hsec-k">En Instagram</p><h2 class="hsec-t" id="igT">@' + esc(user) + "</h2></div>" +
+      '<div class="igs-nav"><button class="iconBtn iconBtn--sm igs-prev" type="button" data-ig-nav="-1" aria-label="Anteriores">' + ic("chev") + "</button>" +
+      '<button class="iconBtn iconBtn--sm" type="button" data-ig-nav="1" aria-label="Siguientes">' + ic("chev") + "</button></div>" +
+      '<a class="btn btn--sm igs-follow" href="' + esc(url) + '" target="_blank" rel="noopener">Seguinos' + ic("ext") + "</a></div>";
+    if (!posts.length) return h + '<a class="igs-empty" href="' + esc(url) + '" target="_blank" rel="noopener">Mirá las novedades, fechas y sorteos en nuestro Instagram' + ic("ext") + "</a></section>";
+    h += '<div class="igs-row" id="igRow">' + posts.map(function (p) {
+      var path = (p.type === "reel" ? "reel/" : "p/") + encodeURIComponent(p.code);
+      return '<figure class="igs-card"><iframe src="https://www.instagram.com/' + path + '/embed/" loading="lazy" title="Publicación de Instagram de Gradiente" scrolling="no" allowtransparency="true"></iframe></figure>';
+    }).join("") + '<a class="igs-more" href="' + esc(url) + '" target="_blank" rel="noopener">' + ic("ig") + "<strong>Ver todo en Instagram</strong><small>@" + esc(user) + "</small></a></div></section>";
+    return h;
+  }
+  function bindIg() {
+    var row = $("#igRow"); if (!row) return;
+    $all("[data-ig-nav]", main).forEach(function (b) {
+      b.onclick = function () { row.scrollBy({ left: +b.dataset.igNav * row.clientWidth * .85, behavior: "smooth" }); };
+    });
   }
 
   /* ======================================================================
@@ -845,13 +875,16 @@
 
   var chat = { log: [], busy: false };
   function faqShell() {
-    return '<div class="faq-head"><span class="faq-av">' + ic("chat") + '</span><div><p class="hsec-k">Preguntas frecuentes</p><h2 class="hsec-t" id="faqT">¿Tenés una duda?</h2></div>' +
-      '<button class="faq-reset" type="button" data-faq-reset aria-label="Empezar de nuevo">' + ic("undo") + "</button></div>" +
-      '<div class="chat" id="chat" aria-live="polite"></div>' +
-      '<div class="faq-sug" id="faqSug"></div>' +
-      '<form class="chat-in" id="faqForm" autocomplete="off"><label class="sr" for="faqInput">Escribí tu pregunta</label>' +
-      '<input id="faqInput" type="text" placeholder="Escribí tu duda: final, becas, SIU…" enterkeyhint="send">' +
-      '<button type="submit" aria-label="Enviar">' + ic("send") + "</button></form>";
+    var topics = (DATA.faq && DATA.faq.topics) || [];
+    return '<div class="gchat-card"><div class="faq-head"><span class="faq-av" aria-hidden="true">' + esc(BOT.charAt(0)) + '<i></i></span><div><h2 class="faq-name" id="faqT">' + esc(BOT) + "</h2>" +
+      '<p class="faq-role"><i></i>Asistente de Gradiente · responde al toque</p></div>' +
+      '<button class="faq-reset" type="button" data-faq-reset aria-label="Empezar de nuevo" title="Empezar de nuevo">' + ic("undo") + "</button>" +
+      '<button class="faq-close" type="button" data-chat-close aria-label="Cerrar el chat">' + ic("x") + "</button></div>" +
+      '<div class="gchat-body"><nav class="faq-guide" aria-label="Temas"><p class="hsec-k">Temas</p>' +
+      '<button type="button" data-popular>' + ic("spark") + "<span>Lo más preguntado</span></button>" +
+      topics.map(function (t) { return '<button type="button" data-topic="' + esc(t.id) + '">' + ic("chev") + "<span>" + esc(t.label) + "</span></button>"; }).join("") + "</nav>" +
+      '<div class="gchat-main"><div class="faq-sug" id="faqSug"></div><div class="chat" id="chat" aria-live="polite"></div>' +
+      '<p class="gchat-foot">¿No está lo que buscás? <a href="' + esc(CFG.consultationFormUrl) + '" target="_blank" rel="noopener">Escribinos</a> y te responde alguien de Gradiente.</p></div></div></div>';
   }
   function bubble(from, html, opts) {
     return '<div class="msg msg--' + from + (opts && opts.cls ? " " + opts.cls : "") + '">' + html + "</div>";
@@ -874,7 +907,7 @@
   function faqStart() {
     if (!$("#chat") || !DATA.faq) return;
     if (!chat.log.length) {
-      chat.log = [bubble("bot", "<p>" + (S.name ? "¡Hola, " + esc(S.name) + "! " : "¡Hola! ") + "Estas son las que más nos preguntan. Tocá una o escribí la tuya.</p>") + chipsHtml(popularChips())];
+      chat.log = [bubble("bot", "<p>" + (S.name ? "¡Hola, " + esc(S.name) + "! " : "¡Hola! ") + "Soy " + esc(BOT) + ", de Gradiente. Estas son las que más nos preguntan: tocá una, elegí un tema o escribí tu duda arriba.</p>") + chipsHtml(popularChips())];
     }
     paintChat(false);
   }
@@ -955,22 +988,21 @@
   }
   function bindFaq() {
     var box = $("#faq"); if (!box) return;
-    var form = $("#faqForm"), inp = $("#faqInput");
-    form.onsubmit = function (e) { e.preventDefault(); var v = inp.value; inp.value = ""; paintSug(""); askFree(v); };
-    inp.oninput = function () { paintSug(inp.value); };
+    var inp = $("#askInput");
     box.onclick = function (ev) {
       var b = ev.target.closest("button, a"); if (!b || !box.contains(b)) return;
       if (b.closest(".is-used") && !b.classList.contains("msg-link")) return;
+      if (b.hasAttribute("data-chat-close")) { closeChat(); return; }
       if (b.dataset.q) askItem(b.dataset.q);
-      else if (b.dataset.sug) { inp.value = ""; paintSug(""); askItem(b.dataset.sug); }
+      else if (b.dataset.sug) { if (inp) inp.value = ""; paintSug(""); askItem(b.dataset.sug); }
       else if (b.hasAttribute("data-topics")) askTopics();
       else if (b.hasAttribute("data-topics-back")) { if (!chat.busy) { userSay("Volver"); botSay("<p>¿Sobre qué es?</p>", DATA.faq.topics.map(function (t) { return { label: t.label, attr: 'data-topic="' + t.id + '"' }; })); } }
       else if (b.dataset.topic) askTopic(b.dataset.topic);
       else if (b.hasAttribute("data-popular")) { if (!chat.busy) { userSay("Ver las más preguntadas"); botSay("<p>Estas son las que más nos llegan:</p>", popularChips()); } }
       else if (b.hasAttribute("data-nope")) { if (!chat.busy) { userSay(b.textContent); botSay(consultHtml("Uh, perdón. Escribinos y te responde alguien de Gradiente."), [{ label: "Ver las más preguntadas", attr: "data-popular", soft: true }]); } }
-      else if (b.hasAttribute("data-about-go")) openAbout("who");
+      else if (b.hasAttribute("data-about-go")) { closeChat(); openAbout("who"); }
       else if (b.dataset.helpGo) openConsultas(b.dataset.helpGo);
-      else if (b.hasAttribute("data-cal-go")) goCal();
+      else if (b.hasAttribute("data-cal-go")) { closeChat(); goCal(); }
       else if (b.hasAttribute("data-faq-reset")) { chat.log = []; faqStart(); }
     };
   }
@@ -991,9 +1023,7 @@
       "</li><li><i class=\"c\"></i><b>" + s.c + '</b> cursando</li><li class="pp-rest"><b>' + pend + "</b> por hacer</li></ul></section>";
   }
   function footer() {
-    return '<footer class="footer"><div class="social">' + (CFG.socialLinks || []).map(function (s) {
-      return '<a href="' + esc(s.url) + '" target="_blank" rel="noopener" aria-label="' + esc(s.label) + '">' + ic(s.icon) + "</a>";
-    }).join("") + '</div><p class="small muted" style="margin:0">' + esc(CFG.description || "") + '<br>Los planes salen de la web oficial de la Facultad. Ante cualquier duda, SIU Guaraní y el Departamento de Alumnos tienen la última palabra.</p></footer>';
+    return '<footer class="footer"><div class="social">' + (CFG.socialLinks || []).map(function (s) { return socialBtn(s, false); }).join("") + '</div><p class="small muted" style="margin:0">' + esc(CFG.description || "") + '<br>Los planes salen de la web oficial de la Facultad. Ante cualquier duda, SIU Guaraní y el Departamento de Alumnos tienen la última palabra.</p></footer>';
   }
 
   /* ======================================================================
@@ -1726,9 +1756,9 @@
     var n = DATA.nube[code], d = n && n.d && n.d[0];
     return d ? "https://drive.google.com/drive/folders/" + d : (CFG.nubeParcialesUrl || CFG.driveUrl);
   }
-  function nubeHit(s) {
+  function nubeHit(s, i) {
     var n = DATA.nube[s.c];
-    return '<a class="nubeHit" href="' + esc(nubeUrl(s.c)) + '" target="_blank" rel="noopener"><span class="nubeHit-ic">' + ic("folder") + '</span><span><strong>' + esc(s.n) + "</strong><small>" + (n.d ? "Abrir su carpeta" : "Buscala en «Parciales»") + "</small></span><em>" + n.n + " archivo" + (n.n === 1 ? "" : "s") + "</em>" + ic("ext") + "</a>";
+    return '<a class="nubeHit" style="--i:' + (i || 0) + '" href="' + esc(nubeUrl(s.c)) + '" target="_blank" rel="noopener"><span class="nubeHit-ic">' + ic("folder") + '</span><span><strong>' + esc(s.n) + "</strong><small>" + (n.d ? "Abrir su carpeta" : "Buscala en «Parciales»") + "</small></span><em>" + n.n + " archivo" + (n.n === 1 ? "" : "s") + "</em>" + ic("ext") + "</a>";
   }
   function nubeFinderResults(q) {
     if (!q) {
@@ -1743,7 +1773,7 @@
   }
   function nubeFinder(id) {
     return '<div class="nubeFind"><label class="search nubeSearch"><span class="sr">Buscar materia en la nube</span>' + ic("search") +
-      '<input id="' + id + '" type="search" placeholder="¿Hay material de tu materia?" autocomplete="off"></label>' +
+      '<input id="' + id + '" type="search" placeholder="Buscá tu materia…" autocomplete="off"></label>' +
       '<div class="nubeHits" id="' + id + 'Hits">' + nubeFinderResults("") + "</div></div>";
   }
   function bindNubeFinder(id, root) {
@@ -1756,9 +1786,9 @@
     });
   }
   function nubeCard() {
-    return '<section class="nube rise"><div class="nube-head"><span class="nube-ic">' + ic("cloud") + "</span>" +
-      '<div class="nube-t"><p class="nube-k">Nube Gradiente · <b>2.600+</b> archivos · <b>' + nubeCount() + "</b> materias</p>" +
-      '<h2 class="h2">¿Hay material de tu materia?</h2></div>' +
+    return '<section class="nube rise" aria-labelledby="nubeT"><div class="nube-head"><span class="nube-ic">' + ic("cloud") + "</span>" +
+      '<div class="nube-t"><h2 class="nube-k" id="nubeT">Buscador · Nube Gradiente</h2>' +
+      '<p class="nube-sub"><b>2.600+</b> parciales, finales y apuntes de <b>' + nubeCount() + "</b> materias</p></div>" +
       '<a class="nube-open" href="' + esc(CFG.driveUrl) + '" target="_blank" rel="noopener">Abrir la nube' + ic("ext") + "</a></div>" +
       nubeFinder("nubeQ") + "</section>";
   }
@@ -1768,9 +1798,10 @@
     if (!DATA.links || !DATA.plans) loading();
     return Promise.all([ensureLinks(), ensurePlans()]).then(function () {
       var cats = catList().filter(function (c) { return !c.hide && DATA.links.some(function (l) { return l.category === c.id; }); });
-      var html = '<div class="wrap page res"><p class="kicker">Recursos</p><h1 class="h1">Todo lo que<br>vas a buscar</h1>' +
-        '<p class="lead">Trámites, becas, apuntes, cursada y contactos útiles de la Facultad, en un solo lugar.</p>' +
+      var html = '<div class="wrap page res"><header class="resHead"><h1 class="h1">Recursos</h1>' +
+        '<p class="lead">Trámites, becas, apuntes, cursada y contactos útiles de la Facultad.</p></header>' +
         nubeCard() +
+        '<h2 class="resSec">Links útiles</h2>' +
         '<div class="stickSentinel" id="stickSentinel"></div><div class="planTools resTools" id="planTools"><label class="search"><span class="sr">Buscar</span>' + ic("search") +
         '<input id="resSearch" type="search" placeholder="Buscar: becas, SIU, turnos, mails…" autocomplete="off" value="' + esc(resState.q) + '"></label>' +
         '<nav class="chipsRow resChips" aria-label="Ir a una categoría">' +
