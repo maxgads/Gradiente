@@ -72,15 +72,23 @@
     if (t) return t === "dark";
     return window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches;
   }
-  /* el botón va rotando entre fondos: claros y oscuros, con varios azules de la agrupación.
-     Solo cambian fondo y superficies (app.css, "paletas"); los colores de estado quedan igual. */
+  /* paletas de colores: el botón abre un selector. Cada una define fondo, superficies, acentos y
+     colores de estado en app.css ("v2.8 · Paletas"); sw = muestras que se ven en el selector. */
   var PALETTES = [
-    { id: "light", theme: "light", name: "Claro" },
-    { id: "cielo", theme: "light", name: "Cielo" },
-    { id: "marino", theme: "dark", name: "Marino" },
-    { id: "oceano", theme: "dark", name: "Océano" },
-    { id: "noche", theme: "dark", name: "Noche azul" },
-    { id: "dark", theme: "dark", name: "Oscuro" }
+    { id: "light", theme: "light", name: "Clásica", sw: ["#f3f5f9", "#0e1b44", "#e11d2a", "#059669", "#d97706"] },
+    { id: "vivo", theme: "light", name: "Vivo", sw: ["#f2f5ff", "#1d4ed8", "#ef233c", "#16a34a", "#eab308"] },
+    { id: "cielo", theme: "light", name: "Cielo", sw: ["#eaf1ff", "#1e3a8a", "#e11d2a", "#0ea5e9", "#059669"] },
+    { id: "pastel", theme: "light", name: "Pastel", sw: ["#fbf7f0", "#4a6fd6", "#e0505e", "#3aa876", "#f2b33d"] },
+    { id: "rosa", theme: "light", name: "Rosa", sw: ["#fdf2f7", "#7c4ddb", "#ec4899", "#6d7ff2", "#f5a524"] },
+    { id: "lavanda", theme: "light", name: "Lavanda", sw: ["#f4f3ff", "#5b4bd6", "#df3b73", "#3fa7e0", "#20a67a"] },
+    { id: "menta", theme: "light", name: "Menta", sw: ["#effaf6", "#0f766e", "#f0544f", "#2b8fd6", "#e0a100"] },
+    { id: "durazno", theme: "light", name: "Durazno", sw: ["#fff5ee", "#b4441f", "#e0445a", "#3c7fd1", "#2f9e62"] },
+    { id: "marino", theme: "dark", name: "Marino", sw: ["#0a1433", "#2f4aa8", "#e11d48", "#34d399", "#fbbf24"] },
+    { id: "oceano", theme: "dark", name: "Océano", sw: ["#061a26", "#0e7490", "#e11d48", "#2dd4bf", "#fbbf24"] },
+    { id: "noche", theme: "dark", name: "Noche azul", sw: ["#0c0e26", "#4f46e5", "#e11d48", "#34d399", "#fbbf24"] },
+    { id: "uva", theme: "dark", name: "Uva", sw: ["#140c22", "#6d4bd8", "#d6246f", "#5eead4", "#fcd34d"] },
+    { id: "dark", theme: "dark", name: "Oscuro", sw: ["#0a0b0f", "#1d2c63", "#e11d2a", "#34d399", "#fbbf24"] },
+    { id: "negro", theme: "dark", name: "Negro", sw: ["#000000", "#1b2340", "#e8202f", "#30d98a", "#ffc53d"] }
   ];
   function curPalette() {
     var root = document.documentElement, id = root.dataset.palette || root.dataset.theme || (isDark() ? "dark" : "light");
@@ -95,18 +103,50 @@
     if (meta) meta.setAttribute("content", getComputedStyle(document.body).backgroundColor);
   }
   function paintThemeBtn() {
-    var p = curPalette(), next = PALETTES[(PALETTES.indexOf(p) + 1) % PALETTES.length];
+    var p = curPalette();
     themeBtn.innerHTML = ic("theme");
-    themeBtn.setAttribute("aria-label", "Colores: " + p.name + ". Cambiar a " + next.name);
+    themeBtn.setAttribute("aria-label", "Colores: " + p.name + ". Elegir paleta");
+    themeBtn.setAttribute("aria-haspopup", "true");
     themeBtn.title = "Colores: " + p.name;
   }
-  themeBtn.addEventListener("click", function () {
-    var p = curPalette(), next = PALETTES[(PALETTES.indexOf(p) + 1) % PALETTES.length];
-    applyPalette(next);
-    paintThemeBtn();
-    toast("Colores: " + next.name);
-    if (ui.lastRoute === "plan" && S.view === "tree") drawTreeLines();
-  });
+  /* selector de paletas: claras y oscuras, con muestras */
+  var palPop = null;
+  function palSwatch(p) {
+    return '<span class="pal-sw" style="background:' + p.sw[0] + '">' + p.sw.slice(1).map(function (c) { return '<i style="background:' + c + '"></i>'; }).join("") + "</span>";
+  }
+  function closePalettes() {
+    if (!palPop) return;
+    var d = palPop; palPop = null;
+    d.classList.add("is-out"); setTimeout(function () { d.remove(); }, 160);
+    themeBtn.setAttribute("aria-expanded", "false");
+    document.removeEventListener("click", outsidePal, true);
+  }
+  function outsidePal(e) { if (palPop && !palPop.contains(e.target) && !themeBtn.contains(e.target)) closePalettes(); }
+  function openPalettes() {
+    var cur = curPalette();
+    var group = function (theme, label) {
+      return '<p class="pal-k">' + label + '</p><div class="pal-grid">' + PALETTES.filter(function (p) { return p.theme === theme; }).map(function (p) {
+        return '<button type="button" class="pal-opt" data-pal="' + p.id + '" aria-pressed="' + (p === cur) + '">' + palSwatch(p) + "<span>" + esc(p.name) + "</span>" + ic("check", "pal-ck") + "</button>";
+      }).join("") + "</div>";
+    };
+    var d = document.createElement("div");
+    d.className = "palPop"; d.setAttribute("role", "dialog"); d.setAttribute("aria-label", "Paletas de colores");
+    d.innerHTML = group("light", "Claras") + group("dark", "Oscuras");
+    document.body.appendChild(d);
+    palPop = d;
+    themeBtn.setAttribute("aria-expanded", "true");
+    d.onclick = function (e) {
+      var b = e.target.closest("[data-pal]"); if (!b) return;
+      var p = PALETTES.filter(function (x) { return x.id === b.dataset.pal; })[0];
+      applyPalette(p); paintThemeBtn();
+      $all("[data-pal]", d).forEach(function (o) { o.setAttribute("aria-pressed", String(o === b)); });
+      if (ui.lastRoute === "plan" && S.view === "tree") drawTreeLines();
+    };
+    setTimeout(function () { document.addEventListener("click", outsidePal, true); }, 0);
+    var f = $('[aria-pressed="true"]', d); if (f) f.focus({ preventScroll: true });
+  }
+  themeBtn.addEventListener("click", function () { if (palPop) closePalettes(); else openPalettes(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && palPop) { closePalettes(); themeBtn.focus(); } });
   paintThemeBtn();
 
   var consultaBtn = $("#consultaBtn");
@@ -2086,9 +2126,9 @@
         var t = ev.target.closest("[data-dev]"); if (!t) return;
         var a = t.dataset.dev;
         if (a === "fresh") {
-          try { localStorage.removeItem(KEY); localStorage.removeItem("gradiente.theme"); localStorage.removeItem("gradiente.tip"); } catch (e) {}
+          try { localStorage.removeItem(KEY); localStorage.removeItem("gradiente.theme"); localStorage.removeItem("gradiente.palette"); localStorage.removeItem("gradiente.tip"); } catch (e) {}
           S.name = "";
-          delete document.documentElement.dataset.theme; paintThemeBtn();
+          delete document.documentElement.dataset.theme; delete document.documentElement.dataset.palette; paintThemeBtn();
           S.career = null; S.prog = {}; S.view = "tree"; S.filter = "all"; ui.query = "";
           closeSheet(); if (location.hash === "#/" || !location.hash) route(); else location.hash = "#/";
           toast("Listo: estás viendo la página como alguien nuevo.");

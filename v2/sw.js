@@ -1,5 +1,5 @@
 /* Service worker: red primero, cache como respaldo para usar el plan sin conexión. */
-var CACHE = "gradiente-v2-10";
+var CACHE = "gradiente-v2-11";
 var SHELL = ["./", "index.html", "config.js", "assets/app.css", "assets/app.js", "data/planes.json", "data/nube.json", "data/faq.json", "data/catedras.json", "data/fechas.json", "data/instagram.json", "assets/icon.svg", "assets/logo-gradiente-azul.png", "assets/logo-gradiente-blanco.png"];
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
