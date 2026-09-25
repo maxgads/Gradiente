@@ -66,7 +66,6 @@
   })();
 
   /* ---------------- tema ---------------- */
-  var themeBtn = $("#themeBtn");
   function isDark() {
     var t = document.documentElement.dataset.theme;
     if (t) return t === "dark";
@@ -102,55 +101,25 @@
     var meta = $('meta[name="theme-color"]');
     if (meta) meta.setAttribute("content", getComputedStyle(document.body).backgroundColor);
   }
-  function paintThemeBtn() {
-    var p = curPalette();
-    themeBtn.innerHTML = ic("theme");
-    themeBtn.setAttribute("aria-label", "Colores: " + p.name + ". Elegir paleta");
-    themeBtn.setAttribute("aria-haspopup", "true");
-    themeBtn.title = "Colores: " + p.name;
-  }
-  /* selector de paletas: claras y oscuras, con muestras */
-  var palPop = null;
+  /* la paleta se elige desde el perfil (openProfile); acá solo queda sincronizar lo que la muestra */
+  function paintThemeBtn() { $all("[data-pal]").forEach(function (o) { o.setAttribute("aria-pressed", String(o.dataset.pal === curPalette().id)); }); }
   function palSwatch(p) {
     return '<span class="pal-sw" style="background:' + p.sw[0] + '">' + p.sw.slice(1).map(function (c) { return '<i style="background:' + c + '"></i>'; }).join("") + "</span>";
   }
-  function closePalettes() {
-    if (!palPop) return;
-    var d = palPop; palPop = null;
-    d.classList.add("is-out"); setTimeout(function () { d.remove(); }, 160);
-    themeBtn.setAttribute("aria-expanded", "false");
-    document.removeEventListener("click", outsidePal, true);
-  }
-  function outsidePal(e) { if (palPop && !palPop.contains(e.target) && !themeBtn.contains(e.target)) closePalettes(); }
-  function openPalettes() {
+  function palGrid() {
     var cur = curPalette();
     var group = function (theme, label) {
       return '<p class="pal-k">' + label + '</p><div class="pal-grid">' + PALETTES.filter(function (p) { return p.theme === theme; }).map(function (p) {
         return '<button type="button" class="pal-opt" data-pal="' + p.id + '" aria-pressed="' + (p === cur) + '">' + palSwatch(p) + "<span>" + esc(p.name) + "</span>" + ic("check", "pal-ck") + "</button>";
       }).join("") + "</div>";
     };
-    var d = document.createElement("div");
-    d.className = "palPop"; d.setAttribute("role", "dialog"); d.setAttribute("aria-label", "Paletas de colores");
-    d.innerHTML = group("light", "Claras") + group("dark", "Oscuras");
-    document.body.appendChild(d);
-    palPop = d;
-    themeBtn.setAttribute("aria-expanded", "true");
-    d.onclick = function (e) {
-      var b = e.target.closest("[data-pal]"); if (!b) return;
-      var p = PALETTES.filter(function (x) { return x.id === b.dataset.pal; })[0];
-      applyPalette(p); paintThemeBtn();
-      $all("[data-pal]", d).forEach(function (o) { o.setAttribute("aria-pressed", String(o === b)); });
-      if (ui.lastRoute === "plan" && S.view === "tree") drawTreeLines();
-    };
-    setTimeout(function () { document.addEventListener("click", outsidePal, true); }, 0);
-    var f = $('[aria-pressed="true"]', d); if (f) f.focus({ preventScroll: true });
+    return group("light", "Claras") + group("dark", "Oscuras");
   }
-  themeBtn.addEventListener("click", function () { if (palPop) closePalettes(); else openPalettes(); });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && palPop) { closePalettes(); themeBtn.focus(); } });
-  paintThemeBtn();
-
-  var consultaBtn = $("#consultaBtn");
-  consultaBtn.addEventListener("click", function (e) { e.preventDefault(); openConsultas(); });
+  function pickPalette(id) {
+    var p = PALETTES.filter(function (x) { return x.id === id; })[0]; if (!p) return;
+    applyPalette(p); paintThemeBtn();
+    if (ui.lastRoute === "plan" && S.view === "tree") drawTreeLines();
+  }
 
   /* ---------------- toast ---------------- */
   var toastEl = $("#toast"), toastTimer;
@@ -168,6 +137,7 @@
   function openSheet(renderFn) {
     if (sheet.hidden) lastFocus = document.activeElement;
     sheetRender = renderFn;
+    sheet.classList.remove("sheet--wide");
     sheetBody.innerHTML = renderFn();
     sheet.hidden = false;
     document.body.style.overflow = "hidden";
@@ -178,7 +148,7 @@
   function refreshSheet() { if (!sheet.hidden && sheetRender) { var top = sheetBody.scrollTop; sheetBody.innerHTML = sheetRender(); sheetBody.scrollTop = top; } }
   function closeSheet() {
     if (sheet.hidden) return;
-    sheet.hidden = true; sheetRender = null; sheet.classList.remove("sheet--ob");
+    sheet.hidden = true; sheetRender = null; sheet.classList.remove("sheet--ob", "sheet--wide");
     document.body.style.overflow = "";
     if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
   }
@@ -706,8 +676,9 @@
     if (DATA.fechas) return Promise.resolve();
     return getJSON(CFG.data.fechas || "data/fechas.json").then(function (f) {
       var seen = {};
-      DATA.fechas = (f.extra || []).concat(f.oficial || []).filter(function (e) { return e && e.d && e.t; })
-        .map(function (e) { return { d: e.d, h: e.h || e.d, t: calTitle(e.t), k: CAL_K[e.k] ? e.k : "info", n: e.n || "", url: e.url || "" }; })
+      // g: lo cargó Gradiente (paros, festivales, ventas…): se marca distinto en el almanaque
+      DATA.fechas = (f.extra || []).map(function (e) { return Object.assign({ g: 1 }, e); }).concat(f.oficial || []).filter(function (e) { return e && e.d && e.t; })
+        .map(function (e) { return { d: e.d, h: e.h || e.d, t: calTitle(e.t), k: CAL_K[e.k] ? e.k : "info", n: e.n || "", url: e.url || "", g: e.g ? 1 : 0 }; })
         // el calendario oficial repite algunas fechas ("Semana sugerida de evaluaciones" = mismas semanas de parciales)
         .filter(function (e) { var id = e.k + e.d + e.h; if (seen[id]) return false; seen[id] = 1; return true; });
     }).catch(function () { DATA.fechas = []; });
@@ -734,9 +705,11 @@
   }
   function calEvRow(e, showDate) {
     var k = CAL_K[e.k], range = e.h !== e.d ? fmtShort(e.d) + " al " + fmtShort(e.h) : fmtShort(e.d);
-    var inner = '<i style="background:' + k.color + '"></i><span class="calEv-t"><strong>' + esc(e.t) + "</strong><small>" +
+    var inner = (e.g ? '<span class="calEv-g" aria-hidden="true">!</span>' : '<i style="background:' + k.color + '"></i>') +
+      '<span class="calEv-t">' + (e.g ? '<em class="calEv-by">Aviso de Gradiente</em>' : "") + "<strong>" + esc(e.t) + "</strong><small>" +
       '<b style="color:' + k.color + '">' + k.label + "</b> · " + (showDate || e.h !== e.d ? range : "todo el día") + (e.n ? " · " + esc(e.n) : "") + "</small></span>";
-    return e.url ? '<a class="calEv" href="' + esc(e.url) + '" target="_blank" rel="noopener">' + inner + ic("ext") + "</a>" : '<div class="calEv">' + inner + "</div>";
+    var cls = "calEv" + (e.g ? " calEv--g" : ""), st = e.g ? ' style="--g:' + k.color + '"' : "";
+    return e.url ? '<a class="' + cls + '"' + st + ' href="' + esc(e.url) + '" target="_blank" rel="noopener">' + inner + ic("ext") + "</a>" : '<div class="' + cls + '"' + st + ">" + inner + "</div>";
   }
   function calTitleOf(days, ref, week) {
     if (!week) return MESES[ref.getMonth()].replace(/^./, function (m) { return m.toUpperCase(); }) + " " + ref.getFullYear();
@@ -775,12 +748,15 @@
       var iso = isoOf(d), ev = eventsOn(iso), kinds = [];
       ev.forEach(function (e) { if (kinds.indexOf(e.k) < 0) kinds.push(e.k); });
       var off = kinds[0] === "feriado" || kinds[0] === "paro";
+      var gEv = ev.filter(function (e) { return e.g; });
       var cls = "cal-d" + (iso === today ? " is-today" : "") + (iso === calUI.sel ? " is-sel" : "") + (!week && d.getMonth() !== R.month ? " is-out" : "") +
-        (off ? " is-off" : "") + (iso < today ? " is-past" : "") + (ev.length ? " has-ev" : "");
-      h += '<button type="button" class="' + cls + '" data-cal-day="' + iso + '" aria-pressed="' + (iso === calUI.sel) + '" aria-label="' + DIAS[d.getDay()] + " " + d.getDate() + (ev.length ? ": " + esc(ev.map(function (e) { return e.t; }).join(", ")) : "") + '"' +
-        (off ? ' style="--off:' + CAL_K[kinds[0]].color + '"' : "") + ">" +
+        (off ? " is-off" : "") + (gEv.length ? " is-g" : "") + (iso < today ? " is-past" : "") + (ev.length ? " has-ev" : "");
+      var st = (off ? "--off:" + CAL_K[kinds[0]].color + ";" : "") + (gEv.length ? "--g:" + CAL_K[gEv[0].k].color + ";" : "");
+      h += '<button type="button" class="' + cls + '" data-cal-day="' + iso + '" aria-pressed="' + (iso === calUI.sel) + '" aria-label="' + DIAS[d.getDay()] + " " + d.getDate() + (off ? ", sin clases" : "") + (ev.length ? ": " + esc(ev.map(function (e) { return e.t; }).join(", ")) : "") + '"' +
+        (st ? ' style="' + st + '"' : "") + ">" +
         (week ? "<small>" + DIAS[d.getDay()].slice(0, 3) + "</small>" : "") + "<b>" + d.getDate() + "</b>" +
-        calBar(kinds) + "</button>";
+        (gEv.length ? '<i class="cal-g" aria-hidden="true">!</i>' : "") +
+        (off && week ? '<em class="cal-offl">Sin clases</em>' : calBar(kinds)) + "</button>";
     });
     h += "</div>";
     // detalle: el día que tocaste, o lo que hay en lo que estás viendo
@@ -1896,10 +1872,204 @@
   function nubeCard() {
     // el ícono es el botón de la nube: todo el encabezado entra en su altura
     return '<section class="nube rise" aria-labelledby="nubeT"><div class="nube-head">' +
-      '<a class="nube-ic" href="' + esc(CFG.driveUrl) + '" target="_blank" rel="noopener" aria-label="Abrir la Nube Gradiente" title="Abrir la Nube Gradiente">' + ic("cloudq") + '<i class="nube-go">' + ic("ext") + "</i></a>" +
+      '<a class="nube-ic" href="' + esc(CFG.driveUrl) + '" target="_blank" rel="noopener" aria-label="Abrir la Nube Gradiente" title="Abrir la Nube Gradiente">' + ic("cloudq") + "</a>" +
       '<h2 class="nube-title" id="nubeT">Buscador</h2>' +
       '<p class="nube-kpis"><span><b>2.600+</b> archivos</span><span><b>' + nubeCount() + "</b> materias</span></p></div>" +
       nubeFinder("nubeQ") + "</section>";
+  }
+
+  /* --- herramientas: fórmulas, pomodoro y tabla periódica (se abren en la hoja) --- */
+  var TOOLS = [
+    ["formulas", "sigma", "Fórmulas", "Derivadas, integrales, física, química… por tema"],
+    ["pomodoro", "timer", "Pomodoro", "Bloques de estudio con descansos"],
+    ["tabla", "atom", "Tabla periódica", "Los 118 elementos con masa, grupo y período"]
+  ];
+  function toolsSection() {
+    return '<section class="tools" aria-labelledby="toolsT"><h2 class="resSec" id="toolsT">Herramientas</h2><div class="toolGrid">' + TOOLS.map(function (t) {
+      return '<button type="button" class="tool tool--' + t[0] + ' rise" data-tool="' + t[0] + '"><span class="tool-ic">' + ic(t[1]) + '</span><span class="tool-t"><strong>' + t[2] + "</strong><small>" + t[3] + "</small></span>" +
+        (t[0] === "pomodoro" ? '<em class="tool-live" id="pomoLive"></em>' : "") + ic("chev") + "</button>";
+    }).join("") + "</div></section>";
+  }
+  function bindTools(root) {
+    $all("[data-tool]", root).forEach(function (b) { b.onclick = function () { openTool(b.dataset.tool); }; });
+    paintPomoLive();
+  }
+  function openTool(id) { if (id === "formulas") openFormulas(); else if (id === "pomodoro") openPomodoro(); else if (id === "tabla") openTabla(); }
+  function toolHead(t) {
+    return '<div class="dHead"><div><p class="dMeta">Herramientas</p><h2 class="h2" id="sheetTitle">' + t + '</h2></div><button class="iconBtn" type="button" data-close aria-label="Cerrar">' + ic("x") + "</button></div>";
+  }
+
+  /* fórmulas: data/formulas.json, dibujadas con KaTeX (se baja recién al abrirlas) */
+  var katexP = null;
+  function loadKatex() {
+    if (window.katex) return Promise.resolve();
+    if (katexP) return katexP;
+    katexP = new Promise(function (ok, bad) {
+      var base = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/";
+      var l = document.createElement("link"); l.rel = "stylesheet"; l.href = base + "katex.min.css"; document.head.appendChild(l);
+      var s = document.createElement("script"); s.src = base + "katex.min.js"; s.onload = ok;
+      s.onerror = function () { katexP = null; bad(new Error("katex")); };
+      document.head.appendChild(s);
+    });
+    return katexP;
+  }
+  function tex(f) {
+    if (!window.katex) return '<code class="fRaw">' + esc(f) + "</code>";
+    try { return katex.renderToString(f, { throwOnError: false, displayMode: true, output: "html" }); } catch (e) { return '<code class="fRaw">' + esc(f) + "</code>"; }
+  }
+  function ensureFormulas() {
+    if (DATA.formulas) return Promise.resolve();
+    return getJSON(CFG.data.formulas || "data/formulas.json").then(function (d) { DATA.formulas = d.topics || []; }).catch(function () { DATA.formulas = []; });
+  }
+  var fUI = { t: null, q: "" };
+  function openFormulas() {
+    Promise.all([ensureFormulas(), loadKatex().catch(function () {})]).then(function () {
+      if (!fUI.t && DATA.formulas[0]) fUI.t = DATA.formulas[0].id;
+      openSheet(formulasView); sheet.classList.add("sheet--wide");
+      sheetBody.onclick = function (e) {
+        var b = e.target.closest("[data-ft]"); if (!b) return;
+        fUI.t = b.dataset.ft; refreshSheet(); bindFormulasInput();
+        var a = $('[data-ft="' + fUI.t + '"]', sheetBody); if (a && a.scrollIntoView) a.scrollIntoView({ inline: "center", block: "nearest" });
+      };
+      bindFormulasInput();
+    });
+  }
+  function formulasView() {
+    var q = norm(fUI.q), topics = DATA.formulas, list = [], h = toolHead("Fórmulas");
+    h += '<label class="search fSearch"><span class="sr">Buscar fórmula</span>' + ic("search") + '<input id="fQ" type="search" placeholder="Buscar: integral, Bayes, Ohm, pH…" value="' + esc(fUI.q) + '" autocomplete="off"></label>';
+    if (q) {
+      topics.forEach(function (t) { t.items.forEach(function (it) { if (norm(it.n + " " + t.name + " " + (it.note || "")).indexOf(q) >= 0) list.push({ t: t, it: it }); }); });
+    } else {
+      h += '<div class="fTopics" role="group" aria-label="Temas">' + topics.map(function (t) { return '<button type="button" data-ft="' + esc(t.id) + '" aria-pressed="' + (t.id === fUI.t) + '">' + esc(t.name) + "</button>"; }).join("") + "</div>";
+      var t = topics.find(function (x) { return x.id === fUI.t; }) || topics[0];
+      if (t) { list = t.items.map(function (it) { return { t: t, it: it }; }); if (t.hint) h += '<p class="fHint">Se suele ver en <b>' + esc(t.hint) + "</b></p>"; }
+    }
+    h += '<div class="fList">' + (list.length ? list.map(function (x) {
+      return '<div class="fCard"><p class="fCard-n">' + esc(x.it.n) + (q ? "<small>" + esc(x.t.name) + "</small>" : "") + '</p><div class="fCard-f">' + tex(x.it.f) + "</div>" +
+        (x.it.note ? '<p class="fCard-note">' + esc(x.it.note) + "</p>" : "") + "</div>";
+    }).join("") : '<p class="cal-none">No encontramos esa fórmula. Probá con otra palabra.</p>') + "</div>";
+    h += '<p class="fFoot">Las armamos para repasar rápido; ante la duda, la cátedra manda. ¿Falta alguna o ves un error? <a href="' + esc(CFG.consultationFormUrl) + '" target="_blank" rel="noopener">Avisanos</a>.</p>';
+    return h;
+  }
+  function bindFormulasInput() {
+    var i = $("#fQ", sheetBody); if (!i) return;
+    i.oninput = function () {
+      fUI.q = i.value; var pos = i.selectionStart;
+      refreshSheet();
+      var n = $("#fQ", sheetBody); n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {}
+      bindFormulasInput();
+    };
+  }
+
+  /* pomodoro: sigue corriendo aunque cierres la hoja; avisa con un sonido */
+  var PO_L = { focus: "Estudio", short: "Descanso", long: "Descanso largo" };
+  var PO = { mode: "focus", left: null, run: false, end: 0, timer: null, done: 0 };
+  (function () { var d = store.get("gradiente.pomo", null); if (d && d.d === new Date().toDateString()) PO.done = d.n || 0; })();
+  function pomoLen(m) { var c = (CFG.tools && CFG.tools.pomodoro) || {}; return 60 * ({ focus: c.focus || 25, short: c.short || 5, long: c.long || 15 })[m]; }
+  function pomoLeft() { return PO.run ? Math.max(0, Math.ceil((PO.end - Date.now()) / 1000)) : (PO.left == null ? pomoLen(PO.mode) : PO.left); }
+  function mmss(s) { return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2); }
+  function pomoTick() { if (PO.run && pomoLeft() <= 0) pomoFinish(); paintPomoLive(); paintPomoSheet(); }
+  function pomoStart() { PO.end = Date.now() + pomoLeft() * 1000; PO.run = true; clearInterval(PO.timer); PO.timer = setInterval(pomoTick, 500); pomoTick(); }
+  function pomoPause() { PO.left = pomoLeft(); PO.run = false; clearInterval(PO.timer); pomoTick(); }
+  function pomoSet(m) { PO.mode = m; PO.left = null; PO.run = false; clearInterval(PO.timer); pomoTick(); }
+  function pomoFinish() {
+    PO.run = false; clearInterval(PO.timer); pomoBeep();
+    if (PO.mode === "focus") {
+      PO.done++; store.set("gradiente.pomo", { d: new Date().toDateString(), n: PO.done });
+      PO.mode = PO.done % 4 === 0 ? "long" : "short"; toast("¡Bloque terminado! Tomate un descanso.");
+    } else { PO.mode = "focus"; toast("Se terminó el descanso. ¡A darle!"); }
+    PO.left = null;
+  }
+  function pomoBeep() {
+    try {
+      var A = window.AudioContext || window.webkitAudioContext, a = new A();
+      [0, .28, .56].forEach(function (t) {
+        var o = a.createOscillator(), g = a.createGain(); o.frequency.value = 880; o.connect(g); g.connect(a.destination);
+        g.gain.setValueAtTime(.0001, a.currentTime + t); g.gain.exponentialRampToValueAtTime(.25, a.currentTime + t + .02); g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + t + .22);
+        o.start(a.currentTime + t); o.stop(a.currentTime + t + .25);
+      });
+    } catch (e) {}
+  }
+  function paintPomoLive() { var el = $("#pomoLive"); if (!el) return; el.textContent = PO.run ? mmss(pomoLeft()) : ""; el.classList.toggle("is-on", PO.run); }
+  function pomoView() {
+    var s = pomoLeft(), tot = pomoLen(PO.mode);
+    return toolHead("Pomodoro") + '<div class="pomo pomo--' + PO.mode + (PO.run ? " is-run" : "") + '">' +
+      '<div class="seg pomo-seg" role="group" aria-label="Modo">' + ["focus", "short", "long"].map(function (m) { return '<button type="button" data-pm="' + m + '" aria-pressed="' + (PO.mode === m) + '">' + PO_L[m] + "</button>"; }).join("") + "</div>" +
+      '<div class="pomo-ring" style="--f:' + ((1 - s / tot) * 100).toFixed(2) + '"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="pr-t" cx="60" cy="60" r="52"/><circle class="pr-f" cx="60" cy="60" r="52" pathLength="100"/></svg>' +
+      '<div class="pomo-time"><b id="pomoTime" aria-live="off">' + mmss(s) + "</b><small>" + PO_L[PO.mode] + "</small></div></div>" +
+      '<div class="pomo-act"><button class="btn btn--primary" type="button" data-pa="' + (PO.run ? "pause" : "start") + '">' + (PO.run ? "Pausar" : s < tot ? "Seguir" : "Empezar") + "</button>" +
+      '<button class="btn" type="button" data-pa="reset">Reiniciar</button></div>' +
+      '<p class="pomo-done"><span class="pomo-dots">' + [0, 1, 2, 3].map(function (i) { return '<i class="' + (i < PO.done % 4 || (PO.done && PO.done % 4 === 0) ? "on" : "") + '"></i>'; }).join("") + "</span>" +
+      PO.done + (PO.done === 1 ? " bloque" : " bloques") + " hoy</p>" +
+      '<p class="fFoot">' + pomoLen("focus") / 60 + " minutos concentrado y " + pomoLen("short") / 60 + " de descanso; cada 4 bloques, uno largo. Podés cerrar esto: el reloj sigue y te avisa con un sonido.</p></div>";
+  }
+  function paintPomoSheet() {
+    var pm = !sheet.hidden && $(".pomo", sheetBody); if (!pm) return;
+    if (!pm.classList.contains("pomo--" + PO.mode) || pm.classList.contains("is-run") !== PO.run) { refreshSheet(); return; }
+    var s = pomoLeft(), t = $("#pomoTime", sheetBody), r = $(".pomo-ring", sheetBody);
+    if (t) t.textContent = mmss(s);
+    if (r) r.style.setProperty("--f", ((1 - s / pomoLen(PO.mode)) * 100).toFixed(2));
+  }
+  function openPomodoro() {
+    openSheet(pomoView);
+    sheetBody.onclick = function (e) {
+      var m = e.target.closest("[data-pm]"), a = e.target.closest("[data-pa]");
+      if (m) pomoSet(m.dataset.pm);
+      else if (a) { if (a.dataset.pa === "start") pomoStart(); else if (a.dataset.pa === "pause") pomoPause(); else pomoSet(PO.mode); }
+      else return;
+      refreshSheet();
+    };
+  }
+
+  /* tabla periódica: data/elementos.json */
+  var ELK = {
+    am: ["Metal alcalino", "#ef4444"], ae: ["Alcalinotérreo", "#f97316"], tm: ["Metal de transición", "#eab308"], pt: ["Otros metales", "#14b8a6"],
+    md: ["Metaloide", "#10b981"], nm: ["No metal", "#0ea5e9"], hg: ["Halógeno", "#6366f1"], ng: ["Gas noble", "#a855f7"], la: ["Lantánido", "#ec4899"], ac: ["Actínido", "#be185d"]
+  };
+  function ensureElems() {
+    if (DATA.elems) return Promise.resolve();
+    return getJSON(CFG.data.elementos || "data/elementos.json").then(function (d) { DATA.elems = d.elements || []; }).catch(function () { DATA.elems = []; });
+  }
+  function elDetail(e) {
+    if (!e) return '<p class="ptDet-empty">' + ic("tap") + "Tocá un elemento para ver sus datos.</p>";
+    var k = ELK[e.k] || ["", "#888"];
+    return '<div class="ptDet-tile" style="--c:' + k[1] + '"><small>' + e.z + "</small><b>" + esc(e.s) + "</b><span>" + esc(e.m) + "</span></div>" +
+      '<div class="ptDet-t"><strong>' + esc(e.n) + '</strong><span class="ptDet-k" style="--c:' + k[1] + '">' + k[0] + "</span>" +
+      '<dl><div><dt>Número atómico</dt><dd>' + e.z + "</dd></div><div><dt>Masa atómica</dt><dd>" + esc(e.m) + " u</dd></div>" +
+      "<div><dt>Período</dt><dd>" + e.p + "</dd></div><div><dt>Grupo</dt><dd>" + (e.g || "3 (" + (e.k === "la" ? "lantánidos" : "actínidos") + ")") + "</dd></div></dl></div>";
+  }
+  function tablaView() {
+    var own = CFG.tools && CFG.tools.tablaUrl;
+    var cells = DATA.elems.map(function (e) {
+      var col = e.g || e.fc, row = e.g ? e.p : e.f;
+      return '<button type="button" class="pt-el pt-' + e.k + '" style="grid-column:' + col + ";grid-row:" + row + ";--c:" + (ELK[e.k] || ["", "#888"])[1] + '" data-el="' + e.z + '" aria-label="' + esc(e.n) + '">' +
+        "<small>" + e.z + "</small><b>" + esc(e.s) + "</b><span>" + esc(String(e.m).replace(/^\((.*)\)$/, "$1")) + "</span></button>";
+    }).join("");
+    cells += '<span class="pt-ph" style="grid-column:3;grid-row:6">57–71</span><span class="pt-ph" style="grid-column:3;grid-row:7">89–103</span><span class="pt-gap" style="grid-row:8"></span>';
+    return toolHead("Tabla periódica") +
+      (own ? '<a class="helpNube helpNube--sm" href="' + esc(own) + '" target="_blank" rel="noopener"><span class="helpNube-ic">' + ic("atom") + "</span><span><em>Hecha por Gradiente</em><strong>Nuestra tabla periódica</strong></span>" + ic("ext") + "</a>" : "") +
+      '<div class="ptLegend" role="group" aria-label="Resaltar por tipo">' + Object.keys(ELK).map(function (k) { return '<button type="button" data-ek="' + k + '" style="--c:' + ELK[k][1] + '"><i></i>' + ELK[k][0] + "</button>"; }).join("") + "</div>" +
+      '<div class="ptDet" id="ptDet">' + elDetail(null) + "</div>" +
+      '<div class="ptWrap"><div class="ptGrid" id="ptGrid">' + cells + "</div></div>" +
+      '<p class="fFoot">Masas en u; entre paréntesis, la del isótopo más estable. Deslizá la tabla para ver todo.</p>';
+  }
+  function openTabla() {
+    ensureElems().then(function () {
+      openSheet(tablaView); sheet.classList.add("sheet--wide");
+      var hl = null;
+      sheetBody.onclick = function (ev) {
+        var b = ev.target.closest("[data-el]"), k = ev.target.closest("[data-ek]"), grid = $("#ptGrid", sheetBody);
+        if (b) {
+          var e = DATA.elems[+b.dataset.el - 1];
+          $all(".pt-el.is-sel", grid).forEach(function (x) { x.classList.remove("is-sel"); }); b.classList.add("is-sel");
+          $("#ptDet", sheetBody).innerHTML = elDetail(e);
+        } else if (k) {
+          hl = hl === k.dataset.ek ? null : k.dataset.ek;
+          grid.dataset.hl = hl || "";
+          $all("[data-ek]", sheetBody).forEach(function (x) { x.setAttribute("aria-pressed", String(x.dataset.ek === hl)); });
+        }
+      };
+    });
   }
 
   /* --- página --- */
@@ -1909,7 +2079,7 @@
       var cats = catList().filter(function (c) { return !c.hide && DATA.links.some(function (l) { return l.category === c.id; }); });
       var html = '<div class="wrap page res"><header class="resHead"><h1 class="h1">Recursos</h1>' +
         '<p class="lead">Trámites, becas, apuntes, cursada y contactos útiles de la Facultad.</p></header>' +
-        nubeCard() +
+        nubeCard() + toolsSection() +
         '<div class="stickSentinel" id="stickSentinel"></div><div class="planTools resTools" id="planTools"><div class="resTools-top"><h2 class="resSec">Links útiles</h2><label class="search"><span class="sr">Buscar</span>' + ic("search") +
         '<input id="resSearch" type="search" placeholder="Buscar: becas, SIU, turnos, mails…" autocomplete="off" value="' + esc(resState.q) + '"></label></div>' +
         '<nav class="chipsRow resChips" aria-label="Ir a una categoría">' +
@@ -1921,6 +2091,7 @@
       main.innerHTML = html; stagger(main);
       watchSticky();
       bindNubeFinder("nubeQ", main);
+      bindTools(main);
       var inp = $("#resSearch");
       inp.addEventListener("input", function () { resState.q = inp.value; paintRes(cats); });
       $all("[data-jump]", main).forEach(function (a) {
@@ -2143,7 +2314,7 @@
     var name = n ? String(p.title).replace(/^kit\s*/i, "").replace(n, "").trim() : p.title;
     return '<article class="kit rise">' + (n ? '<span class="kit-n" aria-hidden="true">' + n + "</span>" : "") +
       '<p class="kit-k">Kit</p><h3 class="kit-t">' + (n ? "<b>" + n + "</b> " : "") + esc(name) + "</h3>" +
-      (items.length ? '<ul class="kit-items">' + items.map(function (it) { return "<li>" + esc(it) + "</li>"; }).join("") + "</ul>" : "") +
+      (items.length ? '<ul class="kit-items' + (items.length > 4 ? " is-cols" : "") + '">' + items.map(function (it) { return "<li>" + esc(it) + "</li>"; }).join("") + "</ul>" : "") +
       '<div class="kit-foot"><span class="kit-price">' + esc(p.price) + '</span><span class="kit-seal" aria-label="' + esc(p.label || "Kit Gradiente") + '">' + ic("nabla") + "<small>" + esc(p.label || "Kit Gradiente") + "</small></span></div></article>";
   }
   function renderMesita() {
@@ -2162,11 +2333,27 @@
       paintShop();
     }).catch(failed);
   }
+  /* dibujito del producto mientras no tenga foto (kiosco.json > image la reemplaza) */
+  function prodArt(p) {
+    var n = norm(p.name), s;
+    if (/cuadern/.test(n)) s = '<rect x="32" y="14" width="58" height="66" rx="5" fill="#2563eb"/><rect x="37" y="19" width="48" height="56" rx="3" fill="#fff"/><path d="M43 33h36M43 42h36M43 51h36M43 60h24" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/><g fill="none" stroke="#334155" stroke-width="2">' + [42, 50, 58, 66, 74, 82].map(function (x) { return '<circle cx="' + x + '" cy="15" r="3"/>'; }).join("") + "</g>";
+    else if (/lapicer|birome/.test(n)) s = '<g transform="rotate(-35 60 45)"><rect x="18" y="40" width="64" height="10" rx="5" fill="#1e3a8a"/><rect x="62" y="38" width="22" height="14" rx="4" fill="#2563eb"/><rect x="30" y="36" width="26" height="3.5" rx="1.75" fill="#94a3b8"/><path d="M84 41l14 4-14 4z" fill="#cbd5e1"/><path d="M95 44l3 1-3 1z" fill="#1e293b"/></g>';
+    else if (/lapiz/.test(n)) s = '<g transform="rotate(-35 60 45)"><rect x="16" y="39" width="10" height="12" rx="2" fill="#f472b6"/><rect x="26" y="39" width="7" height="12" fill="#cbd5e1"/><rect x="33" y="39" width="52" height="12" fill="#facc15"/><path d="M33 43h52" stroke="#eab308" stroke-width="1.5"/><path d="M33 47h52" stroke="#fde047" stroke-width="1.5"/><path d="M85 39l15 6-15 6z" fill="#fde68a"/><path d="M95 43l5 2-5 2z" fill="#334155"/></g>';
+    else if (/mina/.test(n)) s = '<path d="M52 8v14M58 5v17M64 9v13" stroke="#334155" stroke-width="2.5" stroke-linecap="round"/><rect x="44" y="18" width="32" height="62" rx="5" fill="#0ea5e9"/><rect x="44" y="18" width="32" height="12" rx="4" fill="#0369a1"/><rect x="50" y="40" width="20" height="22" rx="3" fill="#fff" opacity=".85"/><path d="M54 47h12M54 53h8" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round"/>';
+    else if (/goma/.test(n)) s = '<g transform="rotate(-14 60 45)"><rect x="28" y="31" width="64" height="28" rx="6" fill="#fff" stroke="#e2e8f0" stroke-width="2"/><rect x="52" y="31" width="40" height="28" rx="6" fill="#3b82f6"/><rect x="52" y="31" width="10" height="28" fill="#3b82f6"/><path d="M66 41h18M66 49h12" stroke="#bfdbfe" stroke-width="2.5" stroke-linecap="round"/></g>';
+    else if (/regla/.test(n)) s = '<g transform="rotate(-18 60 45)"><rect x="8" y="35" width="104" height="20" rx="3" fill="#fde047" opacity=".9"/><path d="' + Array.apply(null, Array(16)).map(function (_, i) { var x = 14 + i * 6; return "M" + x + " 35v" + (i % 5 === 0 ? 10 : i % 2 ? 5 : 7); }).join("") + '" stroke="#a16207" stroke-width="1.4"/></g>';
+    else if (/resalt/.test(n)) s = '<g transform="rotate(-35 60 45)"><rect x="20" y="36" width="60" height="18" rx="6" fill="#a3e635"/><rect x="78" y="37" width="18" height="16" rx="4" fill="#65a30d"/><path d="M96 40l8 3v4l-8 3z" fill="#4d7c0f"/><rect x="30" y="41" width="30" height="3.5" rx="1.75" fill="#d9f99d"/></g>';
+    else if (/galle|bizcoch|satur/.test(n)) s = '<circle cx="46" cy="50" r="17" fill="#d97706"/><circle cx="72" cy="42" r="17" fill="#f59e0b"/><g fill="#92400e">' + [[40, 46], [50, 55], [45, 58], [68, 38], [77, 45], [72, 50]].map(function (d) { return '<circle cx="' + d[0] + '" cy="' + d[1] + '" r="1.8"/>'; }).join("") + "</g>";
+    else return '<span class="product-ic">' + ic("shop") + "</span>";
+    return '<svg class="product-art" viewBox="0 0 120 90" aria-hidden="true">' + s + "</svg>";
+  }
   function paintShop() {
     var list = DATA.kiosco.productos.filter(function (p) { return shopCat === "all" || p.category === shopCat; });
     $("#shopGrid").innerHTML = list.map(function (p) {
       var out = p.stock && p.stock !== "disponible";
-      return '<div class="card product lift rise"><span class="cat">' + esc(p.category || "") + "</span><strong>" + esc(p.name) + "</strong><p>" + esc(p.description || "") + '</p><span class="price">' + esc(p.price) + '</span><span class="stock' + (out ? " is-out" : "") + '">' + (out ? "Sin stock" : "● Disponible") + "</span></div>";
+      var img = p.image ? '<img src="' + esc(p.image) + '" alt="" loading="lazy">' : prodArt(p);
+      return '<div class="product rise' + (out ? " is-out" : "") + '"><div class="product-img' + (p.image ? " has-photo" : "") + '">' + img + '<span class="cat">' + esc(p.category || "") + "</span></div>" +
+        '<div class="product-b"><strong>' + esc(p.name) + "</strong><p>" + esc(p.description || "") + '</p><div class="product-foot"><span class="price">' + esc(p.price) + '</span><span class="stock' + (out ? " is-out" : "") + '">' + (out ? "Sin stock" : "Disponible") + "</span></div></div></div>";
     }).join("") || '<p class="muted">Pronto cargamos productos.</p>';
     stagger($("#shopGrid"));
   }
@@ -2187,7 +2374,9 @@
     var fab = document.createElement("button");
     fab.type = "button"; fab.className = "devFab";
     function paint() { fab.classList.toggle("is-temp", DEV.temp); fab.innerHTML = "<i></i>DEV" + (DEV.temp ? " · sin guardar" : ""); }
-    paint(); document.body.appendChild(fab);
+    // ya no flota en la pantalla: se abre desde el perfil ("Modo desarrollo")
+    paint();
+    DEV.open = function () { fab.onclick(); };
     fab.onclick = function () {
       openSheet(function () {
         var c = career();
@@ -2222,6 +2411,173 @@
       };
     };
   }
+  /* ======================================================================
+     ENCABEZADO: perfil (izquierda) y notificaciones (derecha)
+     ====================================================================== */
+  // variantes del sheet: "modal" centrado (perfil) y "side" lateral (notificaciones). Se sacan solas al cerrarse.
+  var SHEET_VARIANTS = ["sheet--modal", "sheet--side"], pfDirty = false;
+  function openSheetAs(cls, fn) {
+    SHEET_VARIANTS.forEach(function (c) { sheet.classList.remove(c); });
+    openSheet(fn);
+    sheet.classList.add(cls);
+  }
+  new MutationObserver(function () {
+    if (!sheet.hidden) return;
+    SHEET_VARIANTS.forEach(function (c) { sheet.classList.remove(c); });
+    if (pfDirty) { pfDirty = false; if (ui.lastRoute === "home") route(); }
+  }).observe(sheet, { attributes: true, attributeFilter: ["hidden"] });
+
+  /* ---------- perfil (todo queda en este dispositivo hasta que haya cuentas) ---------- */
+  var PF_KEY = "gradiente.profile";
+  function profile() { return store.get(PF_KEY, null) || {}; }
+  function saveProfile(p) { if (!DEV.temp) store.set(PF_KEY, p); }
+  // sin foto: la facultad sobre el azul de la paleta
+  function avatarHtml(big) {
+    var p = profile();
+    if (p.photo) return '<img src="' + esc(p.photo) + '" alt="">';
+    return '<span class="avatar-def' + (big ? " is-big" : "") + '">' + ic("building") + "</span>";
+  }
+  function paintAvatar() { var a = $("#topAvatar"); if (a) a.innerHTML = avatarHtml(false); }
+  function pfField(id, label, val, attrs) {
+    return '<label class="pf-field"><span>' + label + '</span><input data-pf-f="' + id + '" value="' + esc(val || "") + '" ' + (attrs || "") + "></label>";
+  }
+  function profileView() {
+    var p = profile(), c = career();
+    var h = '<div class="pf"><button class="iconBtn pf-x" type="button" data-close aria-label="Cerrar">' + ic("x") + "</button>" +
+      '<div class="pf-top"><label class="pf-photo" title="Cambiar foto"><span class="avatar avatar--big">' + avatarHtml(true) + '</span><span class="pf-cam">' + ic("camera") + '</span><input type="file" accept="image/*" data-pf-photo hidden></label>' +
+      '<div class="pf-id"><label class="sr" for="pfName">Tu nombre</label><input id="pfName" class="pf-name" data-pf-name value="' + esc(S.name || "") + '" placeholder="Tu nombre" autocomplete="given-name" maxlength="40">' +
+      '<p class="pf-sub" id="sheetTitle">Estudiante · Ingeniería UNLP</p>' + (p.photo ? '<button type="button" class="linkBtn pf-rm" data-pf="nophoto">Quitar foto</button>' : "") + "</div></div>";
+
+    if (c) {
+      var s = summary(c);
+      h += '<section class="pf-card"><p class="pf-k">Tu carrera · Plan ' + esc(c.plan) + "</p><strong>" + esc(c.name) + "</strong>" +
+        '<div class="pf-pct"><b>' + s.pct + '<small>%</small></b><span class="pf-bar"><i class="d" style="width:' + s.pct + '%"></i><i class="r" style="width:' + Math.max(0, s.pctR - s.pct) + '%"></i></span></div>' +
+        '<p class="pf-stats"><span><b>' + s.a + "</b> aprobadas</span><span><b>" + s.r + "</b> " + (s.r === 1 ? "regular" : "regulares") + "</span><span>Promedio <b>" + fmtAvg(s.avg) + "</b></span></p>" +
+        '<div class="pf-acts"><a class="btn btn--primary btn--sm" href="#/plan" data-close>' + ic("plan") + 'Ver mi plan</a><button class="btn btn--sm" type="button" data-pf="share">' + ic("share") + "Pasar a otro dispositivo</button></div></section>";
+    } else {
+      h += '<section class="pf-card"><p class="pf-k">Tu carrera</p><strong>Todavía no armaste tu plan</strong><p class="pf-stats">Elegí tu carrera y te mostramos qué podés cursar.</p>' +
+        '<div class="pf-acts"><button class="btn btn--primary btn--sm" type="button" data-pf="onboard">' + ic("plan") + "Armar mi plan</button></div></section>";
+    }
+
+    h += '<p class="pf-sec">Tus datos</p><div class="pf-fields">' +
+      pfField("legajo", "N° de alumno", p.legajo, 'inputmode="numeric" placeholder="12345/6" maxlength="12"') +
+      pfField("dni", "DNI", p.dni, 'inputmode="numeric" placeholder="40123456" maxlength="10"') +
+      pfField("mail", "Mail", p.mail, 'type="email" placeholder="vos@mail.com" autocomplete="email"') + "</div>" +
+      '<p class="pf-note">' + ic("lock") + "Se guarda solo en este dispositivo. No lo mandamos a ningún lado.</p>";
+
+    h += '<p class="pf-sec">Cuenta</p><div class="pf-rows">' +
+      '<button type="button" disabled>' + ic("key") + "<span>Contraseña<small>Vas a poder crearla cuando haya cuentas</small></span><em>Pronto</em></button>" +
+      '<button type="button" disabled>' + ic("users") + "<span>Sincronizar entre dispositivos<small>Tu plan en el celu y en la compu, siempre igual</small></span><em>Pronto</em></button>" +
+      '<button type="button" data-pf="help">' + ic("chat") + "<span>Ayuda y consultas<small>Escribinos o buscá el mail de tu cátedra</small></span>" + ic("chev") + "</button>" +
+      (DEV.on ? '<button type="button" data-pf="dev">' + ic("spark") + "<span>Modo desarrollo<small>Ver como nuevo, modo prueba, progreso de ejemplo</small></span>" + ic("chev") + "</button>" : "") +
+      "</div>";
+
+    h += '<p class="pf-sec">Colores</p><div class="pf-pal">' + palGrid() + "</div></div>";
+    return h;
+  }
+  // foto: recorte cuadrado de 192px para que pese poco
+  function loadPhoto(file) {
+    if (!file || !/^image\//.test(file.type)) return;
+    var rd = new FileReader();
+    rd.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var n = 192, cv = document.createElement("canvas"), side = Math.min(img.width, img.height);
+        cv.width = cv.height = n;
+        cv.getContext("2d").drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, n, n);
+        var p = profile(); p.photo = cv.toDataURL("image/jpeg", 0.85); saveProfile(p);
+        paintAvatar(); refreshSheet(); toast("Foto actualizada.");
+      };
+      img.src = rd.result;
+    };
+    rd.readAsDataURL(file);
+  }
+  function openProfile() {
+    Promise.all([ensurePlans()]).then(function () {
+      openSheetAs("sheet--modal", profileView);
+      sheetBody.onclick = function (e) {
+        var pal = e.target.closest("[data-pal]"); if (pal) { pickPalette(pal.dataset.pal); return; }
+        var b = e.target.closest("[data-pf]"); if (!b) return;
+        var a = b.dataset.pf;
+        if (a === "share") sharePlan(career());
+        else if (a === "onboard") { closeSheet(); openOnboarding(); }
+        else if (a === "help") { closeSheet(); openConsultas(); }
+        else if (a === "dev") { closeSheet(); if (DEV.open) DEV.open(); }
+        else if (a === "nophoto") { var p = profile(); delete p.photo; saveProfile(p); paintAvatar(); refreshSheet(); }
+      };
+      sheetBody.oninput = function (e) {
+        var t = e.target;
+        if (t.hasAttribute("data-pf-name")) { S.name = t.value.trim(); save(); pfDirty = true; }
+        else if (t.dataset.pfF) { var p = profile(); p[t.dataset.pfF] = t.value.trim(); saveProfile(p); }
+      };
+      sheetBody.onchange = function (e) { if (e.target.hasAttribute("data-pf-photo")) loadPhoto(e.target.files[0]); };
+    });
+  }
+
+  /* ---------- notificaciones: avisos + fechas que se vienen + recordatorios del plan ---------- */
+  var NT_SEEN = "gradiente.notifSeen";
+  function whenLabel(e, today) {
+    if (e.d <= today && e.h > today) return "Hasta el " + fmtShort(e.h);
+    if (e.d === today) return "Hoy";
+    if (e.d === isoOf(addDays(dateOf(today), 1))) return "Mañana";
+    var d = dateOf(e.d); return DIAS[d.getDay()] + " " + fmtShort(e.d) + (e.h !== e.d ? " al " + fmtShort(e.h) : "");
+  }
+  function buildNotifs() {
+    var out = [], today = isoOf(new Date()), lim = isoOf(addDays(new Date(), 10)), c = career();
+    (DATA.links || []).filter(function (l) { return l.category === "Avisos"; }).forEach(function (l) {
+      out.push({ id: "aviso:" + l.title, kind: "aviso", color: "var(--accent)", icon: "bell", t: linkLabel(l), x: l.desc || "Aviso de la Facultad", url: l.url, sort: "0" });
+    });
+    (DATA.fechas || []).filter(function (e) { return e.k !== "info" && e.h >= today && e.d <= lim; }).forEach(function (e) {
+      var k = CAL_K[e.k] || CAL_K.info;
+      out.push({ id: "cal:" + e.d + ":" + e.t, kind: "cal", color: k.color, icon: e.k === "paro" || e.k === "feriado" ? "x" : "cal", t: e.t, x: k.label + " · " + whenLabel(e, today) + (e.n ? " · " + e.n : ""), url: e.url, cal: true, sort: "1" + (e.d < today ? today : e.d) });
+    });
+    if (c) {
+      var s = summary(c);
+      var insc = (DATA.fechas || []).filter(function (e) { return e.k === "inscripcion" && /mesas? de examen final/i.test(e.t) && e.h >= today && e.d <= isoOf(addDays(new Date(), 21)); })[0];
+      if (s.final.length && insc) out.push({ id: "plan:final:" + insc.d, kind: "plan", color: "var(--st-reg)", icon: "check", t: "Tenés " + s.final.length + (s.final.length === 1 ? " materia" : " materias") + " para rendir final", x: "Inscripción a mesas: " + whenLabel(insc, today), go: "#/plan?filtro=final", sort: "0" });
+    } else out.push({ id: "plan:start", kind: "plan", color: "var(--navy)", icon: "plan", t: "Armá tu plan de estudios", x: "Elegí tu carrera y te avisamos qué podés cursar y cuándo rendir.", onboard: true, sort: "2" });
+    return out.sort(function (a, b) { return a.sort.localeCompare(b.sort); });
+  }
+  function unreadNotifs(list) { var seen = store.get(NT_SEEN, []) || []; return list.filter(function (n) { return seen.indexOf(n.id) < 0; }); }
+  function paintBell() {
+    var dot = $("#bellDot"), btn = $("#notifBtn"); if (!dot) return;
+    var n = unreadNotifs(buildNotifs()).length;
+    dot.hidden = !n; dot.textContent = n > 9 ? "9+" : n;
+    btn.setAttribute("aria-label", n ? "Notificaciones, " + n + " sin leer" : "Notificaciones");
+  }
+  function notifsView(list, unread) {
+    var isNew = {}; unread.forEach(function (n) { isNew[n.id] = 1; });
+    var h = '<div class="dHead"><div><p class="dMeta">' + (unread.length ? unread.length + (unread.length === 1 ? " nueva" : " nuevas") : "Estás al día") + '</p><h2 class="h2" id="sheetTitle">Notificaciones</h2></div><button class="iconBtn" type="button" data-close aria-label="Cerrar">' + ic("x") + "</button></div>";
+    if (!list.length) h += '<div class="nt-empty">' + ic("bell") + "<p><strong>No hay nada por ahora.</strong><br>Acá te van a aparecer avisos, paros y fechas importantes.</p></div>";
+    else h += '<div class="nt-list">' + list.map(function (n, i) {
+      var inner = '<span class="nt-ic" style="--nc:' + n.color + '">' + ic(n.icon) + '</span><span class="nt-t"><strong>' + esc(n.t) + "</strong><small>" + esc(n.x) + "</small></span>" + (isNew[n.id] ? '<i class="nt-new" aria-label="Nueva"></i>' : "");
+      var attrs = ' class="nt' + (isNew[n.id] ? " is-new" : "") + '" style="--i:' + i + '"';
+      if (n.url) return "<a" + attrs + ' href="' + esc(n.url) + '" target="_blank" rel="noopener">' + inner + "</a>";
+      if (n.go) return "<a" + attrs + ' href="' + esc(n.go) + '" data-close>' + inner + "</a>";
+      return '<button type="button"' + attrs + (n.cal ? " data-nt-cal" : "") + (n.onboard ? " data-nt-onboard" : "") + ">" + inner + "</button>";
+    }).join("") + "</div>";
+    h += '<p class="nt-foot">' + ic("spark") + "Pronto, con tu cuenta: avisos de tus materias (paros de tu cátedra, grupos de estudio y más).</p>";
+    return h;
+  }
+  function openNotifs() {
+    Promise.all([ensureLinks(), ensureFechas(), ensurePlans()]).then(function () {
+      var list = buildNotifs(), unread = unreadNotifs(list);
+      openSheetAs("sheet--side", function () { return notifsView(list, unread); });
+      var seen = store.get(NT_SEEN, []) || [];
+      store.set(NT_SEEN, list.map(function (n) { return n.id; }).concat(seen.filter(function (id) { return !list.some(function (n) { return n.id === id; }); })).slice(0, 300));
+      paintBell();
+      sheetBody.onclick = function (e) {
+        if (e.target.closest("[data-nt-cal]")) { closeSheet(); if (location.hash !== "#/" && location.hash) { location.hash = "#/"; setTimeout(goCal, 500); } else goCal(); }
+        else if (e.target.closest("[data-nt-onboard]")) { closeSheet(); openOnboarding(); }
+      };
+    });
+  }
+
+  $("#profileBtn").addEventListener("click", openProfile);
+  $("#notifBtn").addEventListener("click", openNotifs);
+  paintAvatar();
+  Promise.all([ensureLinks(), ensureFechas(), ensurePlans()]).then(paintBell).catch(function () {});
+
   mountDev();
 
   /* ---------------- arranque ---------------- */

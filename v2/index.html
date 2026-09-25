@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;1,700;1,800&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="assets/app.css?v=13" />
+  <link rel="stylesheet" href="assets/app.css?v=15" />
   <script>
     try { var t = localStorage.getItem('gradiente.theme'), p = localStorage.getItem('gradiente.palette'); if (t) document.documentElement.dataset.theme = t; if (t && p) document.documentElement.dataset.palette = p; } catch (e) {}
   </script>
@@ -58,6 +58,9 @@
       <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12 20 4l-6 16-2.5-6.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
       <symbol id="i-users" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.5 20c.8-3.5 3.3-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M15.5 5.2a3.5 3.5 0 0 1 0 6.6M18 14.8c1.8.8 3 2.6 3.5 5.2"/></g></symbol>
       <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7 4 12l5 5M4.5 12H14a6 6 0 0 1 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5c1-4 4-6 7.5-6s6.5 2 7.5 6"/></g></symbol>
+      <symbol id="i-camera" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 8h3l1.6-2.5h6.8L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></g></symbol>
+      <symbol id="i-key" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M16 7l2.5 2.5M18.5 4.5 21 7"/></g></symbol>
       <symbol id="i-bell" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 21h4"/></g></symbol>
       <symbol id="i-cap" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="m2 9 10-5 10 5-10 5z"/><path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5M22 9v6"/></g></symbol>
       <symbol id="i-flask" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6L4.5 18.5A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.5-2.5L14 9V3"/><path d="M7.5 15h9"/></g></symbol>
@@ -68,6 +71,9 @@
       <symbol id="i-copy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></g></symbol>
       <symbol id="i-nabla" viewBox="0 0 24 24"><path d="M3.6 5.2h16.8L12 20.2z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><g class="nb-eyes" fill="currentColor"><circle cx="9.7" cy="9.6" r="1.35"/><circle cx="14.3" cy="9.6" r="1.35"/></g></symbol>
       <symbol id="i-cloudq" viewBox="0 0 24 24"><path d="M9.5 18.5H7a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 8.5a4.5 4.5 0 0 1 2.9 7.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14.5" cy="15" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="m16.9 17.4 2.6 2.6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+      <symbol id="i-sigma" viewBox="0 0 24 24"><path d="M18 5H6l6.5 7L6 19h12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-timer" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V10M9.5 2.5h5M18.5 6.5l1.5-1.5"/></g></symbol>
+      <symbol id="i-atom" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="12" rx="9.5" ry="3.8"/><ellipse cx="12" cy="12" rx="9.5" ry="3.8" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9.5" ry="3.8" transform="rotate(-60 12 12)"/></g><circle cx="12" cy="12" r="1.8" fill="currentColor"/></symbol>
       <symbol id="i-theme" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/></g></symbol>
       <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     </defs>
@@ -79,19 +85,21 @@
 
   <header class="topbar">
     <div class="topbar-in">
+      <div class="topbar-l">
+        <button class="avatarBtn" id="profileBtn" type="button" aria-label="Tu perfil" aria-haspopup="dialog"><span class="avatar" id="topAvatar"></span></button>
+        <nav class="deskNav" aria-label="Secciones">
+          <a href="#/" data-nav="home">Inicio</a>
+          <a href="#/plan" data-nav="plan">Mi plan</a>
+          <a href="#/recursos" data-nav="recursos">Recursos</a>
+          <a href="#/mesita" data-nav="mesita">Mesita</a>
+        </nav>
+      </div>
       <a class="brand" href="#/" aria-label="Gradiente, inicio">
         <img class="brand-logo brand-logo--light" src="assets/logo-gradiente-azul.png" alt="Gradiente" width="118" height="57" />
         <img class="brand-logo brand-logo--dark" src="assets/logo-gradiente-blanco.png" alt="" width="118" height="57" />
       </a>
-      <nav class="deskNav" aria-label="Secciones">
-        <a href="#/" data-nav="home">Inicio</a>
-        <a href="#/plan" data-nav="plan">Mi plan</a>
-        <a href="#/recursos" data-nav="recursos">Recursos</a>
-        <a href="#/mesita" data-nav="mesita">Mesita</a>
-      </nav>
       <div class="topbar-actions">
-        <button class="iconBtn" id="themeBtn" type="button" aria-label="Cambiar tema"><svg><use href="#i-moon"/></svg></button>
-        <a class="btn btn--accent btn--sm" id="consultaBtn" href="#/consultas" aria-haspopup="dialog"><svg><use href="#i-chat"/></svg><span>Consultas</span></a>
+        <button class="iconBtn bellBtn" id="notifBtn" type="button" aria-label="Notificaciones" aria-haspopup="dialog"><svg><use href="#i-bell"/></svg><i class="bellDot" id="bellDot" hidden></i></button>
       </div>
     </div>
   </header>
@@ -115,7 +123,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="config.js?v=7"></script>
-  <script src="assets/app.js?v=12"></script>
+  <script src="config.js?v=8"></script>
+  <script src="assets/app.js?v=14"></script>
 </body>
 </html>

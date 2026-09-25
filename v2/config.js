@@ -20,11 +20,19 @@ window.GRADIENTE = {
     faq: "data/faq.json",
     fechas: "data/fechas.json",
     catedras: "data/catedras.json",
-    instagram: "data/instagram.json"
+    instagram: "data/instagram.json",
+    formulas: "data/formulas.json",
+    elementos: "data/elementos.json"
   },
 
   // Nombre del asistente de preguntas frecuentes del inicio
   botName: "Nabla",
+
+  // Herramientas (Recursos). tablaUrl: si tenemos nuestra propia tabla periódica, poné el link y aparece arriba de la tabla.
+  tools: {
+    tablaUrl: "",
+    pomodoro: { focus: 25, short: 5, long: 15 }
+  },
 
   // Accesos rápidos del inicio: se buscan por título en links.json (o url directa).
   // icon: id, clock, cal, book, cloud, heart, ext · color: navy, red, blue
