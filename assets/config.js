@@ -13,7 +13,7 @@ window.LINKHUB_CONFIG = {
   driveUrl: "https://drive.google.com/open?id=1nqMOCWnGQf4hijaALpiovu1L5c6PvUJb",
   analyticsMeasurementId: "",
   linksDataVersion: "20260511",
-  kioscoDataVersion: "20260410",
+  kioscoDataVersion: "20260924",
   homePromoAutoplayMs: 5000,
   utmDefaults: {
     source: "ig_bio",

@@ -177,7 +177,59 @@
     save();
     ui.pop = code;
     rerenderPlanBits();
+    var x = c.byCode[code];
+    if (s === "a" && (!prev || prev.s !== "a") && x && x.k !== "lang" && x.k !== "afc") askGrade(c, code);
   }
+
+  /* ---------------- nota al aprobar (mini modal) ---------------- */
+  var gradeDlg = null;
+  function closeGrade() {
+    if (!gradeDlg) return;
+    var d = gradeDlg; gradeDlg = null;
+    d.classList.add("is-out");
+    setTimeout(function () { d.remove(); }, 160);
+    if (d._back && d._back.focus) try { d._back.focus({ preventScroll: true }); } catch (e) {}
+  }
+  function askGrade(c, code) {
+    closeGrade();
+    var x = c.byCode[code];
+    var d = document.createElement("div");
+    d.className = "gdlg";
+    d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-labelledby", "gdlgT");
+    d.innerHTML = '<div class="gdlg-bg" data-g-skip></div><div class="gdlg-card">' +
+      '<span class="gdlg-mark">' + ic("check") + "</span>" +
+      '<p class="gdlg-k">Aprobada</p><h2 class="gdlg-t" id="gdlgT">' + esc(displayName(c, x)) + "</h2>" +
+      '<p class="gdlg-q">¿Con qué nota?</p>' +
+      '<div class="gdlg-grades" role="group" aria-label="Nota">' + [4, 5, 6, 7, 8, 9, 10].map(function (n) { return '<button type="button" data-g="' + n + '">' + n + "</button>"; }).join("") + "</div>" +
+      '<button type="button" class="gdlg-skip" data-g-skip>Sin nota por ahora</button></div>';
+    d._back = document.activeElement;
+    document.body.appendChild(d);
+    gradeDlg = d;
+    setTimeout(function () { var f = d.querySelector('[data-g="7"]'); if (f) f.focus({ preventScroll: true }); }, 30);
+    d.onclick = function (ev) {
+      if (ev.target.closest("[data-g-skip]")) { closeGrade(); return; }
+      var b = ev.target.closest("[data-g]"); if (!b) return;
+      pickGrade(c, code, +b.dataset.g, b);
+    };
+  }
+  function pickGrade(c, code, g, btn) {
+    var P = prog(c.id); if (!P[code] || P[code].s !== "a") { closeGrade(); return; }
+    P[code].n = g; save();
+    if (btn) btn.classList.add("is-picked");
+    setTimeout(function () {
+      closeGrade(); rerenderPlanBits();
+      toast("Nota " + g + " guardada · Promedio " + fmtAvg(summary(c).avg));
+    }, 170);
+  }
+  window.addEventListener("keydown", function (e) {
+    if (!gradeDlg) return;
+    if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); closeGrade(); return; }
+    var k = e.key === "0" ? 10 : +e.key;
+    if (k >= 4 && k <= 10 && /^[0-9]$/.test(e.key)) {
+      var b = gradeDlg.querySelector('[data-g="' + k + '"]');
+      e.preventDefault(); if (b) b.click();
+    }
+  }, true);
   function shortName(x) { var n = x.n; return n.length > 34 ? n.slice(0, 32) + "…" : n; }
   function displayName(c, x) {
     if (x.k === "slot") {
@@ -245,6 +297,7 @@
   }
   var routes = { home: renderHome, plan: renderPlan, recursos: renderRecursos, mesita: renderMesita };
   function route() {
+    closeGrade();
     var r = parseHash();
     if (!routes[r.name]) r.name = "home";
     closeSheet(); hideFocusBar(); hideToast();
@@ -316,7 +369,7 @@
 
       if (DATA.kiosco.promos.length) {
         html += '<div class="sectionHead"><h2 class="h2">Mesita en Electro</h2><a href="#/mesita">Ver todo' + ic("chev") + '</a></div><div class="promoCards promoCards--row">' +
-          DATA.kiosco.promos.map(function (p) { return '<div class="promoCard"><span class="tag">' + esc(p.label || "Promo") + "</span><strong>" + esc(p.title) + '</strong><span class="price">' + esc(p.price) + "</span></div>"; }).join("") + "</div>";
+          DATA.kiosco.promos.map(function (p) { return promoCard(p, true); }).join("") + "</div>";
       }
       html += footer() + "</div>";
       main.innerHTML = html;
@@ -358,7 +411,19 @@
     }
     return h + "</div>";
   }
-  function animateRing() { requestAnimationFrame(function () { requestAnimationFrame(function () { $all(".ring.is-zero").forEach(function (r) { r.classList.remove("is-zero"); }); }); }); }
+  function animateRing() { requestAnimationFrame(function () { requestAnimationFrame(function () { $all(".ring.is-zero, .pp.is-zero").forEach(function (r) { r.classList.remove("is-zero"); }); }); }); }
+  function fmtAvg(v) { return v == null ? "–" : v.toFixed(2).replace(".", ","); }
+  function planProgress(s) {
+    var t = s.total || 1, pend = Math.max(0, s.total - s.a - s.r - s.c);
+    var w = function (n) { return (n / t * 100).toFixed(2) + "%"; };
+    return '<section class="pp is-zero" aria-label="Progreso de la carrera">' +
+      '<div class="pp-pct"><b>' + s.pct + '<span>%</span></b><p>de la carrera aprobada<small>' + s.a + " de " + s.total + " materias</small></p></div>" +
+      '<div class="pp-avg"><p>Promedio</p><b>' + fmtAvg(s.avg) + "</b><small>" + (s.notes.length ? "con " + s.notes.length + (s.notes.length === 1 ? " nota" : " notas") : "Cargá la nota al aprobar") + "</small></div>" +
+      '<div class="pp-bar" role="img" aria-label="' + s.a + " aprobadas, " + s.r + " regulares, " + s.c + ' cursando">' +
+      '<i class="d" style="--w:' + w(s.a) + '"></i><i class="r" style="--w:' + w(s.r) + '"></i><i class="c" style="--w:' + w(s.c) + '"></i></div>' +
+      '<ul class="pp-legend"><li><i class="d"></i><b>' + s.a + "</b> aprobadas</li><li><i class=\"r\"></i><b>" + s.r + "</b> " + (s.r === 1 ? "regular" : "regulares") +
+      "</li><li><i class=\"c\"></i><b>" + s.c + '</b> cursando</li><li class="pp-rest"><b>' + pend + "</b> por hacer</li></ul></section>";
+  }
   function homeStart() {
     return '<div class="card pc pc--start"><p class="pc-kicker">Tu plan de estudios</p><h2 class="h3">Armalo en un minuto</h2>' +
       '<ol class="steps"><li>Elegí tu carrera</li><li>Contanos hasta dónde llegaste</li><li>Mirá qué podés cursar y rendir</li></ol>' +
@@ -398,8 +463,8 @@
       var html = '<div class="wrap page">';
       html += '<header class="planHead"><div class="planTitle"><div class="planTitle-l">' +
         '<button class="careerSwitch" type="button" id="switchCareer">' + ic("plan") + "Cambiar carrera" + ' <span class="mono">Plan ' + esc(c.plan) + "</span></button>" +
-        '<h1 class="h1">' + esc(c.name.replace(/^Ingeniería (en )?/, "Ing. $1")) + "</h1></div>" +
-        '<div id="planStats"></div></div></header>';
+        '<h1 class="h1">' + esc(c.name.replace(/^Ingeniería (en )?/, "Ing. $1")) + "</h1></div></div>" +
+        '<div id="planStats"></div></header>';
       html += '<div class="stickSentinel" id="stickSentinel"></div><div class="planTools" id="planTools"><div class="planTools-row"><label class="search"><span class="sr">Buscar materia</span>' + ic("search") +
         '<input id="planSearch" type="search" placeholder="Buscar materia" autocomplete="off" value="' + esc(ui.query) + '"></label>' +
         '<div class="seg" role="group" aria-label="Vista"><button type="button" data-view="tree" aria-pressed="' + (S.view === "tree") + '">' + ic("tree") + '<span>Árbol</span></button><button type="button" data-view="list" aria-pressed="' + (S.view === "list") + '">' + ic("list") + "<span>Lista</span></button></div>" +
@@ -445,8 +510,8 @@
     var c = career(), s = summary(c), el = $("#planStats");
     if (!el) return;
     var first = !el.innerHTML;
-    el.innerHTML = miniKpis(s);
-    if (!first) $all(".ring.is-zero", el).forEach(function (r) { r.classList.remove("is-zero"); });
+    el.innerHTML = planProgress(s);
+    if (!first) $all(".is-zero", el).forEach(function (r) { r.classList.remove("is-zero"); });
   }
   var FILTERS = [
     ["all", "Todas", null],
@@ -927,14 +992,22 @@
      MESITA
      ====================================================================== */
   var shopCat = "all";
+  function promoCard(p, compact) {
+    var items = Array.isArray(p.items) ? p.items : [];
+    var list = !items.length ? "" : compact
+      ? '<span class="promoItems-line">' + esc(items.join(" · ")) + "</span>"
+      : '<ul class="promoItems">' + items.map(function (it) { return "<li>" + esc(it) + "</li>"; }).join("") + "</ul>";
+    return '<div class="promoCard' + (compact ? "" : " lift rise") + '"><span class="tag">' + esc(p.label || "Promo") + "</span><strong>" + esc(p.title) + "</strong>" +
+      list + '<span class="price">' + esc(p.price) + "</span></div>";
+  }
   function renderMesita() {
     if (!DATA.kiosco) loading();
     return ensureKiosco().then(function () {
       var K = DATA.kiosco;
       var cats = []; K.productos.forEach(function (p) { if (p.category && cats.indexOf(p.category) < 0) cats.push(p.category); });
       var html = '<div class="wrap page"><p class="kicker">Mesita en Electro</p><h1 class="h1">Librería<br>a precio estudiante</h1>' +
-        '<p class="lead">Cuadernos, útiles y algo para el mate. Pasá por la mesita de Gradiente en el edificio de Electro.</p>';
-      if (K.promos.length) html += '<div class="promoCards">' + K.promos.map(function (p) { return '<div class="promoCard lift rise"><span class="tag">' + esc(p.label || "Promo") + "</span><strong>" + esc(p.title) + '</strong><span class="price">' + esc(p.price) + "</span></div>"; }).join("") + "</div>";
+        '<p class="lead">Kits de cuadernos y útiles sueltos. Pasá a buscar el tuyo por la mesita de Gradiente, en el edificio de Electro.</p>';
+      if (K.promos.length) html += '<div class="promoCards">' + K.promos.map(function (p) { return promoCard(p, false); }).join("") + "</div>";
       html += '<div class="sectionHead"><h2 class="h2">Productos</h2></div>';
       if (cats.length > 1) html += '<div class="chipsRow" role="group" aria-label="Categorías"><button class="chip" type="button" data-shop="all" aria-pressed="' + (shopCat === "all") + '">Todo</button>' + cats.map(function (c) { return '<button class="chip" type="button" data-shop="' + esc(c) + '" aria-pressed="' + (shopCat === c) + '">' + esc(c) + "</button>"; }).join("") + "</div>";
       html += '<div class="shopGrid" id="shopGrid"></div>' + footer() + "</div>";

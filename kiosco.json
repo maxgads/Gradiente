@@ -1,28 +1,31 @@
 {
   "promos": [
     {
-      "id": "promo-cuaderno-x2",
-      "title": "Cuaderno cuadriculado x2",
-      "price": "$7.000",
-      "label": "Promo",
+      "id": "kit-gradiente-1",
+      "title": "Kit 1 cuaderno",
+      "price": "$6.000",
+      "label": "Kit Gradiente",
+      "items": ["1 cuaderno A4", "1 lápiz", "1 lapicera", "1 goma", "1 regla"],
       "image": "",
       "priority": 1,
       "active": true
     },
     {
-      "id": "promo-cuaderno-x3",
-      "title": "Cuaderno cuadriculado x3",
-      "price": "$9.000",
-      "label": "Ahorro",
+      "id": "kit-gradiente-2",
+      "title": "Kit 2 cuadernos",
+      "price": "$8.000",
+      "label": "Kit Gradiente",
+      "items": ["2 cuadernos A4", "1 lápiz", "1 lapicera", "1 organizador"],
       "image": "",
       "priority": 2,
       "active": true
     },
     {
-      "id": "promo-kit-cursada",
-      "title": "Ahorra con los kit de cursada",
-      "price": "Desde $4.000",
-      "label": "Libreria economica",
+      "id": "kit-gradiente-3",
+      "title": "Kit 3 cuadernos",
+      "price": "$10.000",
+      "label": "Kit Gradiente",
+      "items": ["3 cuadernos A4", "1 lápiz", "1 lapicera", "1 organizador"],
       "image": "",
       "priority": 3,
       "active": true
@@ -30,11 +33,11 @@
   ],
   "productos": [
     {
-      "id": "prod-cuaderno-cuadriculado",
-      "name": "Cuaderno cuadriculado",
-      "category": "Cuadernillos",
-      "price": "$4.000",
-      "description": "2 x $7.000 · 3 x $9.000",
+      "id": "prod-cuadernillo",
+      "name": "Cuadernillo A4",
+      "category": "Cuadernos",
+      "price": "$3.500",
+      "description": "Llevando 2: $7.000",
       "stock": "disponible",
       "featured": true,
       "priority": 1,
@@ -43,9 +46,9 @@
     {
       "id": "prod-lapicera",
       "name": "Lapicera",
-      "category": "Libreria",
+      "category": "Librería",
       "price": "$800",
-      "description": "Tinta azul o negra segun disponibilidad.",
+      "description": "Tinta azul o negra según disponibilidad.",
       "stock": "disponible",
       "featured": true,
       "priority": 2,
@@ -53,35 +56,57 @@
     },
     {
       "id": "prod-lapiz",
-      "name": "Lapiz",
-      "category": "Libreria",
+      "name": "Lápiz",
+      "category": "Librería",
       "price": "$500",
-      "description": "Lapiz escolar para cursada.",
+      "description": "Lápiz negro para la cursada.",
       "stock": "disponible",
       "featured": false,
       "priority": 3,
       "active": true
     },
     {
-      "id": "prod-goma",
-      "name": "Goma",
-      "category": "Libreria",
-      "price": "$400",
-      "description": "Goma escolar.",
+      "id": "prod-minas",
+      "name": "Minas",
+      "category": "Librería",
+      "price": "$800",
+      "description": "Repuesto para portaminas.",
       "stock": "disponible",
       "featured": false,
       "priority": 4,
       "active": true
     },
     {
-      "id": "prod-resaltador",
-      "name": "Resaltador",
-      "category": "Libreria",
-      "price": "$1.000",
-      "description": "Color segun disponibilidad.",
+      "id": "prod-goma",
+      "name": "Goma",
+      "category": "Librería",
+      "price": "$400",
+      "description": "Goma de borrar.",
       "stock": "disponible",
       "featured": false,
       "priority": 5,
+      "active": true
+    },
+    {
+      "id": "prod-regla",
+      "name": "Regla",
+      "category": "Librería",
+      "price": "$300",
+      "description": "Regla para la cursada.",
+      "stock": "disponible",
+      "featured": false,
+      "priority": 6,
+      "active": true
+    },
+    {
+      "id": "prod-resaltador",
+      "name": "Resaltador",
+      "category": "Librería",
+      "price": "$1.000",
+      "description": "Color según disponibilidad.",
+      "stock": "disponible",
+      "featured": false,
+      "priority": 7,
       "active": true
     },
     {
@@ -92,8 +117,8 @@
       "description": "Bizcochos para la cursada.",
       "stock": "disponible",
       "featured": false,
-      "priority": 6,
-      "active": true
+      "priority": 8,
+      "active": false
     }
   ]
 }
