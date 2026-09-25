@@ -49,9 +49,10 @@
     if (/[?&#]dev\b/.test(location.href)) sessionStorage.setItem("gradiente.dev", "1");
     DEV.temp = sessionStorage.getItem("gradiente.temp") === "1";
   } catch (e) {}
-  function save() { if (DEV.temp) return; store.set(KEY, { career: S.career, prog: S.prog, tv: S.view, name: S.name, rv: S.reveal }); }
+  S.sh = S.sh || 0;
+  function save() { if (DEV.temp) return; store.set(KEY, { career: S.career, prog: S.prog, tv: S.view, name: S.name, rv: S.reveal, sh: S.sh }); }
 
-  var DATA = { plans: null, byId: {}, nube: {}, catedras: {}, links: null, kiosco: null, faq: null };
+  var DATA = { plans: null, byId: {}, nube: {}, catedras: {}, links: null, kiosco: null, faq: null, fechas: null };
   var ui = { query: "", focus: null, lastRoute: null };
 
   /* ---------------- fondo: los brillos se mueven un poco al scrollear ---------------- */
@@ -71,12 +72,39 @@
     if (t) return t === "dark";
     return window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches;
   }
-  function paintThemeBtn() { themeBtn.innerHTML = ic(isDark() ? "sun" : "moon"); themeBtn.setAttribute("aria-label", isDark() ? "Usar tema claro" : "Usar tema oscuro"); }
+  /* el botón va rotando entre fondos: claros y oscuros, con varios azules de la agrupación.
+     Solo cambian fondo y superficies (app.css, "paletas"); los colores de estado quedan igual. */
+  var PALETTES = [
+    { id: "light", theme: "light", name: "Claro" },
+    { id: "cielo", theme: "light", name: "Cielo" },
+    { id: "marino", theme: "dark", name: "Marino" },
+    { id: "oceano", theme: "dark", name: "Océano" },
+    { id: "noche", theme: "dark", name: "Noche azul" },
+    { id: "dark", theme: "dark", name: "Oscuro" }
+  ];
+  function curPalette() {
+    var root = document.documentElement, id = root.dataset.palette || root.dataset.theme || (isDark() ? "dark" : "light");
+    return PALETTES.filter(function (p) { return p.id === id; })[0] || PALETTES[0];
+  }
+  function applyPalette(p) {
+    var root = document.documentElement;
+    root.dataset.theme = p.theme;
+    if (p.id === p.theme) delete root.dataset.palette; else root.dataset.palette = p.id;
+    try { localStorage.setItem("gradiente.theme", p.theme); localStorage.setItem("gradiente.palette", p.id === p.theme ? "" : p.id); } catch (e) {}
+    var meta = $('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", getComputedStyle(document.body).backgroundColor);
+  }
+  function paintThemeBtn() {
+    var p = curPalette(), next = PALETTES[(PALETTES.indexOf(p) + 1) % PALETTES.length];
+    themeBtn.innerHTML = ic("theme");
+    themeBtn.setAttribute("aria-label", "Colores: " + p.name + ". Cambiar a " + next.name);
+    themeBtn.title = "Colores: " + p.name;
+  }
   themeBtn.addEventListener("click", function () {
-    var next = isDark() ? "light" : "dark";
-    document.documentElement.dataset.theme = next;
-    try { localStorage.setItem("gradiente.theme", next); } catch (e) {}
+    var p = curPalette(), next = PALETTES[(PALETTES.indexOf(p) + 1) % PALETTES.length];
+    applyPalette(next);
     paintThemeBtn();
+    toast("Colores: " + next.name);
     if (ui.lastRoute === "plan" && S.view === "tree") drawTreeLines();
   });
   paintThemeBtn();
@@ -185,11 +213,13 @@
     var P = prog(c.id), prev = P[code] ? JSON.parse(JSON.stringify(P[code])) : null;
     if (s === "p" && !(P[code] && P[code].pick)) delete P[code];
     else { P[code] = P[code] || {}; P[code].s = s; if (s !== "a") delete P[code].n; }
+    shareCode(c, code);
     save();
     ui.pop = code;
-    rerenderPlanBits();
     var x = c.byCode[code];
-    if (s === "a" && (!prev || prev.s !== "a") && x && x.k !== "lang" && x.k !== "afc") askGrade(c, code);
+    // si pide la nota, el plan se redibuja (y anima lo que se destraba) recién al cerrar el cartel
+    if (s === "a" && (!prev || prev.s !== "a") && x && x.k !== "lang" && x.k !== "afc") askGrade(c, code, rerenderPlanBits);
+    else rerenderPlanBits();
   }
 
   /* ---------------- nota al aprobar (mini modal) ---------------- */
@@ -198,10 +228,10 @@
     if (!gradeDlg) return;
     var d = gradeDlg; gradeDlg = null;
     d.classList.add("is-out");
-    setTimeout(function () { d.remove(); }, 160);
+    setTimeout(function () { d.remove(); if (d._after) d._after(); }, 160);
     if (d._back && d._back.focus) try { d._back.focus({ preventScroll: true }); } catch (e) {}
   }
-  function askGrade(c, code) {
+  function askGrade(c, code, after) {
     closeGrade();
     var x = c.byCode[code];
     var d = document.createElement("div");
@@ -214,6 +244,7 @@
       '<div class="gdlg-grades" role="group" aria-label="Nota">' + [4, 5, 6, 7, 8, 9, 10].map(function (n) { return '<button type="button" data-g="' + n + '">' + n + "</button>"; }).join("") + "</div>" +
       '<button type="button" class="gdlg-skip" data-g-skip>Sin nota por ahora</button></div>';
     d._back = document.activeElement;
+    d._after = after;
     document.body.appendChild(d);
     gradeDlg = d;
     setTimeout(function () { var f = d.querySelector('[data-g="7"]'); if (f) f.focus({ preventScroll: true }); }, 30);
@@ -225,10 +256,11 @@
   }
   function pickGrade(c, code, g, btn) {
     var P = prog(c.id); if (!P[code] || P[code].s !== "a") { closeGrade(); return; }
-    P[code].n = g; save();
+    P[code].n = g; shareCode(c, code); save();
     if (btn) btn.classList.add("is-picked");
     setTimeout(function () {
-      closeGrade(); rerenderPlanBits();
+      var redraws = gradeDlg && gradeDlg._after;
+      closeGrade(); if (!redraws) rerenderPlanBits();
       toast("Nota " + g + " guardada · Promedio " + fmtAvg(summary(c).avg));
     }, 170);
   }
@@ -266,9 +298,66 @@
     sum.avg = sum.notes.length ? (sum.notes.reduce(function (a, b) { return a + b; }, 0) / sum.notes.length) : null;
     sum.pct = sum.total ? Math.round((sum.a / sum.total) * 100) : 0;
     sum.pctR = sum.total ? Math.round(((sum.a + sum.r) / sum.total) * 100) : 0;
+    sum.plusR = sum.pctR - sum.pct;
     return sum;
   }
-  function careerPct(c) { var n = 0; c.courses.forEach(function (x) { if (x.k !== "lang" && stOf(c.id, x.c) === "a") n++; }); return c.mainCount ? Math.round(n / c.mainCount * 100) : 0; }
+  /* barra gruesa: verde lo aprobado y, al lado, en amarillo lo que sumarían las regulares.
+     El % va adentro de cada tramo cuando entra. Las que estás cursando no cuentan. */
+  function progBar(s, cls) {
+    var t = s.total || 1, wa = s.a / t * 100, wr = s.r / t * 100;
+    return '<div class="pbar' + (cls ? " " + cls : "") + '" role="img" aria-label="' + s.pct + "% aprobado" + (s.r ? ", " + s.plusR + "% más contando las regulares" : "") + '">' +
+      '<i class="d" style="--w:' + wa.toFixed(2) + '%">' + (wa >= 10 ? "<b>" + s.pct + "%</b>" : "") + "</i>" +
+      '<i class="r" style="--w:' + wr.toFixed(2) + '%">' + (s.r && wr >= 8 ? "<b>+" + s.plusR + "%</b>" : "") + "</i></div>";
+  }
+  function plusChip(s) {
+    return s.r && s.plusR ? '<span class="plusR" title="Contando las regulares llegarías al ' + s.pctR + '%">+' + s.plusR + "%</span>" : "";
+  }
+  function careerPct(c) {
+    var a = 0, r = 0;
+    c.courses.forEach(function (x) { if (x.k === "lang") return; var s = stOf(c.id, x.c); if (s === "a") a++; else if (s === "r") r++; });
+    var t = c.mainCount || 1, pa = Math.round(a / t * 100);
+    return { a: pa, r: Math.round((a + r) / t * 100) - pa };
+  }
+
+  /* ---------------- materias compartidas entre carreras ----------------
+     Mismo código = misma materia (Matemática A, Física I…): lo que marcás en una carrera
+     se copia a todas las que la tienen. Las "a elección" no, porque cada carrera tiene su lista. */
+  function sharedIn(o, code) { var x = o.byCode[code]; return x && x.k !== "slot"; }
+  function shareCode(c, code) {
+    var src = S.prog[c.id] && S.prog[c.id][code], n = 0;
+    if (!sharedIn(c, code)) return 0;
+    DATA.plans.careers.forEach(function (o) {
+      if (o.id === c.id || !sharedIn(o, code)) return;
+      var P = S.prog[o.id] = S.prog[o.id] || {};
+      if (!src || src.s === "p") { if (P[code]) { delete P[code]; n++; } return; }
+      var cp = { s: src.s }; if (src.n) cp.n = src.n;
+      if (!P[code] || P[code].s !== cp.s || P[code].n !== cp.n) n++;
+      P[code] = cp;
+    });
+    return n;
+  }
+  function shareAll(c) { Object.keys(S.prog[c.id] || {}).forEach(function (k) { shareCode(c, k); }); }
+  /* una sola vez, para el progreso que ya estaba guardado: gana el estado más avanzado */
+  function mergeShared() {
+    if (S.sh >= 1) return;
+    var RANK = { p: 0, c: 1, r: 2, a: 3 }, best = {};
+    DATA.plans.careers.forEach(function (o) {
+      var P = S.prog[o.id] || {};
+      Object.keys(P).forEach(function (k) {
+        if (!sharedIn(o, k) || !P[k].s) return;
+        var b = best[k];
+        if (!b || RANK[P[k].s] > RANK[b.s] || (P[k].s === b.s && P[k].n && !b.n)) best[k] = { s: P[k].s, n: P[k].n };
+      });
+    });
+    DATA.plans.careers.forEach(function (o) {
+      Object.keys(best).forEach(function (k) {
+        if (!sharedIn(o, k) || best[k].s === "p") return;
+        var P = S.prog[o.id] = S.prog[o.id] || {};
+        P[k] = { s: best[k].s }; if (best[k].n) P[k].n = best[k].n;
+      });
+    });
+    S.sh = 1; save();
+  }
 
   /* ---------------- share / import ---------------- */
   function encodeProgress(cid) {
@@ -328,7 +417,7 @@
   function ensurePlans() {
     if (DATA.plans) return Promise.resolve();
     return Promise.all([
-      getJSON(CFG.data.planes).then(prepPlans),
+      getJSON(CFG.data.planes).then(function (d) { prepPlans(d); mergeShared(); }),
       getJSON(CFG.data.nube).then(function (n) { DATA.nube = n; }).catch(function () {}),
       CFG.data.catedras ? getJSON(CFG.data.catedras).then(function (k) { DATA.catedras = k.c || {}; DATA.catedrasBase = k.base; }).catch(function () {}) : null
     ]);
@@ -357,6 +446,7 @@
      INICIO
      ====================================================================== */
   var homeUI = store.get("gradiente.home", null) || { plan: true };
+  homeUI.acc = homeUI.acc || { accCur: true };
   function saveHomeUI() { store.set("gradiente.home", homeUI); }
   var MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
   var DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -371,7 +461,7 @@
 
   function renderHome() {
     if (!DATA.plans || !DATA.links) loading();
-    return Promise.all([ensurePlans(), ensureLinks(), ensureFaq()]).then(function () {
+    return Promise.all([ensurePlans(), ensureLinks(), ensureFaq(), ensureFechas()]).then(function () {
       var c = career(), d = new Date();
       var avisos = DATA.links.filter(function (l) { return l.category === "Avisos"; });
       var cur = c ? c.courses.filter(function (x) { return stOf(c.id, x.c) === "c"; }).length : 0;
@@ -383,7 +473,9 @@
       html += '<header class="hello rise"><p class="hello-date">' + DIAS[d.getDay()] + " " + d.getDate() + " de " + MESES[d.getMonth()] + "</p>" +
         '<h1 class="hello-t">' + greeting() + (S.name ? ", <span>" + esc(S.name) + "</span>" : "") + "</h1>" +
         '<p class="hello-sub">' + sub + "</p>" +
-        '<button class="askBar" type="button" data-ask>' + ic("search") + "<span>¿Tenés una duda? Preguntá acá</span><kbd>" + ic("chev") + "</kbd></button></header>";
+        '<div class="askBox" id="askBox"><form class="askBar" id="askForm" autocomplete="off" role="search"><label class="sr" for="askInput">Preguntá tu duda</label>' + ic("search") +
+        '<input id="askInput" type="search" placeholder="¿Tenés una duda? Preguntá acá" enterkeyhint="search" aria-controls="askPop"><button type="submit" aria-label="Buscar respuesta"><kbd>' + ic("chev") + "</kbd></button></form>" +
+        '<div class="askPop" id="askPop" hidden></div></div></header>';
 
       if (avisos.length) {
         html += '<div class="avisos">' + avisos.map(function (l) {
@@ -397,7 +489,8 @@
       }).join("") + "</nav>";
 
       html += '<div class="homeCols">';
-      html += '<section class="hsec hp' + (homeUI.plan ? " is-open" : "") + '" id="homePlan" aria-label="Tu carrera">' + homePlan(c) + "</section>";
+      html += '<div class="homeCol"><section class="hsec hp' + (homeUI.plan ? " is-open" : "") + '" id="homePlan" aria-label="Tu carrera">' + homePlan(c) + "</section>";
+      html += '<section class="hsec cal" id="homeCal" aria-labelledby="calT"></section></div>';
       html += '<section class="hsec faq" id="faq" aria-labelledby="faqT">' + faqShell() + "</section>";
       html += "</div>";
 
@@ -407,6 +500,7 @@
       stagger(main);
       bindHome();
       faqStart();
+      paintCal();
       requestAnimationFrame(function () { requestAnimationFrame(function () { var hp = $("#homePlan"); if (hp) hp.classList.add("is-in"); }); });
     }).catch(failed);
   }
@@ -417,9 +511,10 @@
     return '<button class="hrow hrow--' + kind + '" type="button" data-open="' + esc(x.c) + '"><i class="hrow-dot"></i><span class="hrow-n">' + esc(displayName(c, x)) +
       "<small>" + esc(x.k === "slot" ? "A elección" : x.c) + (where ? " · " + where : "") + "</small></span>" + ic("chev") + "</button>";
   }
-  function hAcc(id, label, color, items, extra) {
-    return '<div class="hacc"><button class="hacc-btn" type="button" aria-expanded="false" aria-controls="' + id + '" data-acc>' +
-      '<span class="hacc-ic">' + ic("chev") + '</span><span class="hacc-l"><i class="dotc" style="background:' + color + '"></i>' + label + '</span><em class="hacc-n">' + items.length + "</em></button>" +
+  function hAcc(id, label, kind, items, extra) {
+    var open = !!(homeUI.acc && homeUI.acc[id]);
+    return '<div class="hacc hacc--' + kind + (items.length ? "" : " is-empty") + '"><button class="hacc-btn" type="button" aria-expanded="' + open + '" aria-controls="' + id + '" data-acc="' + id + '">' +
+      '<span class="hacc-ic">' + ic("chev") + '</span><span class="hacc-l"><i class="dotc"></i>' + label + '</span><em class="hacc-n">' + items.length + "</em></button>" +
       '<div class="hacc-body" id="' + id + '"><div class="hacc-in">' + items.join("") + (extra || "") + "</div></div></div>";
   }
   function homePlan(c) {
@@ -429,40 +524,34 @@
         '<button class="btn btn--primary" type="button" data-onboard>' + ic("plan") + "Armar mi plan</button>" +
         '<p class="small muted" style="margin:10px 0 0">Sin cuenta: queda guardado en este dispositivo.</p></div>';
     }
-    var s = summary(c), t = s.total || 1;
-    var w = function (n) { return (n / t * 100).toFixed(2) + "%"; };
+    var s = summary(c);
     var cur = c.courses.filter(function (x) { return stOf(c.id, x.c) === "c"; });
     var h = '<button class="hp-head" type="button" aria-expanded="' + !!homeUI.plan + '" aria-controls="hpBody" data-hp-toggle>' +
       '<span class="hp-title"><span class="hsec-k">Tu carrera · Plan ' + esc(c.plan) + '</span><span class="hsec-t">' + esc(c.name) + "</span></span>" +
-      '<span class="hp-pct"><b>' + s.pct + "<small>%</small></b></span><span class=\"hp-chev\">" + ic("chev") + "</span></button>" +
-      '<div class="hp-bar" role="img" aria-label="' + s.a + " aprobadas, " + s.r + " regulares, " + s.c + ' cursando"><i class="d" style="--w:' + w(s.a) + '"></i><i class="r" style="--w:' + w(s.r) + '"></i><i class="c" style="--w:' + w(s.c) + '"></i></div>' +
-      '<p class="hp-legend"><span><i class="d"></i><b>' + s.a + "</b> aprobadas</span><span><i class=\"r\"></i><b>" + s.r + "</b> " + (s.r === 1 ? "regular" : "regulares") + "</span>" +
+      '<span class="hp-pct"><b>' + s.pct + "<small>%</small></b>" + plusChip(s) + "</span><span class=\"hp-chev\">" + ic("chev") + "</span></button>" +
+      progBar(s, "hp-bar") +
+      '<p class="hp-legend"><span><i class="d"></i><b>' + s.a + "</b> aprobadas</span>" + (s.r ? "<span><i class=\"r\"></i><b>" + s.r + "</b> " + (s.r === 1 ? "regular" : "regulares") + "</span>" : "") +
       "<span>Promedio <b>" + fmtAvg(s.avg) + "</b></span></p>";
 
     h += '<div class="hp-body" id="hpBody"><div class="hp-in">';
-    if (cur.length) {
-      h += '<p class="hp-label"><i class="hp-live"></i>Estás cursando</p><div class="hrows">' + cur.map(function (x) { return hRow(c, x, "cur"); }).join("") + "</div>";
-    } else {
-      h += '<div class="hp-empty"><p>' + (s.a || s.r ? "¿Arrancaste el cuatri? Marcá lo que estás cursando." : "Todavía no marcaste materias.") + '</p><a class="btn btn--sm" href="#/plan' + (s.ready.length ? "?filtro=ready" : "") + '">Marcar' + ic("chev") + "</a></div>";
-    }
-    var accs = "";
-    if (s.ready.length) {
-      var MAX = 8;
-      accs += hAcc("accReady", "Podés cursar", "var(--ink)", s.ready.slice(0, MAX).map(function (x) { return hRow(c, x, "ready"); }),
-        s.ready.length > MAX ? '<a class="hacc-more" href="#/plan?filtro=ready">Ver las ' + s.ready.length + " en el plan" + ic("chev") + "</a>" : "");
-    }
-    if (s.final.length) accs += hAcc("accFinal", "Finales para rendir", "var(--st-reg)", s.final.map(function (x) { return hRow(c, x, "final"); }));
-    if (accs) h += '<div class="haccs">' + accs + "</div>";
-    h += '<div class="hp-actions"><a class="btn btn--primary" href="#/plan">' + ic("plan") + "Ver mi plan</a></div>";
+    var MAX = 8, accs = "";
+    accs += hAcc("accCur", "Estás cursando", "cur", cur.map(function (x) { return hRow(c, x, "cur"); }),
+      cur.length ? "" : '<p class="hacc-empty">' + (s.a || s.r ? "¿Arrancaste el cuatri? Marcá lo que estás cursando." : "Todavía no marcaste materias.") + ' <a href="#/plan' + (s.ready.length ? "?filtro=ready" : "") + '">Marcar' + ic("chev") + "</a></p>");
+    accs += hAcc("accReady", "Podés cursar", "ready", s.ready.slice(0, MAX).map(function (x) { return hRow(c, x, "ready"); }),
+      s.ready.length > MAX ? '<a class="hacc-more" href="#/plan?filtro=ready">Ver las ' + s.ready.length + " en el plan" + ic("chev") + "</a>" : s.ready.length ? "" : '<p class="hacc-empty">Nada nuevo por ahora.</p>');
+    accs += hAcc("accFinal", "Finales para rendir", "final", s.final.map(function (x) { return hRow(c, x, "final"); }),
+      s.final.length ? "" : '<p class="hacc-empty">Cuando regularices una materia con todo aprobado, aparece acá.</p>');
+    h += '<div class="haccs">' + accs + "</div>";
+    h += '<div class="hp-actions"><a class="btn btn--primary" href="#/plan">' + ic("plan") + "Ver mi plan</a>" +
+      '<a class="btn" href="#/plan?elegir=1">' + ic("tree") + "Cambiar carrera</a>" +
+      '<button class="btn hp-share" type="button" data-hp-share aria-label="Pasar mi plan a otro dispositivo">' + ic("share") + "<span>Compartir</span></button></div>";
     h += "</div></div>";
     return h;
   }
   function refreshHomePlan() {
     var el = $("#homePlan"), c = career();
     if (!el) return;
-    var open = $all("[data-acc]", el).map(function (b) { return b.getAttribute("aria-expanded") === "true"; });
     el.innerHTML = homePlan(c);
-    $all("[data-acc]", el).forEach(function (b, i) { if (open[i]) b.setAttribute("aria-expanded", "true"); });
     bindHomePlan();
   }
   function bindHomePlan() {
@@ -476,18 +565,17 @@
       el.classList.toggle("is-open", homeUI.plan);
     };
     $all("[data-acc]", el).forEach(function (b) {
-      b.onclick = function () { b.setAttribute("aria-expanded", String(b.getAttribute("aria-expanded") !== "true")); };
+      b.onclick = function () {
+        var open = b.getAttribute("aria-expanded") !== "true";
+        b.setAttribute("aria-expanded", String(open));
+        homeUI.acc = homeUI.acc || {}; homeUI.acc[b.dataset.acc] = open; saveHomeUI();
+      };
     });
+    var sh = $("[data-hp-share]", el); if (sh) sh.onclick = function () { sharePlan(career()); };
   }
   function bindHome() {
     bindHomePlan();
-    $all("[data-ask]", main).forEach(function (b) {
-      b.onclick = function () {
-        var f = $("#faq"), inp = $("#faqInput");
-        if (f) f.scrollIntoView({ behavior: "smooth", block: "start" });
-        if (inp) setTimeout(function () { inp.focus({ preventScroll: true }); }, 450);
-      };
-    });
+    bindAsk();
     $all("[data-about]", main).forEach(function (b) { b.onclick = function () { openAbout(b.dataset.about); }; });
     bindFaq();
   }
@@ -499,6 +587,183 @@
     }).filter(Boolean);
   }
   function linkByMatch(m) { var l = (DATA.links || []).find(function (x) { return x.title === m; }); return l ? l.url : null; }
+
+  /* ---------- buscador del saludo: responde ahí mismo, sin mandarte al chat ---------- */
+  function askPaint(html) {
+    var pop = $("#askPop"); if (!pop) return;
+    pop.innerHTML = html; pop.hidden = !html;
+    $("#askBox").classList.toggle("is-open", !!html);
+  }
+  function askList(text) {
+    var r = text.trim().length >= 2 ? faqSearch(text, true).slice(0, 5).map(function (x) { return x.it; }) : DATA.faq.tops.slice(0, 4);
+    if (!r.length) return '<p class="askPop-k">Sin coincidencias</p><p class="askPop-p">Apretá enter y te decimos a quién preguntarle.</p>';
+    return '<p class="askPop-k">' + (text.trim() ? "¿Es alguna de estas?" : "Lo más preguntado") + "</p>" +
+      r.map(function (it) { return '<button type="button" class="askOpt" data-ask-q="' + it.id + '">' + ic("search") + "<span>" + esc(it.q) + "</span>" + ic("chev") + "</button>"; }).join("");
+  }
+  function askAnswer(it) {
+    return '<div class="askAns"><p class="askAns-q">' + esc(it.q) + "</p>" + answerHtml(it) + "</div>" +
+      '<div class="askPop-foot"><button type="button" class="linkBtn" data-ask-again>' + ic("search") + "Otra pregunta</button>" +
+      '<button type="button" class="linkBtn" data-ask-chat>Seguir en el chat' + ic("chev") + "</button></div>";
+  }
+  function bindAsk() {
+    var box = $("#askBox"), inp = $("#askInput"), form = $("#askForm");
+    if (!box || !DATA.faq) return;
+    var shown = null;
+    var reset = function () { askPaint(""); shown = null; };
+    var open = function () { if (!shown && $("#askPop").hidden) askPaint(askList(inp.value)); };
+    inp.addEventListener("focus", open);
+    inp.addEventListener("click", open);
+    inp.addEventListener("input", function () { shown = null; askPaint(askList(inp.value)); });
+    inp.addEventListener("keydown", function (e) { if (e.key === "Escape") { reset(); inp.blur(); } });
+    form.onsubmit = function (e) {
+      e.preventDefault();
+      var v = inp.value.trim(); if (!v) { inp.focus(); return; }
+      var r = faqSearch(v, false);
+      if (r.length && r[0].cover >= 0.5 && (r.length < 2 || r[0].score > r[1].score + 0.4 || r[0].cover === 1)) { shown = r[0].it; askPaint(askAnswer(shown)); }
+      else if (r.length) askPaint(askList(v));
+      else askPaint('<div class="askAns">' + consultHtml("Esa todavía no la tenemos guardada. Mandanos la consulta y te respondemos nosotros.") + "</div>");
+      inp.blur();
+    };
+    box.addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b || !box.contains(b)) return;
+      if (b.dataset.askQ) { shown = DATA.faq.byId[b.dataset.askQ]; inp.value = shown.q; askPaint(askAnswer(shown)); }
+      else if (b.hasAttribute("data-ask-again")) { shown = null; inp.value = ""; askPaint(askList("")); inp.focus(); }
+      else if (b.hasAttribute("data-ask-chat")) {
+        var it = shown; reset(); inp.value = "";
+        var f = $("#faq"); if (f) f.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (it) setTimeout(function () { askItem(it.id); }, 350);
+      }
+      else if (b.hasAttribute("data-about-go")) openAbout("who");
+      else if (b.dataset.helpGo) openConsultas(b.dataset.helpGo);
+      else if (b.hasAttribute("data-cal-go")) { reset(); goCal(); }
+    });
+    document.addEventListener("click", function outside(e) {
+      if (!document.body.contains(box)) { document.removeEventListener("click", outside); return; }
+      if (!box.contains(e.target)) reset();
+    });
+  }
+
+  /* ---------- almanaque: fechas oficiales de la Facultad + lo que cargue Gradiente (data/fechas.json) ---------- */
+  var CAL_K = {
+    paro: { label: "Paro", color: "#e11d2a" },
+    feriado: { label: "Sin clases", color: "#f43f5e" },
+    aviso: { label: "Aviso", color: "#db2777" },
+    parciales: { label: "Parciales", color: "#d97706" },
+    finales: { label: "Finales", color: "#7c3aed" },
+    inscripcion: { label: "Inscripción", color: "#2563eb" },
+    clases: { label: "Clases", color: "#059669" },
+    evento: { label: "Gradiente", color: "#1e3a8a" },
+    info: { label: "Facultad", color: "#64748b" }
+  };
+  var CAL_ORDER = ["paro", "feriado", "aviso", "parciales", "finales", "inscripcion", "clases", "evento", "info"];
+  var DIAS_C = ["L", "M", "M", "J", "V", "S", "D"];
+  var calUI = { mode: homeUI.cal === "month" ? "month" : "week", ref: null, sel: null };
+  function ensureFechas() {
+    if (DATA.fechas) return Promise.resolve();
+    return getJSON(CFG.data.fechas || "data/fechas.json").then(function (f) {
+      var seen = {};
+      DATA.fechas = (f.extra || []).concat(f.oficial || []).filter(function (e) { return e && e.d && e.t; })
+        .map(function (e) { return { d: e.d, h: e.h || e.d, t: calTitle(e.t), k: CAL_K[e.k] ? e.k : "info", n: e.n || "", url: e.url || "" }; })
+        // el calendario oficial repite algunas fechas ("Semana sugerida de evaluaciones" = mismas semanas de parciales)
+        .filter(function (e) { var id = e.k + e.d + e.h; if (seen[id]) return false; seen[id] = 1; return true; });
+    }).catch(function () { DATA.fechas = []; });
+  }
+  // "F.N.I. (Día de Navidad)" → "Feriado: Día de Navidad"
+  function calTitle(t) {
+    return t.replace(/^F\.N\.[IT]\.?\s*\(\s*(.*?)\s*\)?$/, "Feriado: $1").replace(/^N\.L\.?\s*\(\s*(.*?)\s*\)?$/, "No laborable: $1").replace(/^N\.L\.?$/, "Día no laborable");
+  }
+  function isoOf(d) { return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  function dateOf(iso) { var p = iso.split("-"); return new Date(+p[0], p[1] - 1, +p[2]); }
+  function addDays(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  function monday(d) { var x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); return addDays(x, -((x.getDay() + 6) % 7)); }
+  function eventsOn(iso) {
+    return (DATA.fechas || []).filter(function (e) { return e.d <= iso && e.h >= iso; })
+      .sort(function (a, b) { return CAL_ORDER.indexOf(a.k) - CAL_ORDER.indexOf(b.k); });
+  }
+  function fmtShort(iso) { var d = dateOf(iso); return d.getDate() + "/" + (d.getMonth() + 1); }
+  function calRange() {
+    var ref = calUI.ref || new Date();
+    if (calUI.mode === "week") return { from: monday(ref), days: 7 };
+    var first = new Date(ref.getFullYear(), ref.getMonth(), 1), start = monday(first);
+    var end = addDays(monday(new Date(ref.getFullYear(), ref.getMonth() + 1, 0)), 6);
+    return { from: start, days: Math.round((end - start) / 864e5) + 1, month: ref.getMonth() };
+  }
+  function calEvRow(e, showDate) {
+    var k = CAL_K[e.k], range = e.h !== e.d ? fmtShort(e.d) + " al " + fmtShort(e.h) : fmtShort(e.d);
+    var inner = '<i style="background:' + k.color + '"></i><span class="calEv-t"><strong>' + esc(e.t) + "</strong><small>" +
+      '<b style="color:' + k.color + '">' + k.label + "</b> · " + (showDate || e.h !== e.d ? range : "todo el día") + (e.n ? " · " + esc(e.n) : "") + "</small></span>";
+    return e.url ? '<a class="calEv" href="' + esc(e.url) + '" target="_blank" rel="noopener">' + inner + ic("ext") + "</a>" : '<div class="calEv">' + inner + "</div>";
+  }
+  function calTitleOf(days, ref, week) {
+    if (!week) return MESES[ref.getMonth()].replace(/^./, function (m) { return m.toUpperCase(); }) + " " + ref.getFullYear();
+    var a = days[0], b = days[6];
+    return a.getMonth() === b.getMonth() ? a.getDate() + " al " + b.getDate() + " de " + MESES[b.getMonth()]
+      : a.getDate() + " de " + MESES[a.getMonth()].slice(0, 3) + " al " + b.getDate() + " de " + MESES[b.getMonth()].slice(0, 3);
+  }
+  function goCal() {
+    var el = $("#homeCal"); if (!el) return;
+    calUI.ref = null; calUI.sel = null; paintCal();
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.classList.remove("is-flash"); void el.offsetWidth; el.classList.add("is-flash");
+  }
+  function paintCal() {
+    var el = $("#homeCal"); if (!el) return;
+    var today = isoOf(new Date()), R = calRange(), ref = calUI.ref || new Date(), week = calUI.mode === "week";
+    var days = [];
+    for (var i = 0; i < R.days; i++) days.push(addDays(R.from, i));
+    var fromIso = isoOf(days[0]), toIso = isoOf(days[days.length - 1]);
+    var h = '<div class="cal-head"><div><p class="hsec-k">Calendario</p><h2 class="hsec-t" id="calT">Próximas fechas</h2></div>' +
+      '<div class="seg seg--sm" role="group" aria-label="Ver"><button type="button" data-cal-mode="week" aria-pressed="' + week + '">Semana</button><button type="button" data-cal-mode="month" aria-pressed="' + !week + '">Mes</button></div></div>' +
+      '<div class="cal-nav"><button class="iconBtn iconBtn--sm cal-prev" type="button" data-cal-nav="-1" aria-label="Anterior">' + ic("chev") + '</button><strong aria-live="polite">' + calTitleOf(days, ref, week) + "</strong>" +
+      '<button class="iconBtn iconBtn--sm" type="button" data-cal-nav="1" aria-label="Siguiente">' + ic("chev") + "</button>" +
+      (fromIso <= today && today <= toIso ? "" : '<button class="cal-today" type="button" data-cal-today>Hoy</button>') + "</div>";
+    h += '<div class="cal-grid' + (week ? " is-week" : " is-month") + '">' + (week ? "" : DIAS_C.map(function (d) { return '<span class="cal-wd">' + d + "</span>"; }).join(""));
+    days.forEach(function (d) {
+      var iso = isoOf(d), ev = eventsOn(iso), kinds = [];
+      ev.forEach(function (e) { if (kinds.indexOf(e.k) < 0) kinds.push(e.k); });
+      var off = kinds[0] === "feriado" || kinds[0] === "paro";
+      var cls = "cal-d" + (iso === today ? " is-today" : "") + (iso === calUI.sel ? " is-sel" : "") + (!week && d.getMonth() !== R.month ? " is-out" : "") +
+        (off ? " is-off" : "") + (iso < today ? " is-past" : "") + (ev.length ? " has-ev" : "");
+      h += '<button type="button" class="' + cls + '" data-cal-day="' + iso + '" aria-pressed="' + (iso === calUI.sel) + '" aria-label="' + DIAS[d.getDay()] + " " + d.getDate() + (ev.length ? ": " + esc(ev.map(function (e) { return e.t; }).join(", ")) : "") + '"' +
+        (off ? ' style="--off:' + CAL_K[kinds[0]].color + '"' : "") + ">" +
+        (week ? "<small>" + DIAS[d.getDay()].slice(0, 3) + "</small>" : "") + "<b>" + d.getDate() + "</b>" +
+        '<span class="cal-dots">' + kinds.slice(0, 3).map(function (k) { return '<i style="background:' + CAL_K[k].color + '"></i>'; }).join("") + "</span></button>";
+    });
+    h += "</div>";
+    // detalle: el día que tocaste, o lo que hay en lo que estás viendo
+    var list, head;
+    if (calUI.sel) {
+      var sd = dateOf(calUI.sel); list = eventsOn(calUI.sel);
+      head = DIAS[sd.getDay()] + " " + sd.getDate() + " de " + MESES[sd.getMonth()];
+      h += '<div class="cal-det"><p class="cal-det-k">' + head + "</p>" + (list.length ? list.map(function (e) { return calEvRow(e, false); }).join("") : '<p class="cal-none">No hay nada marcado este día.</p>') + "</div>";
+    } else {
+      var from = fromIso < today && today <= toIso ? today : fromIso;
+      var start = function (e) { return e.d < from ? from : e.d; };
+      list = (DATA.fechas || []).filter(function (e) { return e.h >= from && e.d <= toIso; })
+        .sort(function (a, b) { return start(a).localeCompare(start(b)) || CAL_ORDER.indexOf(a.k) - CAL_ORDER.indexOf(b.k); });
+      head = week ? (from === today ? "Desde hoy" : "Esta semana") : "En " + MESES[ref.getMonth()];
+      if (!list.length) {
+        list = (DATA.fechas || []).filter(function (e) { return e.d > toIso; }).sort(function (a, b) { return a.d.localeCompare(b.d); }).slice(0, 3);
+        if (list.length) head = "Nada marcado · lo que viene";
+      }
+      h += '<div class="cal-det"><p class="cal-det-k">' + head + "</p>" + (list.length ? list.slice(0, week ? 5 : 10).map(function (e) { return calEvRow(e, true); }).join("") : '<p class="cal-none">No hay fechas cargadas.</p>') + "</div>";
+    }
+    h += '<p class="cal-src">Del <a href="' + esc(linkByMatch("Calendario ano lectivo completo") || "https://ing.unlp.edu.ar/institucional/calendario-ano-lectivo-completo/") + '" target="_blank" rel="noopener">calendario académico oficial</a>. Paros y avisos los carga Gradiente.</p>';
+    el.innerHTML = h;
+    el.onclick = function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      if (b.dataset.calMode) { calUI.mode = b.dataset.calMode; calUI.sel = null; homeUI.cal = calUI.mode; saveHomeUI(); }
+      else if (b.dataset.calNav) {
+        var r = calUI.ref || new Date(), n = +b.dataset.calNav;
+        calUI.ref = calUI.mode === "week" ? addDays(r, 7 * n) : new Date(r.getFullYear(), r.getMonth() + n, 1);
+        calUI.sel = null;
+      }
+      else if (b.hasAttribute("data-cal-today")) { calUI.ref = null; calUI.sel = null; }
+      else if (b.dataset.calDay) calUI.sel = calUI.sel === b.dataset.calDay ? null : b.dataset.calDay;
+      else return;
+      paintCal();
+    };
+  }
 
   /* ---------- quiénes somos ---------- */
   function aboutSection() {
@@ -634,6 +899,9 @@
     var a = Array.isArray(it.a) ? it.a : [it.a];
     var links = (it.links || []).map(function (l) {
       if (l.go === "about") return '<button type="button" class="msg-link" data-about-go>' + esc(l.label) + ic("chev") + "</button>";
+      if (l.go === "catedra") return '<button type="button" class="msg-link" data-help-go="materia">' + ic("search") + esc(l.label) + "</button>";
+      if (l.go === "cal") return '<button type="button" class="msg-link" data-cal-go>' + esc(l.label) + ic("chev") + "</button>";
+      if (l.go === "consulta") return '<a class="msg-link msg-link--accent" href="' + esc(CFG.consultationFormUrl) + '" target="_blank" rel="noopener">' + esc(l.label) + ic("ext") + "</a>";
       if (l.go) return '<a class="msg-link" href="' + esc(l.go) + '">' + esc(l.label) + ic("chev") + "</a>";
       var url = l.url || linkByMatch(l.match);
       return url ? '<a class="msg-link" href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(l.label) + ic("ext") + "</a>" : "";
@@ -701,6 +969,8 @@
       else if (b.hasAttribute("data-popular")) { if (!chat.busy) { userSay("Ver las más preguntadas"); botSay("<p>Estas son las que más nos llegan:</p>", popularChips()); } }
       else if (b.hasAttribute("data-nope")) { if (!chat.busy) { userSay(b.textContent); botSay(consultHtml("Uh, perdón. Escribinos y te responde alguien de Gradiente."), [{ label: "Ver las más preguntadas", attr: "data-popular", soft: true }]); } }
       else if (b.hasAttribute("data-about-go")) openAbout("who");
+      else if (b.dataset.helpGo) openConsultas(b.dataset.helpGo);
+      else if (b.hasAttribute("data-cal-go")) goCal();
       else if (b.hasAttribute("data-faq-reset")) { chat.log = []; faqStart(); }
     };
   }
@@ -804,14 +1074,14 @@
         '<circle class="rg-d" cx="26" cy="26" r="22" pathLength="100" style="--f:' + fa.toFixed(2) + '"/></svg>';
     };
     el.innerHTML = '<button class="ph-ring' + (first ? " is-zero" : "") + '" type="button" id="ringBtn" aria-expanded="' + !!ui.statsOpen + '" aria-controls="phMore" aria-label="' + s.pct + '% de la carrera aprobada. Ver detalle">' +
-      ring("rg") + '<b>' + s.pct + '<small>%</small></b></button>';
+      ring("rg") + '<b>' + s.pct + '<small>%</small></b>' + plusChip(s) + "</button>";
     if (mini) mini.innerHTML = ring("rg") + "<b>" + s.pct + "%</b>";
-    var t = s.total || 1, pend = Math.max(0, s.total - s.a - s.r - s.c);
-    var w = function (n) { return (n / t * 100).toFixed(2) + "%"; };
-    more.innerHTML = '<p class="pm-lead"><b>' + s.a + " de " + s.total + "</b> materias aprobadas</p>" +
-      '<div class="pp-bar" role="img" aria-label="' + s.a + " aprobadas, " + s.r + " regulares, " + s.c + ' cursando"><i class="d" style="--w:' + w(s.a) + '"></i><i class="r" style="--w:' + w(s.r) + '"></i><i class="c" style="--w:' + w(s.c) + '"></i></div>' +
+    var pend = Math.max(0, s.total - s.a - s.r);
+    more.innerHTML = '<p class="pm-lead"><b>' + s.a + " de " + s.total + "</b> materias aprobadas" +
+      (s.r ? ' <span class="pm-r">· con las regulares llegarías al <b>' + s.pctR + "%</b></span>" : "") + "</p>" +
+      progBar(s, "pm-bar") +
       '<ul class="pp-legend"><li><i class="d"></i><b>' + s.a + "</b> aprobadas</li><li><i class=\"r\"></i><b>" + s.r + "</b> " + (s.r === 1 ? "regular" : "regulares") +
-      "</li><li><i class=\"c\"></i><b>" + s.c + '</b> cursando</li><li class="pp-rest"><b>' + pend + "</b> por hacer</li></ul>" +
+      '</li><li class="pp-rest"><b>' + pend + "</b> por hacer</li>" + (s.c ? '<li class="pp-rest"><b>' + s.c + "</b> cursando</li>" : "") + "</ul>" +
       '<p class="pm-avg">Promedio <b>' + fmtAvg(s.avg) + "</b> <span>" + (s.notes.length ? "con " + s.notes.length + (s.notes.length === 1 ? " nota" : " notas") : "cargá la nota al aprobar") + "</span></p>";
     $("#ringBtn").onclick = function () { setStatsOpen(!ui.statsOpen); };
     if (first) requestAnimationFrame(function () { requestAnimationFrame(function () { var b = $("#ringBtn"); if (b) b.classList.remove("is-zero"); }); });
@@ -865,8 +1135,8 @@
     var h = "";
     if (S.view === "tree") {
       h += '<p class="fm-label">En el árbol mostrar</p><div class="fm-seg" role="group" aria-label="Qué mostrar en el árbol">' +
-        '<button type="button" data-reveal="next" aria-pressed="' + (S.reveal !== "all") + '">Lo próximo</button>' +
-        '<button type="button" data-reveal="all" aria-pressed="' + (S.reveal === "all") + '">Todo el plan</button></div>';
+        '<button type="button" data-reveal="next" aria-pressed="' + (S.reveal !== "all") + '">Ir desbloqueando</button>' +
+        '<button type="button" data-reveal="all" aria-pressed="' + (S.reveal === "all") + '">Mostrar todo</button></div>';
     }
     h += '<p class="fm-label">' + (S.view === "tree" ? "Resaltar" : "Mostrar") + '</p><div class="fm-list" role="group">' + FILTERS.map(function (f) {
       var n = c.courses.filter(function (x) { return x.k !== "lang" && matchFilter(ev[x.c], f[0]); }).length;
@@ -988,7 +1258,7 @@
       html += "</div>";
     });
     html += "</div></div>";
-    if (S.reveal !== "all" && hidden) html += '<p class="treeFoot">' + ic("lock") + "<span>" + hidden + " materias se van a ir mostrando a medida que avances.</span>" + '<button type="button" id="showAll">Ver todo el plan</button></p>';
+    if (S.reveal !== "all" && hidden) html += '<p class="treeFoot">' + ic("lock") + "<span>" + hidden + " materias se van a ir mostrando a medida que avances.</span>" + '<button type="button" id="showAll">Mostrar todo</button></p>';
     var prev = $("#tree"), keep = prev ? { l: prev.scrollLeft, t: prev.scrollTop } : null;
     el.innerHTML = tipHtml() + html;
     var tree = $("#tree");
@@ -997,6 +1267,7 @@
     ui.spawned = prevSeen ? Object.keys(nowSeen).filter(function (k) { return !prevSeen[k]; }) : [];
     ui.seen = { key: seenKey, set: nowSeen };
     var wasEnter = ui.enter; ui.enter = false;
+    if (!wasEnter && ui.spawned.length) { keepGhosts(tree, ui.spawned); revealSpawn(tree, ui.spawned); }
     var sa = $("#showAll"); if (sa) sa.onclick = function () { S.reveal = "all"; save(); renderFilters(); renderPlanBody(); };
     bindTip(el);
     if (!tipSeen()) { var first = $all(".tnode.is-ready", tree).filter(function (n) { var x = c.byCode[n.dataset.node]; return x && x.k !== "lang" && x.s > 0; })[0] || $(".tnode.is-ready", tree); if (first) first.classList.add("is-hint"); }
@@ -1007,7 +1278,7 @@
         var code = n.dataset.node;
         $all(".is-hint", tree).forEach(function (h) { h.classList.remove("is-hint"); });
         tuckHeader();
-        if (ui.focus === code) openSubject(c, code);
+        if (ui.focus === code) { tapHintDone(); openSubject(c, code); }
         else { ui.focus = code; paintFocus(c); }
       };
     });
@@ -1015,11 +1286,18 @@
     tree.addEventListener("scroll", function () { if (ui.statsOpen) setStatsOpen(false); }, { passive: true });
     requestAnimationFrame(function () { drawTreeLines(wasEnter ? "enter" : "spawn"); paintFocus(c); });
   }
+  function offsetIn(n, root) {
+    var l = 0, t = 0;
+    for (var e = n; e && e !== root; e = e.offsetParent) { l += e.offsetLeft; t += e.offsetTop; }
+    return { l: l, t: t };
+  }
   function drawTreeLines(mode) {
     var c = career(), inner = $("#treeIn"), svg = $("#treeLines");
     if (!inner || !svg || !c) return;
-    var base = inner.getBoundingClientRect(), pos = {};
-    $all("[data-node]", inner).forEach(function (n) { var r = n.getBoundingClientRect(); pos[n.dataset.node] = { l: r.left - base.left, r: r.right - base.left, y: r.top - base.top + r.height / 2, g: n.classList.contains("is-ghost") }; });
+    // posiciones de layout (offset), no getBoundingClientRect: así las materias que todavía
+    // están entrando con animación (corridas o escaladas) no dejan las líneas cortas
+    var pos = {};
+    $all("[data-node]", inner).forEach(function (n) { var o = offsetIn(n, inner); pos[n.dataset.node] = { l: o.l, r: o.l + n.offsetWidth, y: o.t + n.offsetHeight / 2, g: n.classList.contains("is-ghost") }; });
     svg.setAttribute("width", inner.scrollWidth); svg.setAttribute("height", inner.scrollHeight);
     var spawned = {}; (ui.spawned || []).forEach(function (k) { spawned[k] = 1; });
     var paths = [];
@@ -1041,6 +1319,50 @@
     $all("path.is-draw", svg).forEach(function (p) { p.addEventListener("animationend", function () { p.classList.remove("is-draw"); p.removeAttribute("pathLength"); }, { once: true }); });
     ui.spawned = [];
     paintFocus(c);
+  }
+  /* si lo que se destraba queda fuera de la vista, lleva el árbol hasta la columna
+     con más materias nuevas (a igualdad, la de más a la izquierda) y demora la animación */
+  /* el lugar punteado con candado se queda donde estaba hasta que la tarjeta nueva terminó de aparecer encima */
+  function keepGhosts(tree, codes) {
+    var inner = $("#treeIn"); if (!inner) return;
+    codes.forEach(function (k) {
+      var n = $('[data-node="' + k + '"]', tree); if (!n) return;
+      var o = offsetIn(n, inner), h = Math.min(36, n.offsetHeight);
+      var g = document.createElement("span");
+      g.className = "tghost"; g.setAttribute("aria-hidden", "true"); g.innerHTML = ic("lock");
+      g.style.cssText = "left:" + o.l + "px;top:" + (o.t + (n.offsetHeight - h) / 2) + "px;width:" + n.offsetWidth + "px;height:" + h + "px";
+      inner.appendChild(g);
+      var done = false, out = function () { if (done) return; done = true; g.classList.add("is-out"); setTimeout(function () { g.remove(); }, 350); };
+      n.addEventListener("animationend", function (e) { if (e.target === n) out(); });
+      setTimeout(out, 2600); // por si la animación no corre (movimiento reducido)
+    });
+  }
+  function revealSpawn(tree, codes) {
+    var inner = $("#treeIn"), byCol = [];
+    codes.forEach(function (k) {
+      var n = $('[data-node="' + k + '"]', tree); if (!n) return;
+      var col = n.parentNode, g = byCol.filter(function (x) { return x.col === col; })[0];
+      if (!g) byCol.push(g = { col: col, nodes: [] });
+      g.nodes.push(n);
+    });
+    if (!byCol.length) return;
+    byCol.sort(function (a, b) { return b.nodes.length - a.nodes.length || a.col.offsetLeft - b.col.offsetLeft; });
+    var best = byCol[0], col = best.col;
+    var top = Infinity, bottom = 0;
+    best.nodes.forEach(function (n) { var o = offsetIn(n, inner); top = Math.min(top, o.t); bottom = Math.max(bottom, o.t + n.offsetHeight); });
+    var colL = col.offsetLeft, colR = colL + col.offsetWidth, pad = 24;
+    var inX = colL >= tree.scrollLeft + pad && colR <= tree.scrollLeft + tree.clientWidth - pad;
+    var inY = top >= tree.scrollTop + 40 && bottom <= tree.scrollTop + tree.clientHeight - pad;
+    var tr = tree.getBoundingClientRect(), inPage = tr.top >= 0 && tr.top < window.innerHeight * .5;
+    if (inX && inY && inPage) return;
+    tree.classList.add("is-seeking");
+    setTimeout(function () { tree.classList.remove("is-seeking"); }, 1800);
+    tree.scrollTo({
+      left: inX ? tree.scrollLeft : Math.max(0, (colL + colR) / 2 - tree.clientWidth / 2),
+      top: inY ? tree.scrollTop : Math.max(0, (top + bottom) / 2 - tree.clientHeight / 2),
+      behavior: "smooth"
+    });
+    if (!inPage) window.scrollTo({ top: window.scrollY + tr.top - 80, behavior: "smooth" });
   }
   /* camino de una materia: todo lo de atrás (coloreado según lo que ya tenés) y un solo paso hacia adelante */
   function paintFocus(c) {
@@ -1078,15 +1400,25 @@
     if (!bar) { bar = document.createElement("div"); bar.id = "focusBar"; bar.className = "treeFocusBar"; document.body.appendChild(bar); }
     document.body.classList.add("has-fb");
     var x = c.byCode[code], e = evaluate(c, x);
-    bar.innerHTML = '<div class="fb-top"><span class="fb-name"><small>' + esc(x.k === "slot" ? "A elección" : x.c) + " · " + STATE[e.state].label + "</small>" + esc(displayName(c, x)) + "</span>" +
+    var hint = tapHintShow(code);
+    bar.innerHTML = (hint ? '<p class="fb-hint">' + ic("tap") + "<span>Tocala de nuevo para ver el detalle</span></p>" : "") + '<div class="fb-top"><span class="fb-name"><small>' + esc(x.k === "slot" ? "A elección" : x.c) + " · " + STATE[e.state].label + "</small>" + esc(displayName(c, x)) + "</span>" +
       '<button class="fb-ic" type="button" data-fb-open aria-label="Ver detalle">' + ic("help") + '</button><button class="fb-ic" type="button" aria-label="Quitar selección" data-fb-x>' + ic("x") + "</button></div>" +
       '<div class="fb-seg" role="group" aria-label="Marcar como">' + ["p", "c", "r", "a"].map(function (st) {
         return '<button type="button" data-fb-st="' + st + '" aria-pressed="' + (e.s === st) + '"><i style="background:' + ST_COLOR[st] + '"></i>' + ST_LABEL[st] + "</button>";
       }).join("") + "</div>";
-    bar.querySelector("[data-fb-open]").onclick = function () { openSubject(c, code); };
+    bar.querySelector("[data-fb-open]").onclick = function () { tapHintDone(); openSubject(c, code); };
     bar.querySelector("[data-fb-x]").onclick = function () { ui.focus = null; paintFocus(c); };
     $all("[data-fb-st]", bar).forEach(function (b) { b.onclick = function () { tipDone(); ui.focus = null; hideFocusBar(); setStatus(c, code, b.dataset.fbSt, true); }; });
   }
+  /* "tocala de nuevo": se muestra las primeras veces y desaparece cuando ya lo usaste */
+  var tapHint = { code: null };
+  function tapHintShow(code) {
+    var n = store.get("gradiente.tapHint", 0);
+    if (n >= 4) return false;
+    if (tapHint.code !== code) { tapHint.code = code; store.set("gradiente.tapHint", n + 1); }
+    return true;
+  }
+  function tapHintDone() { store.set("gradiente.tapHint", 9); }
   function hideFocusBar() { var bar = $("#focusBar"); if (bar) bar.remove(); document.body.classList.remove("has-fb"); }
   function enablePan(el) {
     var st = null;
@@ -1152,6 +1484,7 @@
         S.name = o.name; S.career = o.career; S.filter = "all"; ui.query = "";
         var c = DATA.byId[o.career], P = prog(c.id), n = 0;
         if (o.level >= 0 && o.level < 99) c.courses.forEach(function (x) { if (x.k === "lang" || x.k === "slot" || x.k === "afc") return; if (x.s <= o.level && !P[x.c]) { P[x.c] = { s: "a" }; n++; } });
+        shareAll(c);
         save(); closeSheet();
         if (location.hash === "#/plan") route(); else location.hash = "#/plan";
         toast(n ? "Marcamos " + n + " materias como aprobadas." : "¡Listo! Tocá una materia para marcarla.");
@@ -1166,11 +1499,15 @@
   /* ---------------- selector de carrera ---------------- */
   function renderCareerPicker() {
     var html = '<div class="wrap page"><div class="pickerTop"><p class="kicker">Plan de estudios</p>' + (career() ? '<a class="btn btn--sm" href="#/plan">' + ic("chev") + "Volver a " + esc(career().short) + "</a>" : "") + '</div><h1 class="h1">Elegí tu carrera</h1>' +
-      '<p class="lead">Están los 13 planes vigentes de Ingeniería UNLP con sus correlativas. Tu progreso queda guardado en este dispositivo y podés tener varias carreras a la vez.</p><div class="careerPick">';
+      '<p class="lead">Están los 13 planes vigentes de Ingeniería UNLP con sus correlativas. Tu progreso queda guardado en este dispositivo y podés tener varias carreras a la vez.</p>' +
+      '<p class="pickNote">' + ic("links") + "<span>Las materias con el mismo código se comparten: si aprobás Matemática A en una carrera, cuenta en todas las que la tienen.</span></p><div class=\"careerPick\">";
     DATA.plans.careers.forEach(function (c) {
-      var pct = careerPct(c);
-      html += '<button type="button" class="card careerCard lift glow rise' + (c.id === S.career ? " is-current" : "") + '" data-career="' + c.id + '"><span class="mono">Plan ' + esc(c.plan) + " · " + c.mainCount + " materias</span><strong>" + esc(c.short) + "</strong>" +
-        (pct ? '<span class="bar"><i style="width:' + pct + '%"></i></span>' : '<span class="bar"></span>') + "</button>";
+      var p = careerPct(c), cur = c.id === S.career;
+      html += '<button type="button" class="careerCard rise' + (cur ? " is-current" : "") + '" data-career="' + c.id + '"' + (cur ? ' aria-current="true"' : "") + ">" +
+        '<span class="cc-top"><span class="mono">Plan ' + esc(c.plan) + " · " + c.mainCount + " materias</span>" + (cur ? '<em class="cc-tag">Actual</em>' : "") + "</span>" +
+        "<strong>" + esc(c.short) + "</strong>" +
+        '<span class="cc-foot"><span class="bar"><i class="d" style="width:' + p.a + '%"></i><i class="r" style="width:' + p.r + '%"></i></span>' +
+        '<span class="cc-pct">' + (p.a || p.r ? p.a + "%" + (p.r ? "<small>+" + p.r + "</small>" : "") : "–") + "</span></span></button>";
     });
     html += "</div></div>";
     main.innerHTML = html; stagger(main);
@@ -1191,7 +1528,7 @@
       else if (t.dataset.grade) {
         var P = prog(c.id); var g = +t.dataset.grade;
         P[code] = P[code] || { s: "a" }; if (P[code].n === g) delete P[code].n; else P[code].n = g;
-        save(); rerenderPlanBits();
+        shareCode(c, code); save(); rerenderPlanBits();
       } else if (t.dataset.pick !== undefined) {
         var P2 = prog(c.id); P2[code] = P2[code] || { s: "p" };
         if (t.dataset.pick) P2[code].pick = t.dataset.pick; else delete P2[code].pick;
@@ -1282,16 +1619,19 @@
       if (!t) return;
       var a = t.dataset.act;
       if (a === "switch") { closeSheet(); location.hash = "#/plan?elegir=1"; }
-      else if (a === "share") {
-        var link = shareLink(c.id);
-        if (navigator.share) { navigator.share({ title: "Mi plan · Gradiente", url: link }).catch(function () {}); }
-        else if (navigator.clipboard) { navigator.clipboard.writeText(link).then(function () { toast("Link copiado. Pegalo en tu otro dispositivo."); }, function () { showLink(link); }); }
-        else showLink(link);
-      } else if (a === "reset") {
+      else if (a === "share") sharePlan(c);
+      else if (a === "reset") {
         if (!confirmReset) { confirmReset = true; refreshSheet(); return; }
         delete S.prog[c.id]; save(); closeSheet(); rerenderPlanBits(); toast("Listo, arrancás de cero.");
       }
     };
+  }
+  function sharePlan(c) {
+    if (!c) return;
+    var link = shareLink(c.id);
+    if (navigator.share) { navigator.share({ title: "Mi plan · Gradiente", url: link }).catch(function () {}); }
+    else if (navigator.clipboard) { navigator.clipboard.writeText(link).then(function () { toast("Link copiado. Pegalo en tu otro dispositivo."); }, function () { showLink(link); }); }
+    else showLink(link);
   }
   function showLink(link) {
     openSheet(function () {
@@ -1307,7 +1647,7 @@
     });
     sheetBody.onclick = function (ev) {
       if (!ev.target.closest("[data-imp]")) return;
-      S.prog[imp.cid] = imp.prog; S.career = imp.cid; save(); closeSheet(); route(); toast("¡Listo! Importamos tu plan.");
+      S.prog[imp.cid] = imp.prog; S.career = imp.cid; shareAll(DATA.byId[imp.cid]); save(); closeSheet(); route(); toast("¡Listo! Importamos tu plan.");
     };
   }
   function openHelp() {
@@ -1328,7 +1668,7 @@
   /* ======================================================================
      RECURSOS
      ====================================================================== */
-  var resState = { q: "", spy: null };
+  var resState = { q: "", spy: null, closed: {} };
   function catList() {
     return (CFG.categories || []).map(function (c) { return Array.isArray(c) ? { id: c[0], name: c[1] } : c; });
   }
@@ -1381,15 +1721,20 @@
       .sort(function (a, b) { return order[a.st] - order[b.st]; });
   }
   function nubeCount() { return Object.keys(DATA.nube || {}).length; }
+  /* link directo a la carpeta de la materia (nube.json > d); si no tiene, a la carpeta Parciales */
+  function nubeUrl(code) {
+    var n = DATA.nube[code], d = n && n.d && n.d[0];
+    return d ? "https://drive.google.com/drive/folders/" + d : (CFG.nubeParcialesUrl || CFG.driveUrl);
+  }
   function nubeHit(s) {
     var n = DATA.nube[s.c];
-    return '<a class="nubeHit" href="' + esc(CFG.driveUrl) + '" target="_blank" rel="noopener"><span class="nubeHit-ic">' + ic("folder") + '</span><span><strong>' + esc(s.n) + "</strong><small>Carpeta «" + esc(n.f[0]) + "»</small></span><em>" + n.n + " archivo" + (n.n === 1 ? "" : "s") + "</em></a>";
+    return '<a class="nubeHit" href="' + esc(nubeUrl(s.c)) + '" target="_blank" rel="noopener"><span class="nubeHit-ic">' + ic("folder") + '</span><span><strong>' + esc(s.n) + "</strong><small>" + (n.d ? "Abrir su carpeta" : "Buscala en «Parciales»") + "</small></span><em>" + n.n + " archivo" + (n.n === 1 ? "" : "s") + "</em>" + ic("ext") + "</a>";
   }
   function nubeFinderResults(q) {
     if (!q) {
       var mine = mySubjects(function (x) { return DATA.nube[x.c]; }).slice(0, 4);
-      if (!mine.length) return '<p class="nubeHint">Probá con «análisis», «física» o el código de la materia.</p>';
-      return '<p class="nubeHint">De lo que estás cursando:</p>' + mine.map(nubeHit).join("");
+      if (mine.length) return '<p class="nubeHint">De lo que estás cursando</p>' + mine.map(nubeHit).join("");
+      return '<p class="nubeHint">Probá con</p><div class="nubeTry">' + ["Matemática A", "Física I", "Química", "Estructuras"].map(function (t) { return '<button type="button" class="chip" data-try="' + t + '">' + t + "</button>"; }).join("") + "</div>";
     }
     var hits = searchSubjects(q, true).slice(0, 5);
     if (hits.length) return hits.map(nubeHit).join("");
@@ -1397,21 +1742,24 @@
     return '<p class="nubeHint">' + (any ? "Todavía no hay material de <strong>" + esc(any.n) + "</strong>. Si tenés, ¡compartilo!" : "No encontramos esa materia.") + "</p>";
   }
   function nubeFinder(id) {
-    return '<div class="nubeFind"><label class="search search--soft"><span class="sr">Buscar materia en la nube</span>' + ic("search") +
+    return '<div class="nubeFind"><label class="search nubeSearch"><span class="sr">Buscar materia en la nube</span>' + ic("search") +
       '<input id="' + id + '" type="search" placeholder="¿Hay material de tu materia?" autocomplete="off"></label>' +
       '<div class="nubeHits" id="' + id + 'Hits">' + nubeFinderResults("") + "</div></div>";
   }
   function bindNubeFinder(id, root) {
     var inp = $("#" + id, root), out = $("#" + id + "Hits", root);
-    if (inp) inp.addEventListener("input", function () { out.innerHTML = nubeFinderResults(inp.value); });
+    if (!inp) return;
+    inp.addEventListener("input", function () { out.innerHTML = nubeFinderResults(inp.value); });
+    out.addEventListener("click", function (e) {
+      var t = e.target.closest("[data-try]"); if (!t) return;
+      inp.value = t.dataset.try; out.innerHTML = nubeFinderResults(inp.value); inp.focus();
+    });
   }
   function nubeCard() {
-    return '<section class="nubeCard rise"><div class="nubeCard-main">' +
-      '<span class="nubeCard-badge">' + ic("cloud") + "Nube Gradiente</span>" +
-      '<h2 class="h2">Parciales, finales y apuntes</h2>' +
-      "<p>Material de estudiantes para estudiantes, ordenado por materia. En tu plan te marcamos con " + ic("folder", "inlineIc") + " las materias que tienen algo.</p>" +
-      '<div class="nubeStats"><span><b>2.600+</b>archivos</span><span><b>' + nubeCount() + "</b>materias</span></div>" +
-      '<a class="btn btn--accent" href="' + esc(CFG.driveUrl) + '" target="_blank" rel="noopener">' + ic("folder") + "Abrir la nube</a></div>" +
+    return '<section class="nube rise"><div class="nube-head"><span class="nube-ic">' + ic("cloud") + "</span>" +
+      '<div class="nube-t"><p class="nube-k">Nube Gradiente · <b>2.600+</b> archivos · <b>' + nubeCount() + "</b> materias</p>" +
+      '<h2 class="h2">¿Hay material de tu materia?</h2></div>' +
+      '<a class="nube-open" href="' + esc(CFG.driveUrl) + '" target="_blank" rel="noopener">Abrir la nube' + ic("ext") + "</a></div>" +
       nubeFinder("nubeQ") + "</section>";
   }
 
@@ -1441,6 +1789,7 @@
           e.preventDefault();
           if (resState.q) { resState.q = ""; inp.value = ""; paintRes(cats); }
           var t = $("#res-" + a.dataset.jump);
+          if (t && t.classList.contains("is-closed")) $("[data-fold]", t).click();
           if (t) window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - (60 + $("#planTools").offsetHeight + 8), behavior: "smooth" });
         });
       });
@@ -1475,14 +1824,22 @@
       html = '<div class="resGrid">' + cats.map(function (c) {
         var items = DATA.links.filter(function (l) { return l.category === c.id; });
         var tiles = c.layout === "tiles";
-        return '<section class="resPanel' + (tiles ? " resPanel--wide" : "") + '" id="res-' + slug(c.id) + '"' + cStyle(c.color) + ">" +
-          '<header class="resPanel-h"><span class="resPanel-ic">' + ic(c.icon || "links") + '</span><div><h2 class="h3">' + esc(c.name) + "</h2>" + (c.desc ? "<p>" + esc(c.desc) + "</p>" : "") + '</div><span class="resPanel-n">' + items.length + "</span></header>" +
-          (tiles ? '<div class="resTiles">' + items.map(resTile).join("") + "</div>" : '<div class="resRows">' + items.map(resRow).join("") + "</div>") +
+        var closed = resState.closed[c.id];
+        return '<section class="resPanel' + (tiles ? " resPanel--wide" : "") + (closed ? " is-closed" : "") + '" id="res-' + slug(c.id) + '"' + cStyle(c.color) + ">" +
+          '<button class="resPanel-h" type="button" data-fold="' + esc(c.id) + '" aria-expanded="' + !closed + '"><span class="resPanel-ic">' + ic(c.icon || "links") + '</span><div><h2 class="h3">' + esc(c.name) + "</h2>" + (c.desc ? "<p>" + esc(c.desc) + "</p>" : "") + '</div><span class="resPanel-n">' + items.length + "</span>" + ic("chev", "resPanel-chev") + "</button>" +
+          '<div class="resPanel-b"><div class="resPanel-in">' + (tiles ? '<div class="resTiles">' + items.map(resTile).join("") + "</div>" : '<div class="resRows">' + items.map(resRow).join("") + "</div>") + "</div></div>" +
           "</section>";
       }).join("") + "</div>";
     }
     el.innerHTML = html;
     $all("[data-help]", el).forEach(function (b) { b.onclick = function () { openConsultas(); }; });
+    $all("[data-fold]", el).forEach(function (b) {
+      b.onclick = function () {
+        var id = b.dataset.fold, open = !!resState.closed[id];
+        if (open) delete resState.closed[id]; else resState.closed[id] = 1;
+        b.parentNode.classList.toggle("is-closed", !open); b.setAttribute("aria-expanded", open);
+      };
+    });
     watchSpy();
   }
   // copiar mails (en toda la app)
@@ -1608,7 +1965,7 @@
     var h = helpHead(subjName(code), code + " · Cátedra", true);
     h += '<div style="margin-top:14px">' + catedraBlock(code, false) + "</div>";
     var n = DATA.nube[code];
-    if (n) h += '<a class="helpNube helpNube--sm" href="' + esc(CFG.driveUrl) + '" target="_blank" rel="noopener"><span class="helpNube-ic">' + ic("folder") + '</span><span><em>En la nube</em><strong>' + n.n + " archivo" + (n.n === 1 ? "" : "s") + "</strong><small>Carpeta «" + esc(n.f[0]) + "»</small></span>" + ic("ext") + "</a>";
+    if (n) h += '<a class="helpNube helpNube--sm" href="' + esc(nubeUrl(code)) + '" target="_blank" rel="noopener"><span class="helpNube-ic">' + ic("folder") + '</span><span><em>En la nube</em><strong>' + n.n + " archivo" + (n.n === 1 ? "" : "s") + "</strong><small>Carpeta «" + esc(n.f[0]) + "»</small></span>" + ic("ext") + "</a>";
     h += '<p class="small muted" style="margin:16px 0 0">Tip: escribí desde tu correo institucional, poné la materia y tu comisión en el asunto.</p>';
     return h + helpFoot();
   }

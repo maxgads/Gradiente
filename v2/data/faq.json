@@ -1,7 +1,8 @@
 {
-  "_ayuda": "Base de preguntas frecuentes del chat del inicio. Cada respuesta: q (pregunta), a (respuesta, puede tener varios párrafos en un array), k (palabras con las que la gente lo busca), links (botones: url directa, match = título en /links.json, o go = ruta interna como #/plan), top (orden en las 5 más preguntadas).",
+  "_ayuda": "Base de preguntas frecuentes del chat del inicio. Cada respuesta: q (pregunta), a (respuesta, puede tener varios párrafos en un array), k (palabras con las que la gente lo busca), links (botones: url directa, match = título en /links.json, o go = ruta interna como #/plan; go especiales: catedra (buscador de mails de cátedras), consulta (formulario de consultas), cal (calendario del inicio), about (quiénes somos)), top (orden en las 5 más preguntadas).",
   "topics": [
     { "id": "cursada", "label": "Cursada e inscripciones" },
+    { "id": "profes", "label": "Profes y cátedras" },
     { "id": "finales", "label": "Finales" },
     { "id": "tramites", "label": "Trámites y SIU" },
     { "id": "becas", "label": "Becas y ayuda" },
@@ -91,6 +92,48 @@
       "a": ["Se pide desde la web de soporte de la Facultad."],
       "k": ["correo", "mail", "email", "institucional", "cuenta", "ing"],
       "links": [{ "label": "Pedir correo", "match": "Solicitud de correo institucional para alumnos" }]
+    },
+    {
+      "id": "mail-profe", "topic": "profes",
+      "q": "¿Cómo consigo el mail de un profe o de la cátedra?",
+      "a": ["Buscá la materia y te mostramos el mail de contacto de la cátedra, su página y el Portal de Asignaturas. Casi todas tienen un mail general que lee el equipo docente.", "Para dudas del día a día, el aula virtual de la materia suele ser lo más rápido."],
+      "k": ["mail", "correo", "email", "profe", "profesor", "profesora", "docente", "catedra", "contacto", "escribir", "ayudante", "jtp", "titular"],
+      "links": [{ "label": "Buscar el mail de la cátedra", "go": "catedra" }, { "label": "Portal de asignaturas", "match": "Portal de Asignaturas FI" }]
+    },
+    {
+      "id": "escribir-profe", "topic": "profes",
+      "q": "¿Cómo le escribo a un profe para hacer una consulta?",
+      "a": ["Mandalo desde tu mail institucional si lo tenés. En el asunto poné materia, comisión y tema (por ejemplo: «Matemática B – Com. 3 – Consulta TP 2»).", "Arrancá con nombre, apellido y número de alumno, y andá al grano. Si es una duda de contenido, muchas veces conviene ir directo a la clase de consulta."],
+      "k": ["escribir", "mail", "consulta", "profe", "profesor", "docente", "asunto", "redactar", "mensaje", "como", "pregunto"],
+      "links": [{ "label": "Buscar el mail de la cátedra", "go": "catedra" }, { "label": "Pedir correo institucional", "match": "Solicitud de correo institucional para alumnos" }]
+    },
+    {
+      "id": "horario-consulta", "topic": "profes",
+      "q": "¿Cuándo son las clases de consulta?",
+      "a": ["Cada cátedra tiene sus propios horarios de consulta. Suelen estar en la página de la cátedra o en su aula virtual.", "Si no los encontrás, escribile al mail de contacto de la cátedra y preguntá."],
+      "k": ["consulta", "consultas", "horario", "horarios", "clase", "dudas", "practica", "ayudante"],
+      "links": [{ "label": "Buscar la cátedra", "go": "catedra" }, { "label": "Aulas y horarios", "match": "Aulas y horarios" }]
+    },
+    {
+      "id": "revision", "topic": "profes",
+      "q": "No estoy de acuerdo con mi nota, ¿qué hago?",
+      "a": ["Pedí ver el examen: la revisión es tu derecho. La cátedra suele avisar en el aula virtual cuándo es la muestra de parciales; si no, preguntá por mail.", "Si después de la revisión sentís que algo no estuvo bien, escribinos y te acompañamos."],
+      "k": ["nota", "revision", "revisar", "examen", "parcial", "reclamo", "corregir", "correccion", "muestra", "desaprobe", "injusto"],
+      "links": [{ "label": "Buscar el mail de la cátedra", "go": "catedra" }, { "label": "Escribirnos", "go": "consulta" }]
+    },
+    {
+      "id": "problema-catedra", "topic": "profes",
+      "q": "Tengo un problema con un profe o una cátedra",
+      "a": ["Primero intentá hablarlo con la cátedra (tu ayudante, el JTP o el titular). Si no se resuelve, podés ir al Departamento de tu carrera o a la Dirección de Enseñanza.", "Si no querés hacerlo solo, escribinos: como agrupación te acompañamos y lo tratamos con discreción."],
+      "k": ["problema", "profe", "profesor", "catedra", "trato", "maltrato", "reclamo", "queja", "denuncia", "conflicto", "injusto"],
+      "links": [{ "label": "Escribirnos", "go": "consulta" }, { "label": "Mail a Enseñanza", "url": "mailto:ensenanza@ing.unlp.edu.ar" }]
+    },
+    {
+      "id": "paro", "topic": "cursada",
+      "q": "¿Hay clases? ¿Hay paro o feriado?",
+      "a": ["En el calendario del inicio están los feriados, asuetos y fechas de la Facultad. Cuando hay paro o un aviso importante, también lo marcamos ahí."],
+      "k": ["paro", "clases", "feriado", "asueto", "hay", "manana", "hoy", "calendario", "fecha", "fechas", "suspension", "no laborable"],
+      "links": [{ "label": "Ver el calendario", "go": "cal" }, { "label": "Calendario oficial", "match": "Calendario ano lectivo completo" }]
     },
     {
       "id": "contacto-facu", "topic": "tramites",

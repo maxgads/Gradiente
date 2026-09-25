@@ -24,6 +24,8 @@ Rediseño completo del sitio. HTML/CSS/JS sin build, pensado primero para celula
 | Categorías de Recursos (color, ícono, bajada) y temas de Consultas | `v2/config.js` (`categories`, `help`) |
 | Nombre lindo y bajada de cada link | `label` y `desc` en `/links.json` (opcionales) |
 | Mails y páginas de cátedras | `v2/data/catedras.json` → se regenera con `node v2/tools/actualizar-catedras.mjs` |
+| Carpeta de Drive de cada materia (link directo del buscador de la Nube) | `d` en `v2/data/nube.json` → `node v2/tools/actualizar-nube-links.mjs` |
+| Calendario del inicio | `v2/data/fechas.json` → `oficial` se baja con `node v2/tools/actualizar-fechas.mjs`; `extra` es a mano (ver abajo) |
 
 ## planes.json
 
@@ -61,3 +63,16 @@ En `localhost` (o agregando `?dev` a la URL) aparece un botón amarillo **DEV** 
 - **Cargar progreso de ejemplo** y **Borrar progreso**.
 
 En el sitio publicado no aparece (salvo con `?dev`).
+
+## fechas.json
+
+`oficial` sale del [calendario académico de la Facultad](https://ing.unlp.edu.ar/institucional/calendario-ano-lectivo-completo/) (correr el script cuando lo actualicen). `extra` es lo que carga Gradiente a mano y el script no lo toca. Ejemplo:
+
+```json
+"extra": [
+  { "d": "2026-10-01", "t": "Paro docente", "k": "paro", "n": "Sin clases en toda la Facultad" },
+  { "d": "2026-10-05", "h": "2026-10-09", "t": "Semana de la Ingeniería", "k": "evento", "url": "https://..." }
+]
+```
+
+`d` = desde, `h` = hasta (opcional), `k` = tipo: `paro`, `feriado`, `aviso`, `parciales`, `finales`, `inscripcion`, `clases`, `evento` (Gradiente) o `info`. `n` (nota) y `url` son opcionales.

@@ -1,0 +1,577 @@
+{
+ "fuente": "https://ing.unlp.edu.ar/institucional/calendario-ano-lectivo-completo/",
+ "actualizado": "2026-09-25",
+ "extra": [],
+ "oficial": [
+  {
+   "d": "2026-01-01",
+   "t": "F.N.I. (Año Nuevo)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-01-02",
+   "h": "2026-01-18",
+   "t": "La Facultad permanecerá cerrada",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-01-20",
+   "t": "Reanudación de actividades e inicio de Matemática para Ingeniería (ingresantes)",
+   "k": "clases"
+  },
+  {
+   "d": "2026-01-26",
+   "h": "2026-02-01",
+   "t": "Inscripción por SIU Guarani a Mesas de examen final Generales (Para todas las asignaturas)",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2026-01-26",
+   "h": "2026-02-18",
+   "t": "Período de inscripciones al programa estudiantes trabajadores (RET)",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2026-02-02",
+   "h": "2026-02-07",
+   "t": "Mesas de examen final Generales (Para todas las asignaturas)",
+   "k": "finales"
+  },
+  {
+   "d": "2026-02-09",
+   "h": "2026-02-21",
+   "t": "Semanas de evaluaciones parciales del 2º módulo del 2º semestre",
+   "k": "parciales"
+  },
+  {
+   "d": "2026-02-09",
+   "h": "2026-02-21",
+   "t": "Semana sugerida de evaluaciones, se flexibiliza lo establecido en la ordenanza 28",
+   "k": "parciales"
+  },
+  {
+   "d": "2026-02-10",
+   "t": "Finaliza el período de cierre de actas de mesas de finales",
+   "k": "finales"
+  },
+  {
+   "d": "2026-02-16",
+   "h": "2026-02-17",
+   "t": "F.N.I. (Carnaval)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-02-18",
+   "h": "2026-02-23",
+   "t": "Carga de notas finales y aviso a la of. de alumnos para el cierre de actas del 2º semestre/2025",
+   "k": "info"
+  },
+  {
+   "d": "2026-02-23",
+   "t": "Finaliza el ciclo lectivo 2025",
+   "k": "clases"
+  },
+  {
+   "d": "2026-02-23",
+   "h": "2026-02-27",
+   "t": "Asiento de AFCs aprobadas al SIU Guaraní",
+   "k": "info"
+  },
+  {
+   "d": "2026-02-27",
+   "h": "2026-03-08",
+   "t": "Período de Inscripción por SIU Guaraní a materias del 1º semestre",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2026-02-27",
+   "h": "2026-03-29",
+   "t": "Período solicitud de readmisión",
+   "k": "info"
+  },
+  {
+   "d": "2026-03-02",
+   "t": "Comienzo de clases ciclo lectivo 2026",
+   "k": "clases"
+  },
+  {
+   "d": "2026-03-16",
+   "h": "2026-03-22",
+   "t": "Inscripción por SIU Guarani a Mesas de examen final Generales (Para todas las asignaturas)",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2026-03-23",
+   "t": "Día no laborable con fines turísticos",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-03-24",
+   "t": "F.N.I. (Día Nacional de la Memoria por la Verdad y la Justicia)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-03-25",
+   "h": "2026-03-30",
+   "t": "Mesas de examen final Generales (Para todas las asignaturas)",
+   "k": "finales"
+  },
+  {
+   "d": "2026-03-30",
+   "h": "2026-04-30",
+   "t": "Período solicitud de readmisión",
+   "k": "info"
+  },
+  {
+   "d": "2026-04-02",
+   "t": "F.N.I. (Día del Veterano y de los Caídos en la Guerra de Malvinas)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-04-03",
+   "h": "2026-04-04",
+   "t": "F.N.I. (Semana Santa)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-04-13",
+   "h": "2026-04-19",
+   "t": "Inscripción por SIU Guarani a Mesas de Trabajo Final, PPS, Inglés y de examen final para asignaturas del tramo superior que lo requieran",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2026-04-20",
+   "h": "2026-04-25",
+   "t": "Mesas de Trabajo Final, PPS, Inglés y de examen final para asignaturas del tramo superior que lo requieran",
+   "k": "finales"
+  },
+  {
+   "d": "2026-04-20",
+   "h": "2026-05-09",
+   "t": "Evaluaciones parciales del 1º módulo del 1º semestre",
+   "k": "parciales"
+  },
+  {
+   "d": "2026-04-20",
+   "h": "2026-05-09",
+   "t": "Semana sugerida de evaluaciones, se flexibiliza Art. 2 de la Ord. 28 referido a asignaturas básicas",
+   "k": "parciales"
+  },
+  {
+   "d": "2026-04-24",
+   "t": "Acto Académico",
+   "k": "info"
+  },
+  {
+   "d": "2026-05-01",
+   "t": "F.N.I. (Día del Trabajador)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-05-04",
+   "h": "2026-05-10",
+   "t": "Inscripción por SIU Guarani a Mesas de Trabajo Final, PPS, Inglés y de examen final para asignaturas del tramo superior que lo requieran",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2026-05-11",
+   "h": "2026-05-16",
+   "t": "Mesas de Trabajo Final, PPS, Inglés y de examen final para asignaturas del tramo superior que lo requieran",
+   "k": "finales"
+  },
+  {
+   "d": "2026-05-11",
+   "h": "2026-05-31",
+   "t": "Fecha límite para baja de inscripciones a cursadas",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2026-05-25",
+   "t": "F.N.I. (Día de la Revolución de Mayo)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-06-01",
+   "h": "2026-06-07",
+   "t": "Inscripción por SIU Guarani a Mesas de Trabajo Final, PPS, Inglés y de examen final Generales (Para todas las asignaturas)",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2026-06-06",
+   "t": "Día de la Ingeniería Argentina (día lectivo)",
+   "k": "info"
+  },
+  {
+   "d": "2026-06-08",
+   "h": "2026-06-13",
+   "t": "Mesas de Trabajo Final, PPS, Inglés y de examen final General (todas las asignaturas)",
+   "k": "finales"
+  },
+  {
+   "d": "2026-06-15",
+   "t": "F.N.T. (Paso a la inmortalidad del Gral. Martín Miguel de Güemes)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-06-20",
+   "t": "F.N.I. (Paso a la inmortalidad del Gral. Manuel Belgrano)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-06-22",
+   "h": "2026-06-28",
+   "t": "Inscripción por SIU Guarani a Mesas de examen final para asignaturas del tramo superior que lo requieran",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2026-06-29",
+   "h": "2026-07-18",
+   "t": "Evaluaciones parciales del 2º módulo del 1º semestre incluyendo el período especial de recuperación (opcional)",
+   "k": "parciales"
+  },
+  {
+   "d": "2026-06-29",
+   "h": "2026-07-18",
+   "t": "Semana sugerida de evaluaciones, se flexibiliza Art. 2 de la Ord. 28 referido a asignaturas básicas",
+   "k": "parciales"
+  },
+  {
+   "d": "2026-06-29",
+   "h": "2026-07-04",
+   "t": "Mesas de examen final para asignaturas del tramo superior que lo requieran",
+   "k": "finales"
+  },
+  {
+   "d": "2026-06-29",
+   "h": "2026-07-04",
+   "t": "Mesas de examen final para asignaturas del tramo superior que lo requieran",
+   "k": "finales"
+  },
+  {
+   "d": "2026-07-03",
+   "t": "Acto Académico (a confirmar)",
+   "k": "info"
+  },
+  {
+   "d": "2026-07-09",
+   "t": "F.N.I. (Día de la Independencia)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-07-10",
+   "t": "Finaliza el período de cierre de actas de mesas de finales",
+   "k": "finales"
+  },
+  {
+   "d": "2026-07-10",
+   "t": "10 – N.L. con fines turísticos",
+   "k": "info"
+  },
+  {
+   "d": "2026-07-11",
+   "t": "11 N. L",
+   "k": "info"
+  },
+  {
+   "d": "2026-07-17",
+   "h": "2026-08-11",
+   "t": "Carga de notas finales y aviso a la of. de alumnos para el cierre de actas del 1º semestre",
+   "k": "info"
+  },
+  {
+   "d": "2026-07-20",
+   "h": "2026-07-31",
+   "t": "Receso invernal (estimado)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-07-20",
+   "h": "2026-08-07",
+   "t": "Período de inscripciones al programa estudiantes trabajadores (RET)",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2026-08-03",
+   "h": "2026-08-08",
+   "t": "Período especial de recuperación (flotante). Se flexibiliza Art. 2 de la Ord. 28 referido a asignaturas básicas",
+   "k": "info"
+  },
+  {
+   "d": "2026-08-03",
+   "h": "2026-08-07",
+   "t": "Asiento de AFCs aprobadas al SIU Guaraní",
+   "k": "info"
+  },
+  {
+   "d": "2026-08-12",
+   "t": "N.L. ( Día de la Universidad",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-08-14",
+   "h": "2026-08-22",
+   "t": "Período de Inscripción por SIU Guaraní a materias del 2º semestre",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2026-08-17",
+   "t": "F.N.T. ( Paso a la inmortalidad del Gral San Martín)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-08-18",
+   "t": "Comienzo de clases 2º Semestre",
+   "k": "clases"
+  },
+  {
+   "d": "2026-08-18",
+   "h": "2026-08-23",
+   "t": "Inscripción por SIU Guarani a Mesas de Trabajo Final, PPS, Inglés y de examen final para asignaturas del tramo superior que lo requieran",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2026-08-24",
+   "h": "2026-08-29",
+   "t": "Mesas de Trabajo Final, PPS, Inglés y de examen final para asignaturas del tramo superior que lo requieran",
+   "k": "finales"
+  },
+  {
+   "d": "2026-08-31",
+   "h": "2026-09-05",
+   "t": "Inscripción por SIU Guarani a Mesas de examen final Generales (Para todas las asignaturas)",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2026-09-04",
+   "t": "Acto Académico (a confirmar)",
+   "k": "info"
+  },
+  {
+   "d": "2026-09-07",
+   "h": "2026-09-12",
+   "t": "Mesas de examen final Generales (Para todas las asignaturas)",
+   "k": "finales"
+  },
+  {
+   "d": "2026-09-11",
+   "t": "Día del maestro (Asueto académico y administrativo)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-09-17",
+   "t": "Día del Docente universitario",
+   "k": "info"
+  },
+  {
+   "d": "2026-09-28",
+   "h": "2026-10-17",
+   "t": "Evaluaciones parciales del 1º módulo del 2º semestre",
+   "k": "parciales"
+  },
+  {
+   "d": "2026-09-28",
+   "h": "2026-10-17",
+   "t": "Semana sugerida de evaluaciones, se flexibiliza Art. 2 de la Ord. 28 referido a asignaturas básicas",
+   "k": "parciales"
+  },
+  {
+   "d": "2026-10-12",
+   "t": "F.N.T. (Respeto a la Diversidad Cultural)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-10-13",
+   "h": "2026-10-18",
+   "t": "Inscripción por SIU Guarani a Mesas de Trabajo Final, PPS, Inglés y de examen final para asignaturas del tramo superior que lo requieran",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2026-10-19",
+   "h": "2026-10-24",
+   "t": "Mesas de Trabajo Final, PPS, Inglés y de examen final para asignaturas del tramo superior que lo requieran",
+   "k": "finales"
+  },
+  {
+   "d": "2026-10-19",
+   "h": "2026-11-01",
+   "t": "Fecha límite para baja de inscripciones a cursadas",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2026-11-02",
+   "h": "2026-11-08",
+   "t": "Inscripción por SIU Guarani a Mesas de examen final Generales (Para todas las asignaturas)",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2026-11-09",
+   "t": "Comienza el Período de inscripción para el Ingreso 2027 (a confirmar)",
+   "k": "info"
+  },
+  {
+   "d": "2026-11-09",
+   "h": "2026-11-14",
+   "t": "Mesas de examen final Generales (Para todas las asignaturas)",
+   "k": "finales"
+  },
+  {
+   "d": "2026-11-13",
+   "t": "Acto Académico (a confirmar)",
+   "k": "info"
+  },
+  {
+   "d": "2026-11-19",
+   "t": "N.L. (Aniversario Fundación Ciudad de La Plata)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-11-23",
+   "t": "F.N.T. (Día de la Soberanía Nacional)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-11-26",
+   "t": "N.L. (Día del Nodocente)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-12-07",
+   "t": "N.L",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-12-08",
+   "t": "F.N.I. (Día de la Inmaculada Concepción de María)",
+   "k": "feriado"
+  },
+  {
+   "d": "2026-12-09",
+   "h": "2026-12-18",
+   "t": "Evaluaciones parciales del 2º módulo del 2º semestre",
+   "k": "parciales"
+  },
+  {
+   "d": "2026-12-09",
+   "h": "2026-12-20",
+   "t": "Semana sugerida de evaluaciones, se flexibiliza Art. 2 de la Ord. 28 referido a asignaturas básicas",
+   "k": "parciales"
+  },
+  {
+   "d": "2026-12-11",
+   "t": "Finaliza el Período de inscripción para el Ingreso 2027 (a confirmar)",
+   "k": "info"
+  },
+  {
+   "d": "2026-12-18",
+   "t": "Fin de actividades académicas",
+   "k": "clases"
+  },
+  {
+   "d": "2026-12-25",
+   "t": "F.N.I. (Día de Navidad)",
+   "k": "feriado"
+  },
+  {
+   "d": "2027-01-01",
+   "t": "F.N.I. (Año Nuevo)",
+   "k": "feriado"
+  },
+  {
+   "d": "2027-01-02",
+   "h": "2027-01-24",
+   "t": "La Facultad permanecerá cerrada",
+   "k": "feriado"
+  },
+  {
+   "d": "2027-01-25",
+   "t": "Reanudación de actividades e inicio de Matemática para Ingeniería (ingresantes)",
+   "k": "clases"
+  },
+  {
+   "d": "2027-01-25",
+   "h": "2027-02-17",
+   "t": "Período de inscripciones al programa estudiantes trabajadores (RET)",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2027-01-25",
+   "h": "2027-01-31",
+   "t": "Inscripción por SIU Guarani a Mesas de examen final Generales (Para todas las asignaturas)",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2027-02-01",
+   "h": "2027-02-06",
+   "t": "Mesas de examen final Generales (Para todas las asignaturas)",
+   "k": "finales"
+  },
+  {
+   "d": "2027-02-01",
+   "h": "2027-02-20",
+   "t": "Semanas de evaluaciones parciales del 2º módulo del 2º semestre",
+   "k": "parciales"
+  },
+  {
+   "d": "2027-02-01",
+   "h": "2027-02-20",
+   "t": "Semana sugerida de evaluaciones, se flexibiliza Art. 2 de la Ord. 28 referido a asignaturas básicas",
+   "k": "parciales"
+  },
+  {
+   "d": "2027-02-10",
+   "t": "Finaliza el período de cierre de actas de mesas de finales",
+   "k": "finales"
+  },
+  {
+   "d": "2027-02-10",
+   "h": "2027-02-22",
+   "t": "Carga de notas finales y aviso a la of. de alumnos para el cierre de actas del 2º semestre/2026",
+   "k": "info"
+  },
+  {
+   "d": "2027-02-22",
+   "t": "Finaliza el ciclo lectivo 2026",
+   "k": "clases"
+  },
+  {
+   "d": "2027-02-22",
+   "h": "2027-02-26",
+   "t": "Asiento de AFCs aprobadas al SIU Guaraní",
+   "k": "info"
+  },
+  {
+   "d": "2027-02-26",
+   "h": "2027-03-03",
+   "t": "Período de Inscripción por SIU Guaraní a a asignaturas del 1º semestre (2do a 5to año)",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2027-02-26",
+   "h": "2027-03-26",
+   "t": "Período solicitud de readmisión",
+   "k": "info"
+  },
+  {
+   "d": "2027-02-26",
+   "h": "2027-03-13",
+   "t": "Período de Inscripción por SIU Guaraní a a asignaturas del 1º semestre (2º a 5º año)",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2027-03-01",
+   "t": "Comienzo de clases ciclo lectivo 2027 para 2º a 5º año",
+   "k": "clases"
+  },
+  {
+   "d": "2027-03-05",
+   "h": "2027-03-13",
+   "t": "Período de Inscripción por SIU Guaraní a a asignaturas del 1º semestre (1º año)",
+   "k": "inscripcion"
+  },
+  {
+   "d": "2027-03-08",
+   "t": "Comienzo de clases ciclo lectivo 2027 para 1º año",
+   "k": "clases"
+  }
+ ]
+}

@@ -7,6 +7,8 @@ window.GRADIENTE = {
 
   consultationFormUrl: "https://docs.google.com/forms/d/e/1FAIpQLSeGuH8e9_Yb_C6glZLeWzefB3vMLW1RlIgOFwUTw5RWtrd7hA/viewform?usp=publish-editor",
   driveUrl: "https://drive.google.com/open?id=1nqMOCWnGQf4hijaALpiovu1L5c6PvUJb",
+  // carpeta "Parciales" de la nube: destino del buscador cuando una materia no tiene carpeta propia
+  nubeParcialesUrl: "https://drive.google.com/drive/folders/1UfDvQ7H14H_3qtnAvem8FTfnhqKWs2aw",
   siuUrl: "https://autogestion.guarani.unlp.edu.ar/acceso",
 
   // Rutas de datos (absolutas: funcionan igual desde /v2 o desde la raíz)
@@ -16,6 +18,7 @@ window.GRADIENTE = {
     planes: "data/planes.json",
     nube: "data/nube.json",
     faq: "data/faq.json",
+    fechas: "data/fechas.json",
     catedras: "data/catedras.json"
   },
 
