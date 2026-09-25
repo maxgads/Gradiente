@@ -50,8 +50,18 @@
   } catch (e) {}
   function save() { if (DEV.temp) return; store.set(KEY, { career: S.career, prog: S.prog, tv: S.view, name: S.name }); }
 
-  var DATA = { plans: null, byId: {}, nube: {}, links: null, kiosco: null };
+  var DATA = { plans: null, byId: {}, nube: {}, catedras: {}, links: null, kiosco: null };
   var ui = { query: "", focus: null, lastRoute: null };
+
+  /* ---------------- fondo: los brillos se mueven un poco al scrollear ---------------- */
+  (function () {
+    var amb = $(".ambient"), ticking = false;
+    if (!amb || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) return;
+    window.addEventListener("scroll", function () {
+      if (ticking) return; ticking = true;
+      requestAnimationFrame(function () { amb.style.setProperty("--sy", Math.round(window.scrollY)); ticking = false; });
+    }, { passive: true });
+  })();
 
   /* ---------------- tema ---------------- */
   var themeBtn = $("#themeBtn");
@@ -71,7 +81,7 @@
   paintThemeBtn();
 
   var consultaBtn = $("#consultaBtn");
-  if (CFG.consultationFormUrl) consultaBtn.href = CFG.consultationFormUrl;
+  consultaBtn.addEventListener("click", function (e) { e.preventDefault(); openConsultas(); });
 
   /* ---------------- toast ---------------- */
   var toastEl = $("#toast"), toastTimer;
@@ -295,14 +305,16 @@
     var name = h.replace(/^\/+|\/+$/g, "") || "home";
     return { name: name, q: q };
   }
-  var routes = { home: renderHome, plan: renderPlan, recursos: renderRecursos, mesita: renderMesita };
+  var routes = { home: renderHome, plan: renderPlan, recursos: renderRecursos, mesita: renderMesita,
+    // #/consultas: abre el asistente arriba del inicio (link para compartir)
+    consultas: function () { history.replaceState(null, "", "#/"); ui.lastRoute = "home"; return renderHome().then(function () { openConsultas(); }); } };
   function route() {
     closeGrade();
     var r = parseHash();
     if (!routes[r.name]) r.name = "home";
     closeSheet(); hideFocusBar(); hideToast();
     $all("[data-nav]").forEach(function (a) { if (a.dataset.nav === r.name) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
-    var titles = { home: "Gradiente · Ingeniería UNLP", plan: "Mi plan · Gradiente", recursos: "Recursos · Gradiente", mesita: "Mesita en Electro · Gradiente" };
+    var titles = { consultas: "Consultas · Gradiente", home: "Gradiente · Ingeniería UNLP", plan: "Mi plan · Gradiente", recursos: "Recursos · Gradiente", mesita: "Mesita en Electro · Gradiente" };
     document.title = titles[r.name];
     var changed = ui.lastRoute !== r.name;
     ui.lastRoute = r.name;
@@ -316,7 +328,8 @@
     if (DATA.plans) return Promise.resolve();
     return Promise.all([
       getJSON(CFG.data.planes).then(prepPlans),
-      getJSON(CFG.data.nube).then(function (n) { DATA.nube = n; }).catch(function () {})
+      getJSON(CFG.data.nube).then(function (n) { DATA.nube = n; }).catch(function () {}),
+      CFG.data.catedras ? getJSON(CFG.data.catedras).then(function (k) { DATA.catedras = k.c || {}; DATA.catedrasBase = k.base; }).catch(function () {}) : null
     ]);
   }
   function ensureLinks() {
@@ -872,6 +885,7 @@
     if (un.length) h += '<div class="dSection"><p class="dLabel">Habilita</p>' + chips(un) + "</div>";
     if (!reqs.length && !x.x && x.k !== "slot") h += '<p class="small muted" style="margin:14px 0 0">Sin correlativas: se puede cursar desde el principio.</p>';
 
+    if (x.k !== "slot" && x.k !== "afc" && DATA.catedras[x.c]) h += '<div class="dSection"><p class="dLabel">Cátedra</p>' + catedraBlock(x.c, true) + "</div>";
     h += '<a class="dFoot" href="' + esc(c.official) + '" target="_blank" rel="noopener">Ver en el plan oficial' + ic("ext") + "</a>";
     return h;
   }
@@ -941,25 +955,13 @@
   /* ======================================================================
      RECURSOS
      ====================================================================== */
-  var resState = { q: "", cat: "all" };
-  function renderRecursos() {
-    if (!DATA.links) loading();
-    return ensureLinks().then(function () {
-      var cats = (CFG.categories || []).filter(function (c) { return DATA.links.some(function (l) { return l.category === c[0]; }); });
-      var html = '<div class="wrap page"><p class="kicker">Recursos</p><h1 class="h1">Todo lo que<br>vas a buscar</h1>' +
-        '<p class="lead">Trámites, becas, apuntes, cursada y contactos útiles de la Facultad, en un solo lugar.</p>' +
-        '<div class="card nubeHero rise"><div><p class="kicker" style="color:#ff8a8f">Nube Gradiente</p><h2 class="h2" style="color:#fff">Parciales, finales y apuntes</h2></div><p>Más de 2.600 archivos ordenados por materia. En tu plan te marcamos con ' + ic("folder", "inlineIc") + ' las materias que tienen material.</p><a class="btn" href="' + esc(CFG.driveUrl) + '" target="_blank" rel="noopener">' + ic("folder") + "Abrir la nube</a></div>" +
-        '<div class="planTools" style="margin-top:16px"><label class="search"><span class="sr">Buscar</span>' + ic("search") + '<input id="resSearch" type="search" placeholder="Buscar: becas, SIU, turnos…" value="' + esc(resState.q) + '"></label>' +
-        '<div class="chipsRow" role="group" aria-label="Categorías"><button class="chip" type="button" data-cat="all" aria-pressed="' + (resState.cat === "all") + '">Todo</button>' +
-        cats.map(function (c) { return '<button class="chip" type="button" data-cat="' + esc(c[0]) + '" aria-pressed="' + (resState.cat === c[0]) + '">' + esc(c[1]) + "</button>"; }).join("") + "</div></div>" +
-        '<div id="resBody"></div>' + footer() + "</div>";
-      main.innerHTML = html; stagger(main);
-      var inp = $("#resSearch");
-      inp.addEventListener("input", function () { resState.q = inp.value; paintRes(cats); });
-      $all("[data-cat]", main).forEach(function (b) { b.onclick = function () { resState.cat = b.dataset.cat; $all("[data-cat]", main).forEach(function (o) { o.setAttribute("aria-pressed", String(o === b)); }); paintRes(cats); }; });
-      paintRes(cats);
-    }).catch(failed);
+  var resState = { q: "", spy: null };
+  function catList() {
+    return (CFG.categories || []).map(function (c) { return Array.isArray(c) ? { id: c[0], name: c[1] } : c; });
   }
+  function catOf(id) { return catList().find(function (c) { return c.id === id; }) || { id: id, name: id }; }
+  function linkLabel(l) { return l.label || (l.url.indexOf("mailto:") === 0 ? l.title.split(":")[0] : l.title); }
+  function linkHost(l) { return l.url.indexOf("mailto:") === 0 ? l.url.slice(7) : l.url.replace(/^https?:\/\/(www\d?\.)?/, "").split("/")[0]; }
   function linkIcon(l) {
     var u = l.url || "";
     if (u.indexOf("mailto:") === 0) return "mail";
@@ -967,25 +969,290 @@
     if (/forms/.test(u)) return "chat";
     return "ext";
   }
-  function paintRes(cats) {
-    var q = norm(resState.q), el = $("#resBody"), html = "", any = false;
-    cats.forEach(function (c) {
-      if (resState.cat !== "all" && resState.cat !== c[0]) return;
-      var items = DATA.links.filter(function (l) {
-        if (l.category !== c[0]) return false;
-        if (!q) return true;
-        return norm(l.title + " " + (l.tags || []).join(" ")).indexOf(q) >= 0;
+  function cStyle(color) { return color ? ' style="--c:' + esc(color) + '"' : ""; }
+
+  /* --- nube: buscador "¿hay material de mi materia?" --- */
+  function subjectIndex() {
+    if (DATA.subjects) return DATA.subjects;
+    var map = {};
+    (DATA.plans ? DATA.plans.careers : []).forEach(function (c) {
+      [].concat(c.courses, c.opt, c.hum).forEach(function (x) {
+        if (!x.c || x.k === "slot" || x.k === "afc" || /^(OPT|HUM|AFC)\d/.test(x.c)) return;
+        var m = map[x.c] || (map[x.c] = { c: x.c, n: x.n, careers: [], key: "" });
+        if (m.careers.indexOf(c.short || c.name) < 0) m.careers.push(c.short || c.name);
       });
-      if (!items.length) return;
-      any = true;
-      html += '<section class="linkGroup"><h2 class="h3">' + esc(c[1]) + '</h2><div class="linkList">' + items.map(function (l) {
-        var host = l.url.indexOf("mailto:") === 0 ? l.url.slice(7) : l.url.replace(/^https?:\/\/(www\d?\.)?/, "").split("/")[0];
-        var title = l.url.indexOf("mailto:") === 0 ? l.title.split(":")[0] : l.title;
-        return '<a class="card linkItem lift glow" href="' + esc(l.url) + '" target="_blank" rel="noopener"><span class="quick-ic">' + ic(linkIcon(l)) + "</span><span>" + esc(title) + "<small>" + esc(host) + "</small></span>" + ic("chev") + "</a>";
-      }).join("") + "</div></section>";
     });
-    if (!any) html = '<div class="emptyState"><p><strong>No encontramos nada con eso.</strong></p><p class="small">¿No está lo que buscás? <a href="' + esc(CFG.consultationFormUrl) + '" target="_blank" rel="noopener" style="text-decoration:underline">Mandanos una consulta</a>.</p></div>';
+    DATA.subjects = Object.keys(map).map(function (k) { var m = map[k]; m.key = norm(m.n + " " + m.c); return m; })
+      .sort(function (a, b) { return a.n.localeCompare(b.n, "es"); });
+    return DATA.subjects;
+  }
+  function searchSubjects(q, onlyNube) {
+    var nq = norm(q), list = subjectIndex(), mine = career();
+    if (onlyNube) list = list.filter(function (s) { return DATA.nube[s.c]; });
+    if (!nq) return [];
+    var words = nq.split(/\s+/);
+    var hits = list.filter(function (s) { return words.every(function (w) { return s.key.indexOf(w) >= 0; }); });
+    hits.sort(function (a, b) {
+      var am = mine && mine.byCode[a.c] ? 0 : 1, bm = mine && mine.byCode[b.c] ? 0 : 1;
+      var as = norm(a.n).indexOf(nq) === 0 ? 0 : 1, bs = norm(b.n).indexOf(nq) === 0 ? 0 : 1;
+      return am - bm || as - bs || a.n.localeCompare(b.n, "es");
+    });
+    return hits;
+  }
+  function mySubjects(filterFn) {
+    var c = career(); if (!c) return [];
+    var order = { c: 0, r: 1, p: 2, a: 3 };
+    return c.courses.filter(function (x) { return x.k !== "lang" && x.k !== "slot" && x.k !== "afc" && (!filterFn || filterFn(x)); })
+      .map(function (x) { return { c: x.c, n: x.n, st: stOf(c.id, x.c) }; })
+      .filter(function (x) { return x.st === "c" || x.st === "r"; })
+      .sort(function (a, b) { return order[a.st] - order[b.st]; });
+  }
+  function nubeCount() { return Object.keys(DATA.nube || {}).length; }
+  function nubeHit(s) {
+    var n = DATA.nube[s.c];
+    return '<a class="nubeHit" href="' + esc(CFG.driveUrl) + '" target="_blank" rel="noopener"><span class="nubeHit-ic">' + ic("folder") + '</span><span><strong>' + esc(s.n) + "</strong><small>Carpeta «" + esc(n.f[0]) + "»</small></span><em>" + n.n + " archivo" + (n.n === 1 ? "" : "s") + "</em></a>";
+  }
+  function nubeFinderResults(q) {
+    if (!q) {
+      var mine = mySubjects(function (x) { return DATA.nube[x.c]; }).slice(0, 4);
+      if (!mine.length) return '<p class="nubeHint">Probá con «análisis», «física» o el código de la materia.</p>';
+      return '<p class="nubeHint">De lo que estás cursando:</p>' + mine.map(nubeHit).join("");
+    }
+    var hits = searchSubjects(q, true).slice(0, 5);
+    if (hits.length) return hits.map(nubeHit).join("");
+    var any = searchSubjects(q, false)[0];
+    return '<p class="nubeHint">' + (any ? "Todavía no hay material de <strong>" + esc(any.n) + "</strong>. Si tenés, ¡compartilo!" : "No encontramos esa materia.") + "</p>";
+  }
+  function nubeFinder(id) {
+    return '<div class="nubeFind"><label class="search search--soft"><span class="sr">Buscar materia en la nube</span>' + ic("search") +
+      '<input id="' + id + '" type="search" placeholder="¿Hay material de tu materia?" autocomplete="off"></label>' +
+      '<div class="nubeHits" id="' + id + 'Hits">' + nubeFinderResults("") + "</div></div>";
+  }
+  function bindNubeFinder(id, root) {
+    var inp = $("#" + id, root), out = $("#" + id + "Hits", root);
+    if (inp) inp.addEventListener("input", function () { out.innerHTML = nubeFinderResults(inp.value); });
+  }
+  function nubeCard() {
+    return '<section class="nubeCard rise"><div class="nubeCard-main">' +
+      '<span class="nubeCard-badge">' + ic("cloud") + "Nube Gradiente</span>" +
+      '<h2 class="h2">Parciales, finales y apuntes</h2>' +
+      "<p>Material de estudiantes para estudiantes, ordenado por materia. En tu plan te marcamos con " + ic("folder", "inlineIc") + " las materias que tienen algo.</p>" +
+      '<div class="nubeStats"><span><b>2.600+</b>archivos</span><span><b>' + nubeCount() + "</b>materias</span></div>" +
+      '<a class="btn btn--accent" href="' + esc(CFG.driveUrl) + '" target="_blank" rel="noopener">' + ic("folder") + "Abrir la nube</a></div>" +
+      nubeFinder("nubeQ") + "</section>";
+  }
+
+  /* --- página --- */
+  function renderRecursos() {
+    if (!DATA.links || !DATA.plans) loading();
+    return Promise.all([ensureLinks(), ensurePlans()]).then(function () {
+      var cats = catList().filter(function (c) { return !c.hide && DATA.links.some(function (l) { return l.category === c.id; }); });
+      var html = '<div class="wrap page res"><p class="kicker">Recursos</p><h1 class="h1">Todo lo que<br>vas a buscar</h1>' +
+        '<p class="lead">Trámites, becas, apuntes, cursada y contactos útiles de la Facultad, en un solo lugar.</p>' +
+        nubeCard() +
+        '<div class="stickSentinel" id="stickSentinel"></div><div class="planTools resTools" id="planTools"><label class="search"><span class="sr">Buscar</span>' + ic("search") +
+        '<input id="resSearch" type="search" placeholder="Buscar: becas, SIU, turnos, mails…" autocomplete="off" value="' + esc(resState.q) + '"></label>' +
+        '<nav class="chipsRow resChips" aria-label="Ir a una categoría">' +
+        cats.map(function (c) { return '<a class="chip chip--c" href="#res-' + slug(c.id) + '" data-jump="' + slug(c.id) + '"' + cStyle(c.color) + '><i class="dot"></i>' + esc(c.name) + "</a>"; }).join("") + "</nav></div>" +
+        '<div id="resBody"></div>' +
+        '<section class="askBand rise"><div><h2 class="h3">¿No encontrás lo que buscás?</h2><p>Contanos qué necesitás y te decimos a dónde ir, o encontrá el mail de tu cátedra.</p></div>' +
+        '<button class="btn btn--primary" type="button" data-help>' + ic("chat") + "Hacer una consulta</button></section>" +
+        footer() + "</div>";
+      main.innerHTML = html; stagger(main);
+      watchSticky();
+      bindNubeFinder("nubeQ", main);
+      var inp = $("#resSearch");
+      inp.addEventListener("input", function () { resState.q = inp.value; paintRes(cats); });
+      $all("[data-jump]", main).forEach(function (a) {
+        a.addEventListener("click", function (e) {
+          e.preventDefault();
+          if (resState.q) { resState.q = ""; inp.value = ""; paintRes(cats); }
+          var t = $("#res-" + a.dataset.jump);
+          if (t) window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - (60 + $("#planTools").offsetHeight + 8), behavior: "smooth" });
+        });
+      });
+      $("[data-help]", main).onclick = function () { openConsultas(); };
+      paintRes(cats);
+    }).catch(failed);
+  }
+  function slug(s) { return norm(s).replace(/[^a-z0-9]+/g, "-"); }
+  function resRow(l) {
+    var mail = l.url.indexOf("mailto:") === 0;
+    var inner = '<a class="resRow" href="' + esc(l.url) + '"' + (mail ? "" : ' target="_blank" rel="noopener"') + '><span class="resRow-t"><strong>' + esc(linkLabel(l)) + "</strong><small>" + esc(mail ? linkHost(l) : (l.desc || linkHost(l))) + "</small></span>" + ic(mail ? "mail" : "ext") + "</a>";
+    if (!mail) return inner;
+    return '<div class="resRow-wrap">' + inner + '<button class="iconBtn iconBtn--sm" type="button" data-copy="' + esc(linkHost(l)) + '" aria-label="Copiar mail">' + ic("copy") + "</button></div>";
+  }
+  function resTile(l) {
+    return '<a class="resTile lift" href="' + esc(l.url) + '" target="_blank" rel="noopener"><strong>' + esc(linkLabel(l)) + "</strong><span>" + esc(l.desc || "") + "</span><small>" + esc(linkHost(l)) + ic("ext") + "</small></a>";
+  }
+  function paintRes(cats) {
+    var q = norm(resState.q), el = $("#resBody"), html = "";
+    if (q) {
+      var words = q.split(/\s+/);
+      var hits = DATA.links.filter(function (l) {
+        var hay = norm([l.title, l.label, l.desc, l.category, catOf(l.category).name, linkHost(l)].concat(l.tags || []).join(" "));
+        return words.every(function (w) { return hay.indexOf(w) >= 0; });
+      });
+      html = hits.length ? '<p class="resCount">' + hits.length + " resultado" + (hits.length === 1 ? "" : "s") + '</p><div class="resResults">' + hits.map(function (l) {
+        var c = catOf(l.category);
+        return '<div class="resHit"' + cStyle(c.color) + '><span class="resHit-cat">' + ic(c.icon || "ext") + esc(c.name) + "</span>" + resRow(l) + "</div>";
+      }).join("") + "</div>"
+        : '<div class="emptyState"><p><strong>No encontramos nada con eso.</strong></p><p class="small">Probá con otra palabra o <button type="button" class="linkBtn" data-help>hacé una consulta</button>.</p></div>';
+    } else {
+      html = '<div class="resGrid">' + cats.map(function (c) {
+        var items = DATA.links.filter(function (l) { return l.category === c.id; });
+        var tiles = c.layout === "tiles";
+        return '<section class="resPanel' + (tiles ? " resPanel--wide" : "") + '" id="res-' + slug(c.id) + '"' + cStyle(c.color) + ">" +
+          '<header class="resPanel-h"><span class="resPanel-ic">' + ic(c.icon || "links") + '</span><div><h2 class="h3">' + esc(c.name) + "</h2>" + (c.desc ? "<p>" + esc(c.desc) + "</p>" : "") + '</div><span class="resPanel-n">' + items.length + "</span></header>" +
+          (tiles ? '<div class="resTiles">' + items.map(resTile).join("") + "</div>" : '<div class="resRows">' + items.map(resRow).join("") + "</div>") +
+          "</section>";
+      }).join("") + "</div>";
+    }
     el.innerHTML = html;
+    $all("[data-help]", el).forEach(function (b) { b.onclick = function () { openConsultas(); }; });
+    watchSpy();
+  }
+  // copiar mails (en toda la app)
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-copy]");
+    if (!b) return;
+    e.preventDefault();
+    var txt = b.dataset.copy;
+    var done = function () { toast("Mail copiado: " + txt); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function () { toast(txt); });
+    else toast(txt);
+  });
+  // resalta en la barra la categoría que estás viendo
+  var spyObs;
+  function watchSpy() {
+    if (spyObs) spyObs.disconnect();
+    if (!("IntersectionObserver" in window)) return;
+    var panels = $all(".resPanel", main);
+    if (!panels.length) return;
+    var visible = {};
+    spyObs = new IntersectionObserver(function (en) {
+      en.forEach(function (x) { visible[x.target.id] = x.isIntersecting ? x.boundingClientRect.top : null; });
+      var best = null, bestTop = Infinity;
+      Object.keys(visible).forEach(function (k) { if (visible[k] != null && visible[k] < bestTop) { bestTop = visible[k]; best = k; } });
+      $all("[data-jump]", main).forEach(function (a) {
+        var on = best === "res-" + a.dataset.jump;
+        a.classList.toggle("is-on", on);
+        if (on && a.scrollIntoView && a.parentNode.scrollWidth > a.parentNode.clientWidth) a.parentNode.scrollTo({ left: a.offsetLeft - 16, behavior: "smooth" });
+      });
+    }, { rootMargin: "-140px 0px -55% 0px" });
+    panels.forEach(function (p) { spyObs.observe(p); });
+  }
+
+  /* ======================================================================
+     CONSULTAS: asistente "¿En qué te ayudamos?"
+     ====================================================================== */
+  var helpState = { step: "home", q: "", code: null };
+  function openConsultas(step) {
+    helpState = { step: step || "home", q: "", code: null };
+    Promise.all([ensureLinks(), ensurePlans()]).then(function () { showHelp(); });
+  }
+  function showHelp() { openSheet(helpView); bindHelp(); }
+  function helpGo(step, extra) { helpState.step = step; if (extra) Object.keys(extra).forEach(function (k) { helpState[k] = extra[k]; }); showHelp(); }
+  function helpTopic(id) { return (CFG.help || []).find(function (t) { return t.id === id; }); }
+  function linkByTitle(t) { return DATA.links.find(function (l) { return l.title === t; }) || (DATA.allLinks || []).find(function (l) { return l.title === t; }); }
+  function mailCard(m) {
+    return '<div class="mailCard"><a href="mailto:' + esc(m.mail) + '"><span class="mailCard-ic">' + ic("mail") + '</span><span><strong>' + esc(m.label) + "</strong><small>" + esc(m.mail) + "</small>" + (m.note ? "<em>" + esc(m.note) + "</em>" : "") + "</span></a>" +
+      '<button class="iconBtn iconBtn--sm" type="button" data-copy="' + esc(m.mail) + '" aria-label="Copiar mail">' + ic("copy") + "</button></div>";
+  }
+  function helpHead(title, meta, back) {
+    return '<div class="dHead">' + (back ? '<button class="iconBtn" type="button" data-hback aria-label="Volver">' + ic("back") + "</button>" : "") +
+      '<div><p class="dMeta">' + esc(meta) + '</p><h2 class="h2" id="sheetTitle">' + esc(title) + '</h2></div><button class="iconBtn" type="button" data-close aria-label="Cerrar">' + ic("x") + "</button></div>";
+  }
+  function helpFoot() {
+    return '<div class="helpFoot"><p>¿No se resolvió?</p><a class="btn btn--sm" href="' + esc(CFG.consultationFormUrl) + '" target="_blank" rel="noopener">' + ic("chat") + "Escribile a Gradiente</a></div>";
+  }
+  function helpView() {
+    var st = helpState.step;
+    if (st === "home") {
+      return helpHead("¿En qué te ayudamos?", "Consultas", false) +
+        '<a class="helpNube" href="' + esc(CFG.driveUrl) + '" target="_blank" rel="noopener"><span class="helpNube-ic">' + ic("cloud") + '</span><span><em>Lo más buscado</em><strong>Nube de parciales, finales y apuntes</strong><small>' + nubeCount() + " materias con material</small></span>" + ic("ext") + "</a>" +
+        '<p class="dLabel" style="margin:20px 0 8px">Elegí un tema</p><div class="helpTopics">' +
+        (CFG.help || []).map(function (t) {
+          return '<button type="button" class="helpTopic" data-topic="' + esc(t.id) + '"' + cStyle(t.color) + '><span class="helpTopic-ic">' + ic(t.icon || "help") + "</span><span><strong>" + esc(t.title) + "</strong>" + (t.sub ? "<small>" + esc(t.sub) + "</small>" : "") + "</span>" + ic("chev") + "</button>";
+        }).join("") + "</div>";
+    }
+    if (st === "materia") return helpMateria();
+    if (st === "catedra") return helpCatedra(helpState.code);
+    var t = helpTopic(st);
+    if (!t) return "";
+    var h = helpHead(t.title, "Consultas", true);
+    if (t.nube) {
+      h += '<p class="dNote">Buscá tu materia para ver si hay material y en qué carpeta está.</p>' + nubeFinder("helpNubeQ") +
+        '<a class="btn btn--accent btn--block" style="margin-top:14px" href="' + esc(CFG.driveUrl) + '" target="_blank" rel="noopener">' + ic("folder") + "Abrir la nube</a>";
+    }
+    if (t.gradiente) {
+      h += '<p class="dNote">Somos estudiantes como vos. Escribinos por donde te quede más cómodo.</p><div class="helpLinks">' +
+        '<a class="resRow" href="' + esc(CFG.consultationFormUrl) + '" target="_blank" rel="noopener"><span class="resRow-t"><strong>Formulario de consultas</strong><small>Te respondemos por mail</small></span>' + ic("ext") + "</a>" +
+        (CFG.socialLinks || []).filter(function (s) { return s.icon !== "tt"; }).map(function (s) {
+          return '<a class="resRow" href="' + esc(s.url) + '" target="_blank" rel="noopener"><span class="resRow-t"><strong>' + esc(s.label) + "</strong><small>" + esc(s.url.replace(/^mailto:|^https?:\/\/(www\.)?/, "").split("?")[0]) + "</small></span>" + ic(s.icon) + "</a>";
+        }).join("") + "</div>";
+      return h;
+    }
+    if (t.mails && t.mails.length) h += '<p class="dLabel" style="margin:18px 0 8px">Escribiles</p>' + t.mails.map(mailCard).join("");
+    var ls = (t.links || []).map(linkByTitle).filter(Boolean);
+    if (ls.length) h += '<p class="dLabel" style="margin:18px 0 8px">Links útiles</p><div class="helpLinks">' + ls.map(resRow).join("") + "</div>";
+    return h + helpFoot();
+  }
+  function helpMateria() {
+    var h = helpHead("¿De qué materia?", "Consultas · Cátedras", true);
+    h += '<label class="search" style="margin-top:14px"><span class="sr">Buscar materia</span>' + ic("search") + '<input id="helpMatQ" type="search" placeholder="Nombre o código de la materia" autocomplete="off" value="' + esc(helpState.q) + '" data-autofocus></label>' +
+      '<div class="helpMatList" id="helpMatList">' + helpMatResults() + "</div>";
+    return h;
+  }
+  function matRow(s, extra) {
+    var cat = DATA.catedras[s.c];
+    return '<button type="button" class="matRow" data-mat="' + esc(s.c) + '"><span><strong>' + esc(s.n) + "</strong><small>" + esc(s.c) + (extra ? " · " + esc(extra) : s.careers ? " · " + esc(s.careers.slice(0, 2).join(", ")) + (s.careers.length > 2 ? "…" : "") : "") + "</small></span>" +
+      (cat && cat.m ? '<span class="matRow-tag">' + ic("mail") + "</span>" : "") + ic("chev") + "</button>";
+  }
+  function helpMatResults() {
+    var q = helpState.q;
+    if (!q) {
+      var mine = mySubjects();
+      if (mine.length) return '<p class="dLabel" style="margin:16px 0 6px">Lo que estás cursando</p>' + mine.slice(0, 8).map(function (s) { return matRow(s, s.st === "c" ? "cursando" : "regular"); }).join("");
+      return '<p class="nubeHint" style="margin-top:14px">Escribí el nombre de la materia. Te mostramos el mail de la cátedra y su página.</p>';
+    }
+    var hits = searchSubjects(q, false).slice(0, 25);
+    return hits.length ? hits.map(function (s) { return matRow(s); }).join("") : '<p class="nubeHint" style="margin-top:14px">No encontramos esa materia.</p>';
+  }
+  function subjName(code) { var s = subjectIndex().find(function (x) { return x.c === code; }); return s ? s.n : code; }
+  function catedraBlock(code, compact) {
+    var cat = DATA.catedras[code], base = (DATA.catedrasBase || "https://www1.ing.unlp.edu.ar/catedras/");
+    var h = "";
+    if (cat && cat.m) h += mailCard({ label: compact ? "Mail de la cátedra" : "Contacto de la cátedra", mail: cat.m, note: compact ? "" : "Es el mail que la cátedra publica en su página." });
+    else if (!compact) h += '<div class="dState">' + ic("help") + "<p>La cátedra no publicó un mail de contacto. Probá por su página o por el aula virtual.</p></div>";
+    h += '<div class="helpLinks">';
+    if (cat) h += '<a class="resRow" href="' + esc(base + cat.p) + '" target="_blank" rel="noopener"><span class="resRow-t"><strong>Página de la cátedra</strong><small>Docentes, horarios, programa y novedades</small></span>' + ic("ext") + "</a>";
+    h += '<a class="resRow" href="https://www.asignaturas.ing.unlp.edu.ar/course/search.php?search=' + encodeURIComponent(subjName(code)) + '" target="_blank" rel="noopener"><span class="resRow-t"><strong>Aula virtual</strong><small>Buscarla en el Portal de Asignaturas</small></span>' + ic("ext") + "</a>";
+    h += "</div>";
+    return h;
+  }
+  function helpCatedra(code) {
+    var h = helpHead(subjName(code), code + " · Cátedra", true);
+    h += '<div style="margin-top:14px">' + catedraBlock(code, false) + "</div>";
+    var n = DATA.nube[code];
+    if (n) h += '<a class="helpNube helpNube--sm" href="' + esc(CFG.driveUrl) + '" target="_blank" rel="noopener"><span class="helpNube-ic">' + ic("folder") + '</span><span><em>En la nube</em><strong>' + n.n + " archivo" + (n.n === 1 ? "" : "s") + "</strong><small>Carpeta «" + esc(n.f[0]) + "»</small></span>" + ic("ext") + "</a>";
+    h += '<p class="small muted" style="margin:16px 0 0">Tip: escribí desde tu correo institucional, poné la materia y tu comisión en el asunto.</p>';
+    return h + helpFoot();
+  }
+  function bindHelp() {
+    var b = sheetBody;
+    $all("[data-topic]", b).forEach(function (x) { x.onclick = function () { helpGo(x.dataset.topic, { q: "" }); }; });
+    var back = $("[data-hback]", b);
+    if (back) back.onclick = function () { helpGo(helpState.step === "catedra" ? "materia" : "home"); };
+    bindNubeFinder("helpNubeQ", b);
+    var mq = $("#helpMatQ", b);
+    if (mq) {
+      var list = $("#helpMatList", b);
+      var bindRows = function () { $all("[data-mat]", list).forEach(function (r) { r.onclick = function () { helpGo("catedra", { code: r.dataset.mat }); }; }); };
+      mq.addEventListener("input", function () { helpState.q = mq.value; list.innerHTML = helpMatResults(); bindRows(); });
+      bindRows();
+      var end = mq.value.length; try { mq.setSelectionRange(end, end); } catch (e) {}
+    }
   }
 
   /* ======================================================================

@@ -6,7 +6,8 @@ Rediseño completo del sitio. HTML/CSS/JS sin build, pensado primero para celula
 
 - `#/` Inicio: progreso de tu carrera, accesos rápidos, avisos y mesita.
 - `#/plan` Mi plan: los 13 planes de Ingeniería UNLP con correlativas, vista **Lista** y **Árbol**.
-- `#/recursos` Links de `links.json` con buscador y categorías.
+- `#/recursos` Nube (con buscador de materia), links de `links.json` en bloques de color por categoría, buscador y barra de categorías que queda fija.
+- **Consultas** (botón rojo arriba, o `#/consultas`): asistente «¿En qué te ayudamos?». Primero la nube; después temas (materia, trámites, becas, cuentas, Gradiente). En «materia» buscás la materia y te da el mail y la página de la cátedra.
 - `#/mesita` Productos y promos de `kiosco.json`.
 
 ## Qué editar
@@ -18,6 +19,9 @@ Rediseño completo del sitio. HTML/CSS/JS sin build, pensado primero para celula
 | Form de consultas, Drive, redes, accesos rápidos | `v2/config.js` |
 | Planes de estudio | `v2/data/planes.json` |
 | Qué materias tienen material en la nube | `v2/data/nube.json` |
+| Categorías de Recursos (color, ícono, bajada) y temas de Consultas | `v2/config.js` (`categories`, `help`) |
+| Nombre lindo y bajada de cada link | `label` y `desc` en `/links.json` (opcionales) |
+| Mails y páginas de cátedras | `v2/data/catedras.json` → se regenera con `node v2/tools/actualizar-catedras.mjs` |
 
 ## planes.json
 
@@ -29,6 +33,10 @@ Cada carrera tiene `courses` (plan troncal), `opt` (optativas) y `hum` (humanís
 - `a`: 1 si es anual
 
 Fuente: planes oficiales en www1.ing.unlp.edu.ar (septiembre 2026). Computación usa el plan 2024; el resto, 2018.
+
+## catedras.json
+
+Sale de la página pública de Cátedras de la Facultad (www1.ing.unlp.edu.ar/catedras). Por código de materia: `p` = id de la página de la cátedra, `m` = mail que la cátedra publica como «Contacto». Solo se toma ese mail, no los de cada docente. Conviene correr el script cada cuatrimestre.
 
 ## Reglas que aplica
 

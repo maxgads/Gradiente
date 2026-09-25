@@ -12,7 +12,9 @@
       "ingreso",
       "primer-ano",
       "oficial"
-    ]
+    ],
+    "label": "Guía oficial para ingresantes",
+    "desc": "Todo lo que tenés que saber antes de arrancar."
   },
   {
     "title": "Catedra de ingreso",
@@ -27,7 +29,9 @@
       "matepi",
       "ingreso",
       "oficial"
-    ]
+    ],
+    "label": "Cátedra de ingreso",
+    "desc": "Matemática para Ingeniería: cronograma y material."
   },
   {
     "title": "Calendario ano lectivo completo",
@@ -43,7 +47,9 @@
       "fechas",
       "calendario",
       "oficial"
-    ]
+    ],
+    "label": "Calendario académico",
+    "desc": "Inscripciones, mesas de final y feriados del año."
   },
   {
     "title": "Programa para estudiantes trabajadores (RET)",
@@ -59,7 +65,9 @@
       "ret",
       "trabajadores",
       "tramite"
-    ]
+    ],
+    "label": "Estudiantes trabajadores (RET)",
+    "desc": "Régimen especial si trabajás mientras estudiás."
   },
   {
     "title": "Turnos FI para tramites",
@@ -75,7 +83,9 @@
       "turnos",
       "readmision",
       "tramite"
-    ]
+    ],
+    "label": "Turnos para trámites",
+    "desc": "Pedí turno en alumnos, readmisión y más."
   },
   {
     "title": "Como generar tu cuenta SIU-Guarani",
@@ -91,7 +101,9 @@
       "guarani",
       "autogestion",
       "ingreso"
-    ]
+    ],
+    "label": "Cuenta SIU Guaraní",
+    "desc": "Inscribite a materias y finales."
   },
   {
     "title": "Aulas y horarios",
@@ -106,7 +118,9 @@
       "aulas",
       "horarios",
       "cursada"
-    ]
+    ],
+    "label": "Aulas y horarios",
+    "desc": "Dónde y cuándo se cursa cada materia."
   },
   {
     "title": "Portal de Asignaturas FI",
@@ -121,7 +135,9 @@
       "asignaturas",
       "materias",
       "cursada"
-    ]
+    ],
+    "label": "Portal de Asignaturas",
+    "desc": "Las aulas virtuales (Moodle) de cada cátedra."
   },
   {
     "title": "Solicitud de correo institucional para alumnos",
@@ -136,7 +152,9 @@
       "correo",
       "cuenta",
       "it"
-    ]
+    ],
+    "label": "Correo institucional",
+    "desc": "Pedí tu cuenta @alu.ing.unlp.edu.ar."
   },
   {
     "title": "Prorroga para rendir final",
@@ -151,7 +169,9 @@
       "final",
       "prorroga",
       "tramite"
-    ]
+    ],
+    "label": "Prórroga para rendir final",
+    "desc": "Si se te vence la regularidad de una materia."
   },
   {
     "title": "Nube de apuntes y parciales",
@@ -166,7 +186,9 @@
       "apuntes",
       "parciales",
       "finales"
-    ]
+    ],
+    "label": "Nube de apuntes y parciales",
+    "desc": "Parciales, finales y resúmenes por materia."
   },
   {
     "title": "Formulario para compartir material",
@@ -195,7 +217,9 @@
       "becas",
       "pasantias",
       "fi"
-    ]
+    ],
+    "label": "Becas y pasantías FI",
+    "desc": "Todas las becas de la Facultad en un lugar."
   },
   {
     "title": "Pasantias educativas FI",
@@ -212,7 +236,9 @@
       "pasantia",
       "laboral",
       "oficial"
-    ]
+    ],
+    "label": "Pasantías educativas",
+    "desc": "Prácticas rentadas en empresas e instituciones."
   },
   {
     "title": "PAE FI (inscripcion y seguimiento de becas)",
@@ -227,7 +253,9 @@
       "pae",
       "becas",
       "fi"
-    ]
+    ],
+    "label": "PAE FI",
+    "desc": "Inscripción y seguimiento de becas de la Facultad."
   },
   {
     "title": "Becas UNLP",
@@ -242,7 +270,9 @@
       "unlp",
       "ayuda-economica",
       "comedor"
-    ]
+    ],
+    "label": "Becas UNLP",
+    "desc": "Ayuda económica, comedor, transporte y más."
   },
   {
     "title": "Albergue universitario UNLP",
@@ -258,7 +288,9 @@
       "albergue",
       "unlp",
       "bienestar"
-    ]
+    ],
+    "label": "Albergue universitario",
+    "desc": "Alojamiento para estudiantes de la UNLP."
   },
   {
     "title": "Fondo de Becas FI (Devolviendo Oportunidades)",
@@ -273,7 +305,9 @@
       "fondo",
       "becas",
       "fi"
-    ]
+    ],
+    "label": "Fondo de Becas FI",
+    "desc": "Devolviendo Oportunidades: becas de graduados."
   },
   {
     "title": "Becas Progresar (oficial)",
@@ -288,7 +322,9 @@
       "progresar",
       "nacion",
       "beca"
-    ]
+    ],
+    "label": "Becas Progresar",
+    "desc": "Beca nacional para estudiantes."
   },
   {
     "title": "Becas Manuel Belgrano (oficial)",
@@ -303,7 +339,9 @@
       "belgrano",
       "nacion",
       "beca"
-    ]
+    ],
+    "label": "Becas Manuel Belgrano",
+    "desc": "Beca nacional para carreras estratégicas."
   },
   {
     "title": "Becas Fundacion YPF",
@@ -318,7 +356,9 @@
       "ypf",
       "beca",
       "ingenieria"
-    ]
+    ],
+    "label": "Becas Fundación YPF",
+    "desc": "Becas para carreras de ingeniería y energía."
   },
   {
     "title": "Proyectos de extension FI",
@@ -333,7 +373,9 @@
       "extension",
       "proyectos",
       "participar"
-    ]
+    ],
+    "label": "Proyectos de extensión",
+    "desc": "Proyectos con la comunidad a los que podés sumarte."
   },
   {
     "title": "Convocatorias de extension FI",
@@ -348,7 +390,9 @@
       "convocatorias",
       "extension",
       "afc"
-    ]
+    ],
+    "label": "Convocatorias de extensión",
+    "desc": "Llamados abiertos y actividades (sirven como AFC)."
   },
   {
     "title": "Proyectos de investigacion y transferencia",
@@ -365,7 +409,9 @@
       "investigacion",
       "transferencia",
       "proyectos"
-    ]
+    ],
+    "label": "Investigación y transferencia",
+    "desc": "Los proyectos que se desarrollan en la FI."
   },
   {
     "title": "UIDETs, laboratorios y centros FI",
@@ -382,7 +428,9 @@
       "uidet",
       "laboratorios",
       "investigacion"
-    ]
+    ],
+    "label": "UIDETs, laboratorios y centros",
+    "desc": "Grupos de investigación donde podés hacer una beca."
   },
   {
     "title": "Novedades de investigacion y transferencia",
@@ -397,7 +445,9 @@
       "novedades",
       "beca-investigacion",
       "convocatoria"
-    ]
+    ],
+    "label": "Novedades de investigación",
+    "desc": "Lo último de los grupos de la Facultad."
   },
   {
     "title": "Mapa Facultad 3D (proximamente)",
@@ -429,7 +479,9 @@
       "plano",
       "campus",
       "edificios"
-    ]
+    ],
+    "label": "Plano del campus",
+    "desc": "Edificios, aulas y departamentos."
   },
   {
     "title": "Estudiantes FI (tramites, certificados y servicios)",
@@ -444,7 +496,9 @@
       "estudiantes",
       "tramites",
       "oficial"
-    ]
+    ],
+    "label": "Estudiantes FI",
+    "desc": "Certificados, trámites y servicios para alumnos."
   },
   {
     "title": "Servicios IT FI",
@@ -459,7 +513,9 @@
       "it",
       "moodle",
       "correo"
-    ]
+    ],
+    "label": "Servicios IT",
+    "desc": "Wifi, cuentas y sistemas de la Facultad."
   },
   {
     "title": "Consultas a la mesa (formulario)",
@@ -475,7 +531,9 @@
       "consulta",
       "mesa",
       "formulario"
-    ]
+    ],
+    "label": "Consultá a Gradiente",
+    "desc": "Escribinos y te respondemos."
   },
   {
     "title": "Marcha 12 de mayo: formulario de convocatoria",
@@ -522,7 +580,9 @@
       "mail",
       "copiar",
       "ensenanza"
-    ]
+    ],
+    "label": "Dirección de Enseñanza",
+    "desc": "Inscripciones, finales y equivalencias."
   },
   {
     "title": "Asuntos Estudiantiles: asuntos.estudiantiles@ing.unlp.edu.ar",
@@ -537,6 +597,8 @@
       "mail",
       "copiar",
       "asuntos-estudiantiles"
-    ]
+    ],
+    "label": "Asuntos Estudiantiles",
+    "desc": "Becas, bienestar y situaciones personales."
   }
 ]
