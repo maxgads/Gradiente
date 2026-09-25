@@ -4,7 +4,7 @@ Rediseño completo del sitio. HTML/CSS/JS sin build, pensado primero para celula
 
 ## Secciones
 
-- `#/` Inicio: progreso de tu carrera, accesos rápidos, avisos y mesita.
+- `#/` Inicio: saludo, accesos rápidos (tarjetas de color), tu carrera desplegable (cursando ahora + acordeones «Podés cursar» / «Finales»), chat de preguntas frecuentes y «Quiénes somos».
 - `#/plan` Mi plan: los 13 planes de Ingeniería UNLP con correlativas, vista **Lista** y **Árbol**.
 - `#/recursos` Links de `links.json` con buscador y categorías.
 - `#/mesita` Productos y promos de `kiosco.json`.
@@ -17,6 +17,8 @@ Rediseño completo del sitio. HTML/CSS/JS sin build, pensado primero para celula
 | Mesita | `/kiosco.json` (el mismo de la raíz) |
 | Form de consultas, Drive, redes, accesos rápidos | `v2/config.js` |
 | Planes de estudio | `v2/data/planes.json` |
+| Preguntas frecuentes del chat (respuestas, palabras clave, links) | `v2/data/faq.json` |
+| Quiénes somos / historia / accesos rápidos (ícono y color) | `v2/config.js` → `about`, `quickLinks` |
 | Qué materias tienen material en la nube | `v2/data/nube.json` |
 
 ## planes.json

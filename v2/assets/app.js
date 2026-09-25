@@ -51,7 +51,7 @@
   } catch (e) {}
   function save() { if (DEV.temp) return; store.set(KEY, { career: S.career, prog: S.prog, tv: S.view, name: S.name, rv: S.reveal }); }
 
-  var DATA = { plans: null, byId: {}, nube: {}, links: null, kiosco: null };
+  var DATA = { plans: null, byId: {}, nube: {}, links: null, kiosco: null, faq: null };
   var ui = { query: "", focus: null, lastRoute: null };
 
   /* ---------------- tema ---------------- */
@@ -343,77 +343,359 @@
   /* ======================================================================
      INICIO
      ====================================================================== */
+  var homeUI = store.get("gradiente.home", null) || { plan: true };
+  function saveHomeUI() { store.set("gradiente.home", homeUI); }
+  var MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  var DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  function greeting() {
+    var h = new Date().getHours();
+    return h < 6 ? "Buenas noches" : h < 13 ? "Buen día" : h < 20 ? "Buenas tardes" : "Buenas noches";
+  }
+  function ensureFaq() {
+    if (DATA.faq) return Promise.resolve();
+    return getJSON(CFG.data.faq || "data/faq.json").then(prepFaq).catch(function () { DATA.faq = { topics: [], items: [], byId: {} }; });
+  }
+
   function renderHome() {
-    if (!DATA.plans || !DATA.links || !DATA.kiosco) loading();
-    return Promise.all([ensurePlans(), ensureLinks(), ensureKiosco()]).then(function () {
-      var c = career();
+    if (!DATA.plans || !DATA.links) loading();
+    return Promise.all([ensurePlans(), ensureLinks(), ensureFaq()]).then(function () {
+      var c = career(), d = new Date();
       var avisos = DATA.links.filter(function (l) { return l.category === "Avisos"; });
-      var html = '<div class="wrap page">';
-      html += '<section class="hero"><div>' +
-        '<p class="kicker">' + (S.name ? "Hola, " + esc(S.name) : "Gradiente · Ingeniería UNLP") + "</p>" +
-        '<h1 class="h1 h1--brand">Tu carrera,<br><span class="hero-mark"><span>a la vista</span></span></h1>' +
-        '<p class="lead">Marcá lo que aprobaste y te mostramos qué podés cursar, qué finales podés rendir y cuánto te falta.</p>' +
-        '<div class="hero-actions">' + (c ? '<a class="btn btn--primary" href="#/plan">' + ic("plan") + "Ver mi plan</a>" : '<button class="btn btn--primary" type="button" data-onboard>' + ic("plan") + "Armar mi plan</button>") +
-        '<a class="btn" href="#/recursos">' + ic("links") + "Apuntes y trámites</a></div></div>";
-      html += '<div class="rise">' + (c ? homeProgress(c) : homeStart()) + "</div></section>";
+      var cur = c ? c.courses.filter(function (x) { return stOf(c.id, x.c) === "c"; }).length : 0;
+      var sub = c ? (cur ? "Estás cursando " + cur + (cur === 1 ? " materia" : " materias") + " de " + esc(c.short) + "." : "Tu plan de " + esc(c.short) + " está listo.")
+        : "Todo lo de Ingeniería UNLP, en un solo lugar.";
+      var html = '<div class="wrap page home">';
+
+      // saludo
+      html += '<header class="hello rise"><p class="hello-date">' + DIAS[d.getDay()] + " " + d.getDate() + " de " + MESES[d.getMonth()] + "</p>" +
+        '<h1 class="hello-t">' + greeting() + (S.name ? ", <span>" + esc(S.name) + "</span>" : "") + "</h1>" +
+        '<p class="hello-sub">' + sub + "</p>" +
+        '<button class="askBar" type="button" data-ask>' + ic("search") + "<span>¿Tenés una duda? Preguntá acá</span><kbd>" + ic("chev") + "</kbd></button></header>";
 
       if (avisos.length) {
-        html += '<div class="sectionHead"><h2 class="h2">Avisos</h2></div><div class="linkList">';
-        avisos.forEach(function (l) { html += '<a class="card notice lift" href="' + esc(l.url) + '" target="_blank" rel="noopener"><div><strong>' + esc(l.title) + "</strong></div>" + ic("ext") + "</a>"; });
-        html += "</div>";
+        html += '<div class="avisos">' + avisos.map(function (l) {
+          return '<a class="aviso rise" href="' + esc(l.url) + '" target="_blank" rel="noopener"><i></i><span><small>Aviso</small>' + esc(l.title) + "</span>" + ic("ext") + "</a>";
+        }).join("") + "</div>";
       }
 
-      html += '<div class="sectionHead"><h2 class="h2">Accesos rápidos</h2><a href="#/recursos">Ver todo' + ic("chev") + "</a></div>";
-      html += '<div class="quickGrid">' + quickLinks().map(function (q) {
-        return '<a class="card quick lift" href="' + esc(q.url) + '" target="_blank" rel="noopener"><span class="quick-ic">' + ic(q.icon || "ext") + "</span>" + esc(q.title) + "</a>";
-      }).join("") + "</div>";
+      // accesos rápidos
+      html += '<nav class="qa" aria-label="Accesos rápidos">' + quickLinks().map(function (q) {
+        return '<a class="qa-tile qa-tile--' + esc(q.color || "navy") + ' rise" href="' + esc(q.url) + '" target="_blank" rel="noopener"><span class="qa-ic">' + ic(q.icon || "ext") + "</span><span class=\"qa-t\">" + esc(q.title) + "</span></a>";
+      }).join("") + "</nav>";
 
-      if (DATA.kiosco.promos.length) {
-        html += '<div class="sectionHead"><h2 class="h2">Mesita en Electro</h2><a href="#/mesita">Ver todo' + ic("chev") + '</a></div><div class="promoCards promoCards--row">' +
-          DATA.kiosco.promos.map(function (p) { return promoCard(p, true); }).join("") + "</div>";
-      }
+      html += '<div class="homeCols">';
+      html += '<section class="hsec hp' + (homeUI.plan ? " is-open" : "") + '" id="homePlan" aria-label="Tu carrera">' + homePlan(c) + "</section>";
+      html += '<section class="hsec faq" id="faq" aria-labelledby="faqT">' + faqShell() + "</section>";
+      html += "</div>";
+
+      html += aboutSection();
       html += footer() + "</div>";
       main.innerHTML = html;
-      stagger(main); animateRing();
+      stagger(main);
       bindHome();
+      faqStart();
+      requestAnimationFrame(function () { requestAnimationFrame(function () { var hp = $("#homePlan"); if (hp) hp.classList.add("is-in"); }); });
     }).catch(failed);
   }
-  function miniKpis(s) {
-    return '<div class="miniKpis" aria-label="' + s.pct + '% aprobado">' +
-      '<div class="ring ring--sm is-zero" style="--p:' + s.pct + ";--p2:" + s.pctR + '"><div><b>' + s.pct + "%</b></div></div>" +
-      '<dl class="kpis"><div><dt>Aprob.</dt><dd class="k-done">' + s.a + '</dd></div><div><dt>Reg.</dt><dd class="k-reg">' + s.r + '</dd></div><div><dt>Cursando</dt><dd class="k-cur">' + s.c + "</dd></div>" +
-      '<div><dt>Prom.</dt><dd>' + (s.avg ? s.avg.toFixed(1).replace(".", ",") : "–") + "</dd></div></dl></div>";
+
+  /* ---------- tu carrera (desplegable) ---------- */
+  function hRow(c, x, kind) {
+    var where = x.s > 0 ? Math.ceil(x.s / 2) + "° año" : x.s === 0 ? "Nivelación" : x.k === "opt" ? "Optativa" : "";
+    return '<button class="hrow hrow--' + kind + '" type="button" data-open="' + esc(x.c) + '"><i class="hrow-dot"></i><span class="hrow-n">' + esc(displayName(c, x)) +
+      "<small>" + esc(x.k === "slot" ? "A elección" : x.c) + (where ? " · " + where : "") + "</small></span>" + ic("chev") + "</button>";
   }
-  function rowItem(c, x) {
-    return '<button class="nextItem" type="button" data-open="' + esc(x.c) + '"><span class="code">' + esc(x.k === "slot" ? "—" : x.c) + "</span><strong>" + esc(displayName(c, x)) + "</strong>" + ic("chev") + "</button>";
+  function hAcc(id, label, color, items, extra) {
+    return '<div class="hacc"><button class="hacc-btn" type="button" aria-expanded="false" aria-controls="' + id + '" data-acc>' +
+      '<span class="hacc-ic">' + ic("chev") + '</span><span class="hacc-l"><i class="dotc" style="background:' + color + '"></i>' + label + '</span><em class="hacc-n">' + items.length + "</em></button>" +
+      '<div class="hacc-body" id="' + id + '"><div class="hacc-in">' + items.join("") + (extra || "") + "</div></div></div>";
   }
-  function homeProgress(c) {
-    var s = summary(c), MAX = 6;
+  function homePlan(c) {
+    if (!c) {
+      return '<div class="hp-start"><p class="hsec-k">Tu plan de estudios</p><h2 class="hsec-t">Armalo en un minuto</h2>' +
+        '<p class="hsec-p">Elegí tu carrera, contanos hasta dónde llegaste y te mostramos qué podés cursar y qué finales rendir.</p>' +
+        '<button class="btn btn--primary" type="button" data-onboard>' + ic("plan") + "Armar mi plan</button>" +
+        '<p class="small muted" style="margin:10px 0 0">Sin cuenta: queda guardado en este dispositivo.</p></div>';
+    }
+    var s = summary(c), t = s.total || 1;
+    var w = function (n) { return (n / t * 100).toFixed(2) + "%"; };
     var cur = c.courses.filter(function (x) { return stOf(c.id, x.c) === "c"; });
-    var h = '<div class="card pc">';
-    h += '<div class="pc-head"><div class="pc-title"><p class="pc-kicker">Plan ' + esc(c.plan) + '</p><h2 class="h3">' + esc(c.name) + '</h2><a class="pc-link" href="#/plan">Ir al plan' + ic("chev") + "</a></div>" + miniKpis(s) + "</div>";
-    if (!s.a && !s.r && !s.c) {
-      h += '<div class="pc-empty"><p>Todavía no marcaste materias.</p><a class="btn btn--sm" href="#/plan">Marcar en el plan' + ic("chev") + "</a></div>";
-    }
+    var h = '<button class="hp-head" type="button" aria-expanded="' + !!homeUI.plan + '" aria-controls="hpBody" data-hp-toggle>' +
+      '<span class="hp-title"><span class="hsec-k">Tu carrera · Plan ' + esc(c.plan) + '</span><span class="hsec-t">' + esc(c.name) + "</span></span>" +
+      '<span class="hp-pct"><b>' + s.pct + "<small>%</small></b></span><span class=\"hp-chev\">" + ic("chev") + "</span></button>" +
+      '<div class="hp-bar" role="img" aria-label="' + s.a + " aprobadas, " + s.r + " regulares, " + s.c + ' cursando"><i class="d" style="--w:' + w(s.a) + '"></i><i class="r" style="--w:' + w(s.r) + '"></i><i class="c" style="--w:' + w(s.c) + '"></i></div>' +
+      '<p class="hp-legend"><span><i class="d"></i><b>' + s.a + "</b> aprobadas</span><span><i class=\"r\"></i><b>" + s.r + "</b> " + (s.r === 1 ? "regular" : "regulares") + "</span>" +
+      "<span>Promedio <b>" + fmtAvg(s.avg) + "</b></span></p>";
+
+    h += '<div class="hp-body" id="hpBody"><div class="hp-in">';
     if (cur.length) {
-      h += '<div class="pc-sec"><p class="dLabel"><i class="dotc" style="background:var(--st-cur)"></i>Cursando ahora · ' + cur.length + '</p><div class="nextList">' + cur.slice(0, MAX).map(function (x) { return rowItem(c, x); }).join("") + "</div></div>";
+      h += '<p class="hp-label"><i class="hp-live"></i>Estás cursando</p><div class="hrows">' + cur.map(function (x) { return hRow(c, x, "cur"); }).join("") + "</div>";
+    } else {
+      h += '<div class="hp-empty"><p>' + (s.a || s.r ? "¿Arrancaste el cuatri? Marcá lo que estás cursando." : "Todavía no marcaste materias.") + '</p><a class="btn btn--sm" href="#/plan' + (s.ready.length ? "?filtro=ready" : "") + '">Marcar' + ic("chev") + "</a></div>";
     }
-    var left = Math.max(0, MAX - Math.min(cur.length, MAX));
+    var accs = "";
     if (s.ready.length) {
-      var open = left >= 3;
-      var show = open ? left : MAX;
-      h += '<details class="acc"' + (open ? " open" : "") + '><summary><i class="dotc" style="background:var(--ink)"></i>Podés cursar · ' + s.ready.length + ic("chev", "chev") + '</summary><div class="nextList">' +
-        s.ready.slice(0, show).map(function (x) { return rowItem(c, x); }).join("") + "</div>" +
-        (s.ready.length > show ? '<a class="pc-more" href="#/plan?filtro=ready">Ver las ' + s.ready.length + " en el plan" + ic("chev") + "</a>" : "") + "</details>";
+      var MAX = 8;
+      accs += hAcc("accReady", "Podés cursar", "var(--ink)", s.ready.slice(0, MAX).map(function (x) { return hRow(c, x, "ready"); }),
+        s.ready.length > MAX ? '<a class="hacc-more" href="#/plan?filtro=ready">Ver las ' + s.ready.length + " en el plan" + ic("chev") + "</a>" : "");
     }
-    if (s.final.length) {
-      h += '<details class="acc"><summary><i class="dotc" style="background:var(--st-reg)"></i>Finales para rendir · ' + s.final.length + ic("chev", "chev") + '</summary><div class="nextList">' +
-        s.final.slice(0, MAX).map(function (x) { return rowItem(c, x); }).join("") + "</div></details>";
-    }
-    return h + "</div>";
+    if (s.final.length) accs += hAcc("accFinal", "Finales para rendir", "var(--st-reg)", s.final.map(function (x) { return hRow(c, x, "final"); }));
+    if (accs) h += '<div class="haccs">' + accs + "</div>";
+    h += '<div class="hp-actions"><a class="btn btn--primary" href="#/plan">' + ic("plan") + "Ver mi plan</a></div>";
+    h += "</div></div>";
+    return h;
   }
+  function refreshHomePlan() {
+    var el = $("#homePlan"), c = career();
+    if (!el) return;
+    var open = $all("[data-acc]", el).map(function (b) { return b.getAttribute("aria-expanded") === "true"; });
+    el.innerHTML = homePlan(c);
+    $all("[data-acc]", el).forEach(function (b, i) { if (open[i]) b.setAttribute("aria-expanded", "true"); });
+    bindHomePlan();
+  }
+  function bindHomePlan() {
+    var el = $("#homePlan"); if (!el) return;
+    $all("[data-onboard]", el).forEach(function (b) { b.onclick = function () { openOnboarding(); }; });
+    $all("[data-open]", el).forEach(function (b) { b.onclick = function () { openSubject(career(), b.dataset.open); }; });
+    var tg = $("[data-hp-toggle]", el);
+    if (tg) tg.onclick = function () {
+      homeUI.plan = !homeUI.plan; saveHomeUI();
+      tg.setAttribute("aria-expanded", String(homeUI.plan));
+      el.classList.toggle("is-open", homeUI.plan);
+    };
+    $all("[data-acc]", el).forEach(function (b) {
+      b.onclick = function () { b.setAttribute("aria-expanded", String(b.getAttribute("aria-expanded") !== "true")); };
+    });
+  }
+  function bindHome() {
+    bindHomePlan();
+    $all("[data-ask]", main).forEach(function (b) {
+      b.onclick = function () {
+        var f = $("#faq"), inp = $("#faqInput");
+        if (f) f.scrollIntoView({ behavior: "smooth", block: "start" });
+        if (inp) setTimeout(function () { inp.focus({ preventScroll: true }); }, 450);
+      };
+    });
+    $all("[data-about]", main).forEach(function (b) { b.onclick = function () { openAbout(b.dataset.about); }; });
+    bindFaq();
+  }
+  function quickLinks() {
+    return (CFG.quickLinks || []).map(function (q) {
+      if (q.url) return q;
+      var l = DATA.links.find(function (x) { return x.title === q.match; });
+      return l ? { title: q.title, url: l.url, icon: q.icon, color: q.color } : null;
+    }).filter(Boolean);
+  }
+  function linkByMatch(m) { var l = (DATA.links || []).find(function (x) { return x.title === m; }); return l ? l.url : null; }
+
+  /* ---------- quiénes somos ---------- */
+  function aboutSection() {
+    var A = CFG.about || {};
+    var hasHist = (A.history || []).length > 0;
+    return '<section class="hsec about" aria-labelledby="aboutT"><div class="about-l"><p class="hsec-k">Gradiente</p><h2 class="hsec-t" id="aboutT">' + esc(CFG.tagline || "Gradiente") + "</h2>" +
+      '<p class="hsec-p">' + esc(A.intro || CFG.description || "") + "</p></div>" +
+      '<div class="about-links">' +
+      '<button type="button" data-about="who">' + ic("users") + "<span>Quiénes somos<small>Qué es Gradiente y qué hacemos</small></span>" + ic("chev") + "</button>" +
+      (hasHist ? '<button type="button" data-about="history">' + ic("cal") + "<span>Nuestra historia<small>Cómo arrancamos y hasta dónde llegamos</small></span>" + ic("chev") + "</button>" : "") +
+      '<button type="button" data-about="join">' + ic("heart") + "<span>Sumate<small>Escribinos o pasá por la mesita</small></span>" + ic("chev") + "</button>" +
+      "</div></section>";
+  }
+  function openAbout(which) {
+    var A = CFG.about || {};
+    openSheet(function () {
+      var head = function (k, t) { return '<div class="dHead"><div><p class="dMeta">' + k + '</p><h2 class="h2" id="sheetTitle">' + t + '</h2></div><button class="iconBtn" type="button" data-close aria-label="Cerrar">' + ic("x") + "</button></div>"; };
+      if (which === "history") {
+        return head("Gradiente", "Nuestra historia") + '<ol class="timeline">' + (A.history || []).map(function (h) { return "<li><b>" + esc(h.year) + "</b><p>" + esc(h.text) + "</p></li>"; }).join("") + "</ol>";
+      }
+      if (which === "join") {
+        return head("Gradiente", "Sumate") + '<p class="muted" style="margin:10px 0 16px">Siempre hay lugar para una mano más: apuntes, la mesita, la web o lo que se te ocurra. Escribinos por donde te quede cómodo.</p>' +
+          '<div class="sheetList">' + (CFG.socialLinks || []).map(function (s) { return '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' + ic(s.icon) + "<span>" + esc(s.label) + "</span></a>"; }).join("") + "</div>";
+      }
+      return head("Gradiente", "Quiénes somos") + '<p style="margin:12px 0 18px;color:var(--ink-2)">' + esc(A.intro || CFG.description || "") + '</p><p class="dLabel">Qué hacemos</p><div class="sheetList">' +
+        (A.doing || []).map(function (d) {
+          var href = d.consult ? CFG.consultationFormUrl : d.go ? d.go : linkByMatch(d.match) || d.url || "#";
+          var ext = !d.go;
+          return '<a href="' + esc(href) + '"' + (ext ? ' target="_blank" rel="noopener"' : " data-close") + ">" + ic(d.icon || "ext") + "<span>" + esc(d.title) + "<small>" + esc(d.text) + "</small></span></a>";
+        }).join("") + "</div>" +
+        ((A.history || []).length ? '<button class="btn btn--block" type="button" style="margin-top:14px" data-about-hist>' + ic("cal") + "Nuestra historia</button>" : "");
+    });
+    sheetBody.onclick = function (ev) {
+      if (ev.target.closest("[data-about-hist]")) openAbout("history");
+      else if (ev.target.closest("a[data-close]")) closeSheet();
+    };
+  }
+
+  /* ======================================================================
+     PREGUNTAS FRECUENTES (chat con respuestas guardadas)
+     ====================================================================== */
+  var STOP = {};
+  "a al como con cual cuales cuando de del donde el en es esta este hay la las lo los me mi mis no o para pero por puedo que se si sin sobre soy su te tengo un una uno y ya tu hago quiero necesito saber hacer".split(" ").forEach(function (w) { STOP[w] = 1; });
+  function stem(t) { if (t.length > 5 && /es$/.test(t)) return t.slice(0, -2); if (t.length > 3 && /s$/.test(t)) return t.slice(0, -1); return t; }
+  function toks(s) { return norm(s).replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(function (t) { return t.length > 1 && !STOP[t]; }).map(stem); }
+  function prepFaq(f) {
+    f.byId = {};
+    f.items.forEach(function (it) {
+      f.byId[it.id] = it;
+      var w = {};
+      toks(it.q).forEach(function (t) { w[t] = Math.max(w[t] || 0, 1.2); });
+      (it.k || []).forEach(function (k) { toks(k).forEach(function (t) { w[t] = Math.max(w[t] || 0, 1); }); });
+      it._w = w;
+    });
+    f.tops = f.items.filter(function (i) { return i.top; }).sort(function (a, b) { return a.top - b.top; });
+    DATA.faq = f;
+  }
+  function faqSearch(text, partial) {
+    var q = toks(text);
+    if (!q.length) return [];
+    return DATA.faq.items.map(function (it) {
+      var sum = 0, hits = 0;
+      q.forEach(function (t, i) {
+        var best = 0, last = partial && i === q.length - 1;
+        Object.keys(it._w).forEach(function (w) {
+          var v = 0;
+          if (w === t) v = 1;
+          else if (t.length >= 3 && w.indexOf(t) === 0) v = last ? 0.9 : 0.7;
+          else if (w.length >= 4 && t.indexOf(w) === 0) v = 0.7;
+          else if (t.length >= 5 && w.length >= 5 && w.slice(0, 5) === t.slice(0, 5)) v = 0.6;
+          if (v) best = Math.max(best, v * it._w[w]);
+        });
+        if (best) { hits++; sum += best; }
+      });
+      return { it: it, score: sum + hits / q.length, cover: hits / q.length };
+    }).filter(function (r) { return r.cover >= 0.5 || (r.cover > 0 && q.length >= 3 && r.score >= 1.8); })
+      .sort(function (a, b) { return b.score - a.score; });
+  }
+
+  var chat = { log: [], busy: false };
+  function faqShell() {
+    return '<div class="faq-head"><span class="faq-av">' + ic("chat") + '</span><div><p class="hsec-k">Preguntas frecuentes</p><h2 class="hsec-t" id="faqT">¿Tenés una duda?</h2></div>' +
+      '<button class="faq-reset" type="button" data-faq-reset aria-label="Empezar de nuevo">' + ic("back") + "</button></div>" +
+      '<div class="chat" id="chat" aria-live="polite"></div>' +
+      '<div class="faq-sug" id="faqSug"></div>' +
+      '<form class="chat-in" id="faqForm" autocomplete="off"><label class="sr" for="faqInput">Escribí tu pregunta</label>' +
+      '<input id="faqInput" type="text" placeholder="Escribí tu duda: final, becas, SIU…" enterkeyhint="send">' +
+      '<button type="submit" aria-label="Enviar">' + ic("send") + "</button></form>";
+  }
+  function bubble(from, html, opts) {
+    return '<div class="msg msg--' + from + (opts && opts.cls ? " " + opts.cls : "") + '">' + html + "</div>";
+  }
+  function chipsHtml(list) {
+    return '<div class="msg-chips">' + list.map(function (o) { return '<button type="button" class="qchip' + (o.soft ? " qchip--soft" : "") + '" ' + o.attr + ">" + (o.icon ? ic(o.icon) : "") + esc(o.label) + "</button>"; }).join("") + "</div>";
+  }
+  function paintChat(scroll) {
+    var el = $("#chat"); if (!el) return;
+    el.innerHTML = chat.log.join("");
+    if (scroll !== false) {
+      var last = el.lastElementChild;
+      if (last && el.scrollHeight > el.clientHeight) el.scrollTo({ top: el.scrollHeight, behavior: chat.log.length > 2 ? "smooth" : "auto" });
+    }
+  }
+  function popularChips() {
+    return DATA.faq.tops.slice(0, 5).map(function (it) { return { label: it.q, attr: 'data-q="' + it.id + '"' }; })
+      .concat([{ label: "Otro tema", attr: "data-topics", soft: true, icon: "more" }]);
+  }
+  function faqStart() {
+    if (!$("#chat") || !DATA.faq) return;
+    if (!chat.log.length) {
+      chat.log = [bubble("bot", "<p>" + (S.name ? "¡Hola, " + esc(S.name) + "! " : "¡Hola! ") + "Estas son las que más nos preguntan. Tocá una o escribí la tuya.</p>") + chipsHtml(popularChips())];
+    }
+    paintChat(false);
+  }
+  function botSay(html, chips) {
+    chat.busy = true;
+    chat.log = chat.log.map(function (m) { return m.replace('class="msg-chips"', 'class="msg-chips is-used"'); });
+    chat.log.push('<div class="msg msg--bot msg--typing"><i></i><i></i><i></i></div>');
+    paintChat();
+    setTimeout(function () {
+      chat.log.pop();
+      chat.log.push(bubble("bot", html, { cls: "is-new" }) + (chips && chips.length ? chipsHtml(chips) : ""));
+      chat.busy = false;
+      paintChat();
+    }, 380);
+  }
+  function userSay(text) {
+    chat.log = chat.log.map(function (m) { return m.replace('class="msg-chips"', 'class="msg-chips is-used"'); });
+    chat.log.push(bubble("me", "<p>" + esc(text) + "</p>"));
+    paintChat();
+  }
+  function answerHtml(it) {
+    var a = Array.isArray(it.a) ? it.a : [it.a];
+    var links = (it.links || []).map(function (l) {
+      if (l.go === "about") return '<button type="button" class="msg-link" data-about-go>' + esc(l.label) + ic("chev") + "</button>";
+      if (l.go) return '<a class="msg-link" href="' + esc(l.go) + '">' + esc(l.label) + ic("chev") + "</a>";
+      var url = l.url || linkByMatch(l.match);
+      return url ? '<a class="msg-link" href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(l.label) + ic("ext") + "</a>" : "";
+    }).join("");
+    return a.map(function (p) { return "<p>" + esc(p) + "</p>"; }).join("") + (links ? '<div class="msg-links">' + links + "</div>" : "");
+  }
+  function followUps(it) {
+    var rel = DATA.faq.items.filter(function (o) { return o.topic === it.topic && o.id !== it.id; }).slice(0, 3)
+      .map(function (o) { return { label: o.q, attr: 'data-q="' + o.id + '"' }; });
+    return rel.concat([{ label: "Otro tema", attr: "data-topics", soft: true, icon: "more" }, { label: "No me sirvió", attr: "data-nope", soft: true }]);
+  }
+  function askItem(id) {
+    var it = DATA.faq.byId[id]; if (!it || chat.busy) return;
+    userSay(it.q);
+    botSay(answerHtml(it), followUps(it));
+  }
+  function askTopics() {
+    if (chat.busy) return;
+    userSay("Otro tema");
+    botSay("<p>Dale, ¿sobre qué es?</p>", DATA.faq.topics.map(function (t) { return { label: t.label, attr: 'data-topic="' + t.id + '"' }; }));
+  }
+  function askTopic(id) {
+    var t = DATA.faq.topics.find(function (x) { return x.id === id; }); if (!t || chat.busy) return;
+    userSay(t.label);
+    botSay("<p>Esto es lo que más se pregunta de <strong>" + esc(t.label.toLowerCase()) + "</strong>:</p>",
+      DATA.faq.items.filter(function (i) { return i.topic === id; }).map(function (i) { return { label: i.q, attr: 'data-q="' + i.id + '"' }; })
+        .concat([{ label: "Volver", attr: "data-topics-back", soft: true, icon: "back" }]));
+  }
+  function consultHtml(intro) {
+    return "<p>" + intro + '</p><div class="msg-links"><a class="msg-link msg-link--accent" href="' + esc(CFG.consultationFormUrl) + '" target="_blank" rel="noopener">Mandanos tu consulta' + ic("ext") + "</a></div>";
+  }
+  function askFree(text) {
+    text = text.trim(); if (!text || chat.busy) return;
+    userSay(text);
+    var r = faqSearch(text, false);
+    if (r.length && r[0].cover >= 0.5 && (r.length < 2 || r[0].score > r[1].score + 0.4 || r[0].cover === 1)) {
+      var it = r[0].it;
+      botSay('<p class="msg-match">' + esc(it.q) + "</p>" + answerHtml(it), followUps(it));
+    } else if (r.length) {
+      botSay("<p>No estoy seguro de haberte entendido. ¿Es alguna de estas?</p>",
+        r.slice(0, 3).map(function (x) { return { label: x.it.q, attr: 'data-q="' + x.it.id + '"' }; }).concat([{ label: "Ninguna", attr: "data-nope", soft: true }]));
+    } else {
+      botSay(consultHtml("Esa todavía no la tengo guardada. Mandanos la consulta y te respondemos nosotros."), [{ label: "Ver las más preguntadas", attr: "data-popular", soft: true }]);
+    }
+  }
+  function paintSug(text) {
+    var el = $("#faqSug"); if (!el) return;
+    var r = text.trim().length >= 3 ? faqSearch(text, true).slice(0, 3) : [];
+    el.innerHTML = r.length ? '<p>Capaz buscás…</p>' + r.map(function (x) { return '<button type="button" data-sug="' + x.it.id + '">' + ic("search") + "<span>" + esc(x.it.q) + "</span></button>"; }).join("") : "";
+    el.classList.toggle("is-on", !!r.length);
+  }
+  function bindFaq() {
+    var box = $("#faq"); if (!box) return;
+    var form = $("#faqForm"), inp = $("#faqInput");
+    form.onsubmit = function (e) { e.preventDefault(); var v = inp.value; inp.value = ""; paintSug(""); askFree(v); };
+    inp.oninput = function () { paintSug(inp.value); };
+    box.onclick = function (ev) {
+      var b = ev.target.closest("button, a"); if (!b || !box.contains(b)) return;
+      if (b.closest(".is-used") && !b.classList.contains("msg-link")) return;
+      if (b.dataset.q) askItem(b.dataset.q);
+      else if (b.dataset.sug) { inp.value = ""; paintSug(""); askItem(b.dataset.sug); }
+      else if (b.hasAttribute("data-topics")) askTopics();
+      else if (b.hasAttribute("data-topics-back")) { if (!chat.busy) { userSay("Volver"); botSay("<p>¿Sobre qué es?</p>", DATA.faq.topics.map(function (t) { return { label: t.label, attr: 'data-topic="' + t.id + '"' }; })); } }
+      else if (b.dataset.topic) askTopic(b.dataset.topic);
+      else if (b.hasAttribute("data-popular")) { if (!chat.busy) { userSay("Ver las más preguntadas"); botSay("<p>Estas son las que más nos llegan:</p>", popularChips()); } }
+      else if (b.hasAttribute("data-nope")) { if (!chat.busy) { userSay(b.textContent); botSay(consultHtml("Uh, perdón. Escribinos y te responde alguien de Gradiente."), [{ label: "Ver las más preguntadas", attr: "data-popular", soft: true }]); } }
+      else if (b.hasAttribute("data-about-go")) openAbout("who");
+      else if (b.hasAttribute("data-faq-reset")) { chat.log = []; faqStart(); }
+    };
+  }
+
   function animateRing() { requestAnimationFrame(function () { requestAnimationFrame(function () { $all(".ring.is-zero, .pp.is-zero").forEach(function (r) { r.classList.remove("is-zero"); }); }); }); }
+
   function fmtAvg(v) { return v == null ? "–" : v.toFixed(2).replace(".", ","); }
+
   function planProgress(s) {
     var t = s.total || 1, pend = Math.max(0, s.total - s.a - s.r - s.c);
     var w = function (n) { return (n / t * 100).toFixed(2) + "%"; };
@@ -424,23 +706,6 @@
       '<i class="d" style="--w:' + w(s.a) + '"></i><i class="r" style="--w:' + w(s.r) + '"></i><i class="c" style="--w:' + w(s.c) + '"></i></div>' +
       '<ul class="pp-legend"><li><i class="d"></i><b>' + s.a + "</b> aprobadas</li><li><i class=\"r\"></i><b>" + s.r + "</b> " + (s.r === 1 ? "regular" : "regulares") +
       "</li><li><i class=\"c\"></i><b>" + s.c + '</b> cursando</li><li class="pp-rest"><b>' + pend + "</b> por hacer</li></ul></section>";
-  }
-  function homeStart() {
-    return '<div class="card pc pc--start"><p class="pc-kicker">Tu plan de estudios</p><h2 class="h3">Armalo en un minuto</h2>' +
-      '<ol class="steps"><li>Elegí tu carrera</li><li>Contanos hasta dónde llegaste</li><li>Mirá qué podés cursar y rendir</li></ol>' +
-      '<button class="btn btn--primary btn--block" type="button" data-onboard>Empezar</button>' +
-      '<p class="small muted" style="margin:0">Sin cuenta: tu progreso queda guardado en este dispositivo.</p></div>';
-  }
-  function bindHome() {
-    $all("[data-onboard]", main).forEach(function (b) { b.onclick = function () { openOnboarding(); }; });
-    $all("[data-open]", main).forEach(function (b) { b.onclick = function () { openSubject(career(), b.dataset.open); }; });
-  }
-  function quickLinks() {
-    return (CFG.quickLinks || []).map(function (q) {
-      if (q.url) return q;
-      var l = DATA.links.find(function (x) { return x.title === q.match; });
-      return l ? { title: q.title, url: l.url, icon: q.icon } : null;
-    }).filter(Boolean);
   }
   function footer() {
     return '<footer class="footer"><div class="social">' + (CFG.socialLinks || []).map(function (s) {
@@ -512,10 +777,7 @@
   }
   function rerenderPlanBits() {
     if (ui.lastRoute === "plan" && $("#planBody")) { renderPlanStats(); renderFilters(); renderPlanBody(); }
-    if (ui.lastRoute === "home" && $(".pc")) {
-      var c = career(); var holder = $(".hero > div:last-child");
-      if (c && holder) { var openAcc = $all("details.acc", holder).map(function (d) { return d.open; }); holder.innerHTML = homeProgress(c).replace("is-zero", ""); $all("details.acc", holder).forEach(function (d, i) { if (openAcc[i] != null) d.open = openAcc[i]; }); bindHome(); }
-    }
+    if (ui.lastRoute === "home") refreshHomePlan();
     refreshSheet();
   }
   function renderPlanStats() {
