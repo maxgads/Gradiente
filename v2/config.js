@@ -24,7 +24,7 @@ window.GRADIENTE = {
   },
 
   // Nombre del asistente de preguntas frecuentes del inicio
-  botName: "Gradi",
+  botName: "Nabla",
 
   // Accesos rápidos del inicio: se buscan por título en links.json (o url directa).
   // icon: id, clock, cal, book, cloud, heart, ext · color: navy, red, blue
@@ -40,6 +40,8 @@ window.GRADIENTE = {
   // "Quiénes somos" (se abre desde el inicio). history: agregar hitos { year, text } y aparece solo.
   about: {
     intro: "Somos una agrupación estudiantil de Ingeniería UNLP. Defendemos la universidad pública y la industria nacional, y laburamos para que cursar sea un poco más fácil.",
+    // Foto grupal debajo de la presentación: poné la imagen en assets/ y descomentá.
+    // photo: "assets/gradiente-grupo.jpg", photoCaption: "El equipo de Gradiente en la mesita de Electro",
     doing: [
       { title: "Nube de apuntes", text: "Más de 2.600 parciales, finales y apuntes ordenados por materia.", match: "Nube de apuntes y parciales", icon: "cloud" },
       { title: "Mesita en Electro", text: "Kits de cuadernos y útiles a precio estudiante.", go: "#/mesita", icon: "shop" },

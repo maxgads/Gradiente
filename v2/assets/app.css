@@ -1705,30 +1705,44 @@ button.resPanel-h:hover .resPanel-chev, button.resPanel-h:focus-visible .resPane
 /* ---------- inicio: plan y calendario lado a lado ---------- */
 .homeCols > .hsec { min-width: 0; }
 
-/* ---------- "¿Tenés una duda?" → se despliega el chat con Gradi ---------- */
-.askBar > svg { color: var(--accent); }
-.askBar kbd { background: var(--accent); color: #fff; }
-.askBox.is-open .askBar { border-color: var(--ink); box-shadow: var(--shadow-2); border-radius: 14px; }
-.gchat { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s var(--ease), margin .45s var(--ease); }
-.gchat.is-open { grid-template-rows: 1fr; margin-top: 14px; }
-.gchat-in { min-height: 0; overflow: hidden; }
-.gchat-card {
-  position: relative; margin: 0 2px 8px; padding: 14px; border-radius: 22px;
-  background: color-mix(in srgb, var(--surface) 92%, transparent); border: 1px solid var(--line); box-shadow: var(--shadow-3);
-  backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3);
-  opacity: 0; transform: translateY(-12px) scale(.985); transform-origin: top center; transition: opacity .3s ease, transform .45s var(--ease);
+/* ---------- Nabla: el buscador es la tapa de la tarjeta; al abrir crece hacia abajo (flota arriba del resto) ---------- */
+.askBox { position: relative; height: 52px; z-index: 25; }
+.nabla {
+  position: absolute; top: 0; right: 0; width: 100%; border-radius: 16px;
+  background: var(--surface); border: 1px solid var(--line-strong); box-shadow: var(--shadow-1);
+  transition: width .45s var(--ease), box-shadow .3s, border-color .3s, border-radius .3s;
 }
-.gchat.is-open .gchat-card { opacity: 1; transform: none; }
-.gchat .faq-head { align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
-.faq-av { position: relative; width: 46px; height: 46px; border-radius: 15px; font-family: var(--display); font-weight: 800; font-style: italic; font-size: 26px; color: #fff;
-  background: linear-gradient(140deg, var(--navy-2), var(--navy) 55%, var(--red)); box-shadow: 0 10px 22px -12px var(--navy-2); }
-.faq-av i { position: absolute; right: -2px; bottom: -2px; width: 13px; height: 13px; border-radius: 50%; background: #22c55e; border: 2.5px solid var(--surface); }
-.faq-name { margin: 0; font-family: var(--display); font-weight: 800; font-size: 26px; line-height: 1; }
-.faq-role { margin: 3px 0 0; font-size: 13px; color: var(--muted); }
-.faq-role i { display: none; }
-.faq-close { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line-strong); color: var(--ink-2); flex: none; transition: background .15s, transform .25s var(--ease); }
+.nabla .askBar { margin: 0; height: 50px; border: 0; background: transparent; box-shadow: none; padding: 0 7px 0 6px; border-radius: 16px; }
+.nabla .askBar:focus-within { box-shadow: none; }
+.nabla:focus-within { border-color: var(--focus); box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus) 14%, transparent); }
+.askBox.is-open .nabla { border-color: var(--line-strong); box-shadow: var(--shadow-3); border-radius: 20px; }
+@media (min-width: 900px) { .askBox.is-open .nabla { width: min(700px, calc(100vw - 32px)); } }
+.askBar kbd { background: var(--accent); color: #fff; }
+/* ∇ con ojitos: abre y guarda */
+.nb-tog { flex: none; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; transition: transform .25s var(--ease); }
+.nb-tog:hover { transform: scale(1.06); }
+.nb-av { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; color: #fff;
+  background: linear-gradient(140deg, var(--navy-2), var(--navy) 55%, var(--red)); box-shadow: 0 8px 18px -10px var(--navy-2); transition: border-radius .35s var(--ease), transform .35s var(--ease); }
+.nb-av svg { width: 22px; height: 22px; }
+.nb-av .nb-eyes { transform-origin: 12px 9.6px; animation: nbBlink 4.5s infinite; }
+@keyframes nbBlink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+.nb-tog[aria-expanded="true"] .nb-av { border-radius: 50%; transform: rotate(180deg); }
+.nb-tog[aria-expanded="true"] .nb-eyes { animation: none; }
+@media (prefers-reduced-motion: reduce) { .nb-av .nb-eyes { animation: none; } .nabla { transition: none; } }
+/* lo que se despliega */
+.gchat { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s var(--ease); }
+.gchat.is-open { grid-template-rows: 1fr; }
+.gchat-in { min-height: 0; overflow: hidden; }
+.gchat-card { padding: 0 14px 14px; opacity: 0; transform: translateY(-8px); transition: opacity .25s ease, transform .4s var(--ease); }
+.gchat.is-open .gchat-card { opacity: 1; transform: none; transition-delay: .08s; }
+.gchat .faq-head { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.faq-who { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-left: 2px; }
+.faq-name { margin: 0; font-family: var(--display); font-weight: 800; font-size: 22px; line-height: 1; }
+.faq-tag { font-family: var(--mono); font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 4px 8px; border-radius: 999px; background: var(--surface-3); }
+.faq-reset { width: 34px; height: 34px; }
+.faq-close { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line-strong); color: var(--ink-2); flex: none; transition: background .15s, transform .25s var(--ease); }
 .faq-close:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); transform: rotate(90deg); }
-.faq-close svg { width: 16px; height: 16px; }
+.faq-close svg { width: 15px; height: 15px; }
 .gchat-body { display: grid; gap: 12px; padding-top: 12px; }
 .faq-guide { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -14px; padding: 0 14px 2px; }
 .faq-guide::-webkit-scrollbar { display: none; }
@@ -1738,19 +1752,17 @@ button.resPanel-h:hover .resPanel-chev, button.resPanel-h:focus-visible .resPane
 .faq-guide button:hover { border-color: var(--ink); color: var(--ink); }
 .faq-guide button[data-popular] svg { color: var(--accent); }
 .gchat-main { min-width: 0; }
-.gchat .chat { margin-top: 0; min-height: 200px; max-height: min(420px, 56vh); }
+.gchat .chat { margin-top: 0; min-height: 180px; max-height: min(380px, 50vh); }
 .gchat .faq-sug { margin: 0 0 8px; box-shadow: none; background: var(--surface-2); }
 .gchat-foot { margin: 10px 0 0; padding-top: 10px; border-top: 1px dashed var(--line-strong); font-size: 13px; color: var(--muted); }
 .gchat-foot a { color: var(--ink); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
 @media (min-width: 760px) {
-  .gchat-card { padding: 16px 18px; }
-  .gchat-body { grid-template-columns: 210px minmax(0, 1fr); gap: 18px; }
-  .faq-guide { flex-direction: column; overflow: visible; margin: 0; padding: 0 16px 0 0; border-right: 1px solid var(--line); gap: 2px; }
+  .gchat-body { grid-template-columns: 190px minmax(0, 1fr); gap: 16px; }
+  .faq-guide { flex-direction: column; overflow: visible; margin: 0; padding: 0 14px 0 0; border-right: 1px solid var(--line); gap: 2px; }
   .faq-guide .hsec-k { display: block; margin: 2px 8px 6px; }
-  .faq-guide button { height: auto; padding: 9px 8px; border: 0; border-radius: 10px; background: transparent; text-align: left; }
+  .faq-guide button { height: auto; padding: 8px; border: 0; border-radius: 10px; background: transparent; text-align: left; }
   .faq-guide button:hover { background: var(--surface-3); }
 }
-@media (min-width: 900px) { .gchat { grid-column: 1 / -1; } }
 @media (prefers-reduced-motion: reduce) { .gchat, .gchat-card { transition: none; } }
 
 /* ---------- redes con sus colores originales ---------- */
@@ -1946,3 +1958,75 @@ button.resPanel-h:hover .resPanel-chev, button.resPanel-h:focus-visible .resPane
 .pal-sw i { border-radius: 4px; }
 .pal-ck { width: 16px; height: 16px; flex: none; opacity: 0; color: var(--ink); }
 .pal-opt[aria-pressed="true"] .pal-ck { opacity: 1; }
+
+/* ================= v2.9 · Nabla, rayitas del calendario, Instagram, Recursos ================= */
+.askBox.is-open .nabla .askBar { border-radius: 16px; }
+
+/* calendario: una rayita por día (un color, mitad y mitad, o partes iguales) */
+.cal-bar { display: block; width: 100%; height: 4px; border-radius: 3px; }
+.cal-bar.is-empty { background: transparent; }
+.cal-grid.is-week .cal-bar { width: 62%; height: 5px; }
+.cal-d.is-out .cal-bar, .cal-d.is-past .cal-bar { opacity: .45; }
+
+/* Instagram: logo blanco más grande, capa que deja deslizar la fila */
+.igs-av .soc-ic svg { width: 29px; height: 29px; }
+.igs-card { position: relative; }
+.igs-hit { position: absolute; inset: 0; z-index: 1; display: flex; align-items: flex-end; justify-content: center; padding: 12px; }
+.igs-hit span { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 700;
+  background: rgba(0, 0, 0, .72); color: #fff; opacity: 0; transform: translateY(6px); transition: opacity .2s, transform .25s var(--ease); }
+.igs-hit span svg { width: 13px; height: 13px; }
+@media (hover: hover) { .igs-hit:hover span, .igs-hit:focus-visible span { opacity: 1; transform: none; } }
+.igs-row { cursor: grab; user-select: none; -webkit-user-select: none; }
+.igs-row.is-grabbing { cursor: grabbing; scroll-snap-type: none; }
+.igs-row.is-grabbing .igs-hit { pointer-events: none; }
+
+/* quiénes somos: foto grupal */
+.ab-photo { margin: 18px 0 0; border-radius: 20px; overflow: hidden; position: relative; box-shadow: var(--shadow-2); }
+.ab-photo img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+.ab-photo figcaption { position: absolute; left: 12px; bottom: 12px; padding: 6px 11px; border-radius: 999px; font-size: 13px; font-weight: 600; color: #fff; background: rgba(0, 0, 0, .55); backdrop-filter: blur(6px); }
+
+/* ---------- Recursos ---------- */
+/* nube: título "Buscador" + datos chiquitos, todo del ancho del buscador */
+.nube-head { align-items: center; gap: 14px; }
+.nube-ic svg { width: 28px; height: 28px; }
+.nube-title { margin: 0; font-family: var(--display); font-weight: 800; font-size: clamp(30px, 6vw, 40px); line-height: .95; }
+.nube-kpis { margin: 8px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.nk { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12.5px; color: var(--ink-2);
+  background: color-mix(in srgb, var(--surface) 80%, transparent); border: 1px solid var(--line); white-space: nowrap; }
+.nk b { font-family: var(--mono); font-weight: 700; color: var(--ink); }
+.nk svg { width: 14px; height: 14px; }
+.nk--brand { color: var(--sky); border-color: color-mix(in srgb, var(--sky-2) 35%, var(--line)); font-weight: 700; }
+.nk--soft { border-style: dashed; color: var(--muted); }
+.nk--link { margin-left: auto; font-weight: 700; color: var(--sky); border-color: transparent; background: transparent; }
+.nk--link:hover { text-decoration: underline; }
+@media (max-width: 559px) { .nk--soft { display: none; } .nk--link { margin-left: 0; } }
+/* resultados: fichas bajas y parejas, el nombre en una línea */
+.nubeHit { min-height: 0; height: 58px; padding: 8px 10px; gap: 10px; }
+.nubeHit > span:nth-child(2) { overflow: hidden; }
+.nubeHit strong { font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nubeHit-ic { width: 32px; height: 32px; border-radius: 10px; }
+.nubeHit em { font-size: 11px; padding: 2px 7px; }
+@media (min-width: 1000px) { .nube .nubeHits { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* "Links útiles" y el buscador en la misma fila */
+.resTools-top { display: flex; align-items: center; gap: 16px; }
+.resTools-top .resSec { margin: 0; flex: none; }
+.resTools-top .search { flex: 1; min-width: 0; max-width: 520px; margin-left: auto; }
+.res .resTools { margin-top: 40px; }
+@media (max-width: 599px) { .resTools-top { flex-direction: column; align-items: stretch; gap: 10px; } .resTools-top .search { max-width: none; margin-left: 0; width: 100%; } .resTools.is-stuck .resSec { display: none; } }
+.resTools.is-stuck .resSec { font-size: 22px; }
+
+/* bloques: sin tarjeta; el título y abajo cada link como un botón redondeado */
+.resPanel { background: color-mix(in srgb, var(--cc) 3%, transparent); border: 1px solid color-mix(in srgb, var(--cc) 26%, transparent); box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 6px 8px 8px; }
+.resRows { margin: 0; background: none; border: 0; border-radius: 0; box-shadow: none; overflow: visible; gap: 6px; }
+.resRows > * + * { border-top: 0; }
+.resRow { border-radius: 13px; background: color-mix(in srgb, var(--surface) 82%, transparent); border: 1px solid color-mix(in srgb, var(--cc) 16%, var(--line)); padding: 11px 13px; transition: background .15s, border-color .15s, transform .15s var(--ease); }
+.resRow:hover { background: var(--tint); border-color: color-mix(in srgb, var(--cc) 45%, transparent); }
+.resRow:active { transform: scale(.99); }
+.resRow-wrap { padding-right: 0; gap: 6px; }
+.resRow-wrap .iconBtn { width: 44px; height: auto; align-self: stretch; border-radius: 13px; border: 1px solid color-mix(in srgb, var(--cc) 16%, var(--line)); background: color-mix(in srgb, var(--surface) 82%, transparent); }
+.resTiles { margin: 0; }
+.resTile { border-radius: 14px; background: color-mix(in srgb, var(--surface) 82%, transparent); border: 1px solid color-mix(in srgb, var(--cc) 16%, var(--line)); box-shadow: none; }
+/* el saludo (con la tarjeta de Nabla adentro) va por encima de los accesos rápidos; la barra de arriba (z 30) sigue encima */
+.hello { position: relative; z-index: 26; }
+@media (max-width: 759px) { .nube .nubeHits .nubeHit:nth-of-type(n+5) { display: none; } }

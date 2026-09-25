@@ -513,9 +513,11 @@
       html += '<header class="hello rise"><p class="hello-date">' + DIAS[d.getDay()] + " " + d.getDate() + " de " + MESES[d.getMonth()] + "</p>" +
         '<h1 class="hello-t">' + greeting() + (S.name ? ", <span>" + esc(S.name) + "</span>" : "") + "</h1>" +
         '<p class="hello-sub">' + sub + "</p>" +
-        '<div class="askBox" id="askBox"><form class="askBar" id="askForm" autocomplete="off" role="search"><label class="sr" for="askInput">Preguntale a ' + BOT + "</label>" + ic("chat") +
-        '<input id="askInput" type="search" placeholder="¿Tenés una duda? Preguntá acá" enterkeyhint="send" aria-controls="faq" aria-expanded="false"><button type="submit" aria-label="Enviar pregunta"><kbd>' + ic("send") + "</kbd></button></form></div>" +
-        '<section class="gchat" id="faq" aria-labelledby="faqT"><div class="gchat-in">' + faqShell() + "</div></section></header>";
+        '<div class="askBox" id="askBox"><div class="nabla" id="nabla"><form class="askBar" id="askForm" autocomplete="off" role="search">' +
+        '<button class="nb-tog" type="button" id="nbTog" aria-expanded="false" aria-controls="faq" aria-label="Abrir a ' + esc(BOT) + '" title="' + esc(BOT) + ', asistente de Gradiente"><span class="nb-av">' + ic("nabla") + "</span></button>" +
+        '<label class="sr" for="askInput">Preguntale a ' + esc(BOT) + "</label>" +
+        '<input id="askInput" type="search" placeholder="¿Tenés una duda? Preguntá acá" enterkeyhint="send" aria-controls="faq" aria-expanded="false"><button type="submit" aria-label="Enviar pregunta"><kbd>' + ic("send") + "</kbd></button></form>" +
+        '<section class="gchat" id="faq" aria-labelledby="faqT"><div class="gchat-in">' + faqShell() + "</div></section></div></div></header>";
 
       if (avisos.length) {
         html += '<div class="avisos">' + avisos.map(function (l) {
@@ -629,40 +631,59 @@
   }
   function linkByMatch(m) { var l = (DATA.links || []).find(function (x) { return x.title === m; }); return l ? l.url : null; }
 
-  /* ---------- "¿Tenés una duda?": al tocar el buscador se despliega abajo el chat con Gradi ---------- */
-  var BOT = CFG.botName || "Gradi";
+  /* ---------- Nabla (∇, por el gradiente): el buscador del saludo es la tapa de su tarjeta.
+     Al tocarlo la tarjeta se abre hacia abajo con el chat; al tocar ∇ de nuevo, afuera o
+     al seguir bajando, se vuelve a guardar y queda solo el buscador. ---------- */
+  var BOT = CFG.botName || "Nabla";
   function chatOpen() { var f = $("#faq"); return !!(f && f.classList.contains("is-open")); }
+  function paintNabla(open) {
+    var f = $("#faq"), box = $("#askBox"), inp = $("#askInput"), tog = $("#nbTog");
+    if (!f) return;
+    f.classList.toggle("is-open", open); box.classList.toggle("is-open", open);
+    if (inp) inp.setAttribute("aria-expanded", String(open));
+    if (tog) { tog.setAttribute("aria-expanded", String(open)); tog.setAttribute("aria-label", (open ? "Guardar a " : "Abrir a ") + BOT); }
+  }
   function openChat(focus) {
-    var f = $("#faq"), inp = $("#askInput"); if (!f) return;
+    var inp = $("#askInput"); if (!$("#faq")) return;
     if (!chatOpen()) {
-      f.classList.add("is-open"); $("#askBox").classList.add("is-open");
-      if (inp) inp.setAttribute("aria-expanded", "true");
+      paintNabla(true);
       faqStart();
-      // que el buscador quede arriba y el chat se vea entero
+      // que el buscador quede arriba y la tarjeta se vea entera
       var top = $("#askBox").getBoundingClientRect().top;
-      if (top > window.innerHeight * .45 || top < 60) window.scrollTo({ top: window.scrollY + top - 76, behavior: "smooth" });
+      if (top > window.innerHeight * .4 || top < 64) window.scrollTo({ top: window.scrollY + top - 76, behavior: "smooth" });
     }
     if (focus && inp) inp.focus({ preventScroll: true });
   }
   function closeChat() {
-    var f = $("#faq"), inp = $("#askInput"); if (!f || !chatOpen()) return;
-    f.classList.remove("is-open"); $("#askBox").classList.remove("is-open");
-    if (inp) { inp.setAttribute("aria-expanded", "false"); inp.value = ""; inp.blur(); }
+    var inp = $("#askInput"); if (!$("#faq") || !chatOpen()) return;
+    paintNabla(false);
+    if (inp) { inp.value = ""; if (document.activeElement === inp) inp.blur(); }
     paintSug("");
   }
   function bindAsk() {
-    var box = $("#askBox"), inp = $("#askInput"), form = $("#askForm");
+    var box = $("#askBox"), nb = $("#nabla"), inp = $("#askInput"), form = $("#askForm"), tog = $("#nbTog");
     if (!box || !DATA.faq) return;
     inp.addEventListener("focus", function () { openChat(false); });
     inp.addEventListener("click", function () { openChat(false); });
     inp.addEventListener("input", function () { paintSug(inp.value); });
     inp.addEventListener("keydown", function (e) { if (e.key === "Escape") { e.stopPropagation(); closeChat(); } });
+    tog.addEventListener("click", function (e) { e.preventDefault(); if (chatOpen()) closeChat(); else openChat(true); });
     form.onsubmit = function (e) {
       e.preventDefault();
       var v = inp.value.trim(); openChat(false);
       if (!v) { inp.focus(); return; }
       inp.value = ""; paintSug(""); askFree(v);
     };
+    // tocar afuera la guarda
+    document.addEventListener("pointerdown", function outside(e) {
+      if (!document.body.contains(nb)) { document.removeEventListener("pointerdown", outside); return; }
+      if (chatOpen() && !nb.contains(e.target) && !e.target.closest(".sheet, .toast")) closeChat();
+    });
+    // seguir bajando también: cuando el buscador ya se fue para arriba
+    window.addEventListener("scroll", function onScroll() {
+      if (!document.body.contains(box)) { window.removeEventListener("scroll", onScroll); return; }
+      if (chatOpen() && box.getBoundingClientRect().top < 8) closeChat();
+    }, { passive: true });
   }
 
   /* ---------- almanaque: fechas oficiales de la Facultad + lo que cargue Gradiente (data/fechas.json) ---------- */
@@ -722,6 +743,15 @@
     return a.getMonth() === b.getMonth() ? a.getDate() + " al " + b.getDate() + " de " + MESES[b.getMonth()]
       : a.getDate() + " de " + MESES[a.getMonth()].slice(0, 3) + " al " + b.getDate() + " de " + MESES[b.getMonth()].slice(0, 3);
   }
+  /* una sola rayita por día: un color si hay una cosa, mitad y mitad si hay dos… partes iguales para todas */
+  function calBar(kinds) {
+    if (!kinds.length) return '<span class="cal-bar is-empty"></span>';
+    var n = kinds.length, stops = kinds.map(function (k, i) {
+      var c = CAL_K[k].color;
+      return c + " " + (i / n * 100).toFixed(2) + "% " + ((i + 1) / n * 100).toFixed(2) + "%";
+    });
+    return '<span class="cal-bar" style="background:linear-gradient(90deg,' + stops.join(",") + ')"></span>';
+  }
   function goCal() {
     var el = $("#homeCal"); if (!el) return;
     calUI.ref = null; calUI.sel = null; paintCal();
@@ -749,7 +779,7 @@
       h += '<button type="button" class="' + cls + '" data-cal-day="' + iso + '" aria-pressed="' + (iso === calUI.sel) + '" aria-label="' + DIAS[d.getDay()] + " " + d.getDate() + (ev.length ? ": " + esc(ev.map(function (e) { return e.t; }).join(", ")) : "") + '"' +
         (off ? ' style="--off:' + CAL_K[kinds[0]].color + '"' : "") + ">" +
         (week ? "<small>" + DIAS[d.getDay()].slice(0, 3) + "</small>" : "") + "<b>" + d.getDate() + "</b>" +
-        '<span class="cal-dots">' + kinds.slice(0, 3).map(function (k) { return '<i style="background:' + CAL_K[k].color + '"></i>'; }).join("") + "</span></button>";
+        calBar(kinds) + "</button>";
     });
     h += "</div>";
     // detalle: el día que tocaste, o lo que hay en lo que estás viendo
@@ -815,7 +845,9 @@
     if ((A.history || []).length) items.push(["history", "cal", "Nuestra historia", "Cómo arrancamos y hasta dónde llegamos"]);
     items.push(["join", "heart", "Sumate", "Escribinos o pasá por la mesita"]);
     return '<section class="hsec about" id="about" aria-labelledby="aboutT"><div class="about-l"><p class="hsec-k">Gradiente</p><h2 class="hsec-t" id="aboutT">' + esc(CFG.tagline || "Gradiente") + "</h2>" +
-      '<p class="hsec-p">' + esc(A.intro || CFG.description || "") + "</p></div>" +
+      '<p class="hsec-p">' + esc(A.intro || CFG.description || "") + "</p>" +
+      (A.photo ? '<figure class="ab-photo"><img src="' + esc(A.photo) + '" alt="' + esc(A.photoAlt || "El equipo de Gradiente") + '" loading="lazy">' +
+        (A.photoCaption ? "<figcaption>" + esc(A.photoCaption) + "</figcaption>" : "") + "</figure>" : "") + "</div>" +
       '<div class="about-links">' + items.map(function (it) {
         return '<div class="ab-item"><button type="button" class="ab-btn" data-about="' + it[0] + '" aria-expanded="false" aria-controls="ab-' + it[0] + '">' + ic(it[1]) +
           "<span>" + it[2] + "<small>" + it[3] + "</small></span><i class=\"ab-pm\"></i></button>" +
@@ -861,16 +893,36 @@
     if (!posts.length) return h + '<a class="igs-empty" href="' + esc(url) + '" target="_blank" rel="noopener">Mirá las novedades, fechas y sorteos en nuestro Instagram' + ic("ext") + "</a></section>";
     h += '<div class="igs-row" id="igRow">' + posts.map(function (p) {
       var path = (p.type === "reel" ? "reel/" : "p/") + encodeURIComponent(p.code);
-      return '<figure class="igs-card"><iframe src="https://www.instagram.com/' + path + '/embed/" loading="lazy" title="Publicación de Instagram de Gradiente" scrolling="no" allowtransparency="true"></iframe></figure>';
+      // la capa de arriba deja deslizar la fila (el iframe se come los gestos) y al tocarla abre el post
+      return '<figure class="igs-card"><iframe src="https://www.instagram.com/' + path + '/embed/" loading="lazy" title="Publicación de Instagram de Gradiente" scrolling="no" allowtransparency="true" tabindex="-1"></iframe>' +
+        '<a class="igs-hit" href="https://www.instagram.com/' + path + '/" target="_blank" rel="noopener" aria-label="Ver la publicación en Instagram"><span>' + ic("ext") + "Ver en Instagram</span></a></figure>";
     }).join("") + '<a class="igs-more" href="' + esc(url) + '" target="_blank" rel="noopener">' + ic("ig") + "<strong>Ver todo en Instagram</strong><small>@" + esc(user) + "</small></a></div></section>";
     return h;
   }
   function bindIg() {
     var row = $("#igRow"); if (!row) return;
     $all("[data-ig-nav]", main).forEach(function (b) {
-      b.onclick = function () { row.scrollBy({ left: +b.dataset.igNav * row.clientWidth * .85, behavior: "smooth" }); };
+      b.onclick = function () {
+        var card = $(".igs-card", row), step = card ? card.offsetWidth + 14 : row.clientWidth * .85;
+        row.scrollBy({ left: +b.dataset.igNav * step, behavior: "smooth" });
+      };
     });
-  }
+    // con mouse: arrastrar para mover la fila (si arrastraste, no abre el post)
+    var st = null;
+    row.addEventListener("pointerdown", function (e) {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      st = { x: e.clientX, l: row.scrollLeft, moved: false };
+    });
+    row.addEventListener("pointermove", function (e) {
+      if (!st) return;
+      var dx = e.clientX - st.x;
+      if (!st.moved && Math.abs(dx) < 6) return;
+      if (!st.moved) { st.moved = true; row.classList.add("is-grabbing"); }
+      row.scrollLeft = st.l - dx;
+    });
+    var end = function () { if (!st) return; var moved = st.moved; st = null; row.classList.remove("is-grabbing"); if (moved) { row.dataset.dragged = "1"; setTimeout(function () { row.dataset.dragged = ""; }, 0); } };
+    row.addEventListener("pointerup", end); row.addEventListener("pointerleave", end);
+    row.addEventListener("click", function (e) { if (row.dataset.dragged === "1") { e.preventDefault(); e.stopPropagation(); } }, true);  }
 
   /* ======================================================================
      PREGUNTAS FRECUENTES (chat con respuestas guardadas)
@@ -916,8 +968,7 @@
   var chat = { log: [], busy: false };
   function faqShell() {
     var topics = (DATA.faq && DATA.faq.topics) || [];
-    return '<div class="gchat-card"><div class="faq-head"><span class="faq-av" aria-hidden="true">' + esc(BOT.charAt(0)) + '<i></i></span><div><h2 class="faq-name" id="faqT">' + esc(BOT) + "</h2>" +
-      '<p class="faq-role"><i></i>Asistente de Gradiente · responde al toque</p></div>' +
+    return '<div class="gchat-card"><div class="faq-head"><div class="faq-who"><h2 class="faq-name" id="faqT">' + esc(BOT) + '</h2><span class="faq-tag">Asistente</span></div>' +
       '<button class="faq-reset" type="button" data-faq-reset aria-label="Empezar de nuevo" title="Empezar de nuevo">' + ic("undo") + "</button>" +
       '<button class="faq-close" type="button" data-chat-close aria-label="Cerrar el chat">' + ic("x") + "</button></div>" +
       '<div class="gchat-body"><nav class="faq-guide" aria-label="Temas"><p class="hsec-k">Temas</p>' +
@@ -1802,14 +1853,28 @@
   }
   function nubeFinderResults(q) {
     if (!q) {
-      var mine = mySubjects(function (x) { return DATA.nube[x.c]; }).slice(0, 4);
-      if (mine.length) return '<p class="nubeHint">De lo que estás cursando</p>' + mine.map(nubeHit).join("");
-      return '<p class="nubeHint">Probá con</p><div class="nubeTry">' + ["Matemática A", "Física I", "Química", "Estructuras"].map(function (t) { return '<button type="button" class="chip" data-try="' + t + '">' + t + "</button>"; }).join("") + "</div>";
+      var s = nubeSuggest();
+      return s.list.length ? '<p class="nubeHint">' + s.label + "</p>" + s.list.map(nubeHit).join("") : "";
     }
     var hits = searchSubjects(q, true).slice(0, 5);
     if (hits.length) return hits.map(nubeHit).join("");
     var any = searchSubjects(q, false)[0];
     return '<p class="nubeHint">' + (any ? "Todavía no hay material de <strong>" + esc(any.n) + "</strong>. Si tenés, ¡compartilo!" : "No encontramos esa materia.") + "</p>";
+  }
+  /* sin nada escrito: lo que estás cursando; si no marcaste nada, lo próximo que podés cursar;
+     sin plan, las del primer año (Matemática para Ingeniería, Matemática A…) */
+  function nubeSuggest() {
+    var c = career(), MAX = 6, has = function (x) { return DATA.nube[x.c]; }, pick = function (x) { return { c: x.c, n: x.n }; };
+    var plain = function (x) { return x.k !== "lang" && x.k !== "slot" && x.k !== "afc"; };
+    if (c) {
+      var cur = c.courses.filter(function (x) { return plain(x) && stOf(c.id, x.c) === "c" && has(x); });
+      if (cur.length) return { label: "De lo que estás cursando", list: cur.slice(0, MAX).map(pick) };
+      var next = c.courses.filter(function (x) { return plain(x) && has(x) && evaluate(c, x).state === "ready"; });
+      if (next.length) return { label: "Lo próximo que podés cursar", list: next.slice(0, MAX).map(pick) };
+    }
+    var first = ["D1001", "F1301", "F1303", "U1901", "F1302", "M1602"].filter(function (k) { return DATA.nube[k]; });
+    var idx = {}; subjectIndex().forEach(function (s) { idx[s.c] = s; });
+    return { label: c ? "Para arrancar" : "Las primeras de la carrera", list: first.filter(function (k) { return idx[k]; }).slice(0, MAX).map(function (k) { return { c: k, n: idx[k].n }; }) };
   }
   function nubeFinder(id) {
     return '<div class="nubeFind"><label class="search nubeSearch"><span class="sr">Buscar materia en la nube</span>' + ic("search") +
@@ -1826,10 +1891,11 @@
     });
   }
   function nubeCard() {
-    return '<section class="nube rise" aria-labelledby="nubeT"><div class="nube-head"><span class="nube-ic">' + ic("cloud") + "</span>" +
-      '<div class="nube-t"><h2 class="nube-k" id="nubeT">Buscador · Nube Gradiente</h2>' +
-      '<p class="nube-sub"><b>2.600+</b> parciales, finales y apuntes de <b>' + nubeCount() + "</b> materias</p></div>" +
-      '<a class="nube-open" href="' + esc(CFG.driveUrl) + '" target="_blank" rel="noopener">Abrir la nube' + ic("ext") + "</a></div>" +
+    return '<section class="nube rise" aria-labelledby="nubeT"><div class="nube-head"><span class="nube-ic">' + ic("cloudq") + "</span>" +
+      '<div class="nube-t"><h2 class="nube-title" id="nubeT">Buscador</h2>' +
+      '<p class="nube-kpis"><span class="nk nk--brand">' + ic("cloud") + "Nube Gradiente</span><span class=\"nk\"><b>2.600+</b> archivos</span><span class=\"nk\"><b>" + nubeCount() + "</b> materias</span>" +
+      '<span class="nk nk--soft">parciales · finales · apuntes</span>' +
+      '<a class="nk nk--link" href="' + esc(CFG.driveUrl) + '" target="_blank" rel="noopener">Abrir la nube' + ic("ext") + "</a></p></div></div>" +
       nubeFinder("nubeQ") + "</section>";
   }
 
@@ -1841,9 +1907,8 @@
       var html = '<div class="wrap page res"><header class="resHead"><h1 class="h1">Recursos</h1>' +
         '<p class="lead">Trámites, becas, apuntes, cursada y contactos útiles de la Facultad.</p></header>' +
         nubeCard() +
-        '<h2 class="resSec">Links útiles</h2>' +
-        '<div class="stickSentinel" id="stickSentinel"></div><div class="planTools resTools" id="planTools"><label class="search"><span class="sr">Buscar</span>' + ic("search") +
-        '<input id="resSearch" type="search" placeholder="Buscar: becas, SIU, turnos, mails…" autocomplete="off" value="' + esc(resState.q) + '"></label>' +
+        '<div class="stickSentinel" id="stickSentinel"></div><div class="planTools resTools" id="planTools"><div class="resTools-top"><h2 class="resSec">Links útiles</h2><label class="search"><span class="sr">Buscar</span>' + ic("search") +
+        '<input id="resSearch" type="search" placeholder="Buscar: becas, SIU, turnos, mails…" autocomplete="off" value="' + esc(resState.q) + '"></label></div>' +
         '<nav class="chipsRow resChips" aria-label="Ir a una categoría">' +
         cats.map(function (c) { return '<a class="chip chip--c" href="#res-' + slug(c.id) + '" data-jump="' + slug(c.id) + '"' + cStyle(c.color) + '><i class="dot"></i>' + esc(c.name) + "</a>"; }).join("") + "</nav></div>" +
         '<div id="resBody"></div>' +
