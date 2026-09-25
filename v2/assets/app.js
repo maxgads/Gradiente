@@ -2431,13 +2431,29 @@
   var PF_KEY = "gradiente.profile";
   function profile() { return store.get(PF_KEY, null) || {}; }
   function saveProfile(p) { if (!DEV.temp) store.set(PF_KEY, p); }
-  // sin foto: la facultad sobre el azul de la paleta
+  // sin foto: el ícono típico de perfil (en la barra, igual que la campana)
   function avatarHtml(big) {
     var p = profile();
     if (p.photo) return '<img src="' + esc(p.photo) + '" alt="">';
-    return '<span class="avatar-def' + (big ? " is-big" : "") + '">' + ic("building") + "</span>";
+    return big ? '<span class="avatar-def is-big">' + ic("user") + "</span>" : ic("user");
   }
-  function paintAvatar() { var a = $("#topAvatar"); if (a) a.innerHTML = avatarHtml(false); }
+  function paintAvatar() {
+    var a = $("#topAvatar"); if (!a) return;
+    a.innerHTML = avatarHtml(false);
+    a.classList.toggle("has-photo", !!profile().photo);
+  }
+  /* colores: botón propio al lado de la campana (también están en el perfil) */
+  function openPalettes() {
+    openSheetAs("sheet--side", function () {
+      return '<div class="dHead"><div><p class="dMeta">Ahora: ' + esc(curPalette().name) + '</p><h2 class="h2" id="sheetTitle">Colores</h2></div><button class="iconBtn" type="button" data-close aria-label="Cerrar">' + ic("x") + "</button></div>" +
+        '<div class="pf-pal pal-sheet">' + palGrid() + "</div>";
+    });
+    sheetBody.onclick = function (e) {
+      var pal = e.target.closest("[data-pal]"); if (!pal) return;
+      pickPalette(pal.dataset.pal);
+      var m = $(".dMeta", sheetBody); if (m) m.textContent = "Ahora: " + curPalette().name;
+    };
+  }
   function pfField(id, label, val, attrs) {
     return '<label class="pf-field"><span>' + label + '</span><input data-pf-f="' + id + '" value="' + esc(val || "") + '" ' + (attrs || "") + "></label>";
   }
@@ -2575,6 +2591,7 @@
 
   $("#profileBtn").addEventListener("click", openProfile);
   $("#notifBtn").addEventListener("click", openNotifs);
+  if ($("#palBtn")) $("#palBtn").addEventListener("click", openPalettes);
   paintAvatar();
   Promise.all([ensureLinks(), ensureFechas(), ensurePlans()]).then(paintBell).catch(function () {});
 
